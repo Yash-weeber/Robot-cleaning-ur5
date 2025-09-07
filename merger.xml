@@ -1,0 +1,40 @@
+<mujoco model="mop_with_handle">
+    <compiler angle="degree" coordinate="local"/>
+    <option gravity="0 0 -9.81" timestep="0.05"/>
+
+    <!-- Assets: load STL meshes -->
+    <asset>
+        <!-- Base -->
+        <mesh name="base_mesh" file="mopppp_base_ballhorder.STL" scale="1 1 1"/>
+        <!-- Handle -->
+        <mesh name="handle_mesh" file="Lower part of handle.STL" scale="1 1 1"/>
+    </asset>
+
+    <!-- Default physics properties -->
+    <default>
+        <geom contype="1" conaffinity="1" density="500" friction="0.8 0.1 0.1"/>
+        <joint limited="true" damping="0.01"/>
+    </default>
+
+    <!-- World body -->
+    <worldbody>
+        <!-- Base body -->
+        <body name="base" pos="0 0 0">
+            <geom type="mesh" mesh="base_mesh" rgba="0.6 0.6 0.6 1"/>
+
+            <!-- Handle body connected with ball joint -->
+            <body name="handle" pos="-0.7 35 46">
+                <joint name="handle_joint" type="ball" range="0 0"/>
+                <geom type="mesh" mesh="handle_mesh" rgba="0.8 0.3 0.3 1"/>
+            </body>
+        </body>
+    </worldbody>
+
+    <!-- Actuators to control the handle manually -->
+    <actuator>
+        <!-- 3 motors = control in x, y, z rotation -->
+        <motor joint="handle_joint" ctrlrange="-1 1" gear="1"/>
+        <motor joint="handle_joint" ctrlrange="-1 1" gear="1"/>
+        <motor joint="handle_joint" ctrlrange="-1 1" gear="1"/>
+    </actuator>
+</mujoco>
