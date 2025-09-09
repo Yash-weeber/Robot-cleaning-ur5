@@ -239,7 +239,6 @@ import threading
 import numpy as np
 import mujoco_py
 import glfw
-
 #----------------------------------------
 # Configuration
 #----------------------------------------
