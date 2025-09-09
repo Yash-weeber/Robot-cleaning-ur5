@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="ur5e_with_mop_and_dust">
+  <compiler angle="radian" meshdir="assets" autolimits="true"/>
+  <option integrator="implicitfast" timestep="0.01"/>
+
+  <!-- ================= DEFAULT SETTINGS ================= -->
+  <default>
+    <default class="ur5e">
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+        <default class="eef_collision">
+          <geom type="cylinder"/>
+        </default>
+      </default>
+      <joint axis="0 1 0" range="-6.28319 6.28319"/>
+      <default class="joint_limited">
+        <joint range="-3.1415 3.1415"/>
+      </default>
+      <default class="position">
+        <position ctrlrange="-6.2831 6.2831" kp="2000" kv="100" forcerange="-150 150"/>
+        <default class="position_limited">
+          <position ctrlrange="-3.1415 3.1415"/>
+        </default>
+        <default class="position_small">
+          <position kp="500" kv="25" forcerange="-28 28"/>
+        </default>
+      </default>
+    </default>
+    <default class="dust">
+      <geom type="mesh" density="800" friction="0.9 0.3 0.1" condim="3"/>
+    </default>
+  </default>
+
+  <!-- ================= MATERIALS + MESHES ================= -->
+  <asset>
+    <material name="black" rgba="0.033 0.033 0.033 1"/>
+    <material name="jointgray" rgba="0.278 0.278 0.278 1"/>
+    <material name="linkgray" rgba="0.82 0.82 0.82 1"/>
+    <material name="urblue" rgba="0.49 0.678 0.8 1"/>
+    <material name="table_material" rgba="0.6 0.4 0.2 1"/>
+    <material name="dust_material" rgba="0.4 0.3 0.2 1"/>
+
+    <mesh file="base_0.obj"/>
+    <mesh file="base_1.obj"/>
+    <mesh file="shoulder_0.obj"/>
+    <mesh file="shoulder_1.obj"/>
+    <mesh file="shoulder_2.obj"/>
+    <mesh file="upperarm_0.obj"/>
+    <mesh file="upperarm_1.obj"/>
+    <mesh file="upperarm_2.obj"/>
+    <mesh file="upperarm_3.obj"/>
+    <mesh file="forearm_0.obj"/>
+    <mesh file="forearm_1.obj"/>
+    <mesh file="forearm_2.obj"/>
+    <mesh file="forearm_3.obj"/>
+    <mesh file="wrist1_0.obj"/>
+    <mesh file="wrist1_1.obj"/>
+    <mesh file="wrist1_2.obj"/>
+    <mesh file="wrist2_0.obj"/>
+    <mesh file="wrist2_1.obj"/>
+    <mesh file="wrist2_2.obj"/>
+    <mesh file="wrist3.obj"/>
+
+    <mesh file="test.stl" scale="0.28 0.29 0.1" name="table"/>
+    <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002"/>
+    <mesh name="handle_mesh" file="mop_handle.obj" scale="0.002 0.002 0.002"/>
+    <mesh name="dust_ball_mesh" file="simple_small_ball.stl" scale="0.005 0.005 0.005"/>
+  </asset>
+
+  <!-- ================= WORLD OBJECTS ================= -->
+  <worldbody>
+    <geom name="ground" type="plane" size="3 3 0.1" rgba="0.5 0.5 0.5 1" pos="0 0 0"/>
+
+    <body name="table" pos="0.3 0 0">
+      <inertial mass="50" pos="0 0 0.4" diaginertia="10 10 5"/>
+      <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"/>
+      <geom name="table_collision" type="mesh" mesh="table" group="3" class="collision"/>
+    </body>
+
+    <body name="base" pos="-0.875 -0.2 0.5" quat="1 0 0 1" childclass="ur5e">
+      <inertial mass="4" pos="0 0 0" diaginertia="0.0044 0.0044 0.0072"/>
+      <geom mesh="base_0" material="black" class="visual"/>
+      <geom mesh="base_1" material="jointgray" class="visual"/>
+
+      <body name="shoulder_link" pos="0 0 0.163">
+        <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102 0.0102 0.0066"/>
+        <joint name="shoulder_pan" axis="0 0 1"/>
+        <geom mesh="shoulder_0" material="urblue" class="visual"/>
+        <geom mesh="shoulder_1" material="black" class="visual"/>
+        <geom mesh="shoulder_2" material="jointgray" class="visual"/>
+
+        <body name="upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
+          <inertial mass="8.39" pos="0 0 0.2125" diaginertia="0.133 0.133 0.015"/>
+          <joint name="shoulder_lift"/>
+          <geom mesh="upperarm_0" material="linkgray" class="visual"/>
+          <geom mesh="upperarm_1" material="black" class="visual"/>
+          <geom mesh="upperarm_2" material="jointgray" class="visual"/>
+          <geom mesh="upperarm_3" material="urblue" class="visual"/>
+
+          <body name="forearm_link" pos="0 -0.131 0.425">
+            <inertial mass="2.27" pos="0 0 0.196" diaginertia="0.031 0.031 0.004"/>
+            <joint name="elbow" class="joint_limited"/>
+            <geom mesh="forearm_0" material="urblue" class="visual"/>
+            <geom mesh="forearm_1" material="linkgray" class="visual"/>
+            <geom mesh="forearm_2" material="black" class="visual"/>
+            <geom mesh="forearm_3" material="jointgray" class="visual"/>
+
+            <body name="wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
+              <inertial mass="1.219" pos="0 0.127 0" diaginertia="0.0025 0.0025 0.0021"/>
+              <joint name="wrist_1"/>
+              <geom mesh="wrist1_0" material="black" class="visual"/>
+              <geom mesh="wrist1_1" material="urblue" class="visual"/>
+              <geom mesh="wrist1_2" material="jointgray" class="visual"/>
+
+              <body name="wrist_2_link" pos="0 0.127 0">
+                <inertial mass="1.219" pos="0 0 0.1" diaginertia="0.0025 0.0025 0.0021"/>
+                <joint name="wrist_2" axis="0 0 1"/>
+                <geom mesh="wrist2_0" material="black" class="visual"/>
+                <geom mesh="wrist2_1" material="urblue" class="visual"/>
+                <geom mesh="wrist2_2" material="jointgray" class="visual"/>
+
+                <body name="wrist_3_link" pos="0 0 0.1">
+                  <inertial mass="0.188" pos="0 0.077 0" diaginertia="0.00013 0.0001 0.0001"/>
+                  <joint name="wrist_3"/>
+                  <geom mesh="wrist3" material="linkgray" class="visual"/>
+                  <site name="ee_site" pos="0 0.08 0" size="0.01" rgba="1 0 0 1"/>
+
+                  <body name="mop_mount" pos="0 0.08 0" quat="1 0 0 1">
+                    <body name="mop_tool" pos="0 -0.6 0">
+                      <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01"/>
+                      <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1"/>
+                      <body name="mop_head">
+                        <joint name="mop_socket" type="ball" damping="0.5" limited="false"/>
+                        <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
+                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+      <!-- Dust particles positioned randomly within x=[-2.2708,-0.1608], y=[-1.3204,0.1246], z=0.5 -->
+      <body name="dust_1"><inertial mass="0.0005" pos="0 0 0"/><geom name="d1"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.2340 -0.6502 0.5"/></body>
+      <body name="dust_2"><inertial mass="0.0005" pos="0 0 0"/><geom name="d2"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.5004 -0.0503 0.5"/></body>
+      <body name="dust_3"><inertial mass="0.0005" pos="0 0 0"/><geom name="d3"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.1001 -1.0000 0.5"/></body>
+      <body name="dust_4"><inertial mass="0.0005" pos="0 0 0"/><geom name="d4"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.3000 -0.1000 0.5"/></body>
+      <body name="dust_5"><inertial mass="0.0005" pos="0 0 0"/><geom name="d5"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.8000 -0.2000 0.5"/></body>
+      <body name="dust_6"><inertial mass="0.0005" pos="0 0 0"/><geom name="d6"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.0000 -0.5000 0.5"/></body>
+      <body name="dust_7"><inertial mass="0.0005" pos="0 0 0"/><geom name="d7"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.7000 -1.2000 0.5"/></body>
+      <body name="dust_8"><inertial mass="0.0005" pos="0 0 0"/><geom name="d8"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.5000 -0.0500 0.5"/></body>
+      <body name="dust_9"><inertial mass="0.0005" pos="0 0 0"/><geom name="d9"  type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2500 -0.3000 0.5"/></body>
+      <body name="dust_10"><inertial mass="0.0005" pos="0 0 0"/><geom name="d10" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.9000 -0.1200 0.5"/></body>
+      <body name="dust_11"><inertial mass="0.0005" pos="0 0 0"/><geom name="d11" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.0000 0.0000 0.5"/></body>
+      <body name="dust_12"><inertial mass="0.0005" pos="0 0 0"/><geom name="d12" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2000 -1.0500 0.5"/></body>
+      <body name="dust_13"><inertial mass="0.0005" pos="0 0 0"/><geom name="d13" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.7500 -0.7500 0.5"/></body>
+      <body name="dust_14"><inertial mass="0.0005" pos="0 0 0"/><geom name="d14" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.2500 -0.2500 0.5"/></body>
+      <body name="dust_15"><inertial mass="0.0005" pos="0 0 0"/><geom name="d15" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.1000 -0.1500 0.5"/></body>
+      <body name="dust_16"><inertial mass="0.0005" pos="0 0 0"/><geom name="d16" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2700 -1.3200 0.5"/></body>
+      <body name="dust_17"><inertial mass="0.0005" pos="0 0 0"/><geom name="d17" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.1608 -0.1246 0.5"/></body>
+      <body name="dust_18"><inertial mass="0.0005" pos="0 0 0"/><geom name="d18" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.5000 -1.0000 0.5"/></body>
+      <body name="dust_19"><inertial mass="0.0005" pos="0 0 0"/><geom name="d19" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.7008 -0.2003 0.5"/></body>
+      <body name="dust_20"><inertial mass="0.0005" pos="0 0 0"/><geom name="d20" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.1008 -0.9502 0.5"/></body>
+      <body name="dust_21"><inertial mass="0.0005" pos="0 0 0"/><geom name="d21" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.2000 -0.5000 0.5"/></body>
+      <body name="dust_22"><inertial mass="0.0005" pos="0 0 0"/><geom name="d22" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.4500 -0.0500 0.5"/></body>
+      <body name="dust_23"><inertial mass="0.0005" pos="0 0 0"/><geom name="d23" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.0000 -1.2000 0.5"/></body>
+      <body name="dust_24"><inertial mass="0.0005" pos="0 0 0"/><geom name="d24" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.3008 -0.1200 0.5"/></body>
+      <body name="dust_25"><inertial mass="0.0005" pos="0 0 0"/><geom name="d25" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.9000 -0.1000 0.5"/></body>
+      <body name="dust_26"><inertial mass="0.0005" pos="0 0 0"/><geom name="d26" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2500 0.0000 0.5"/></body>
+      <body name="dust_27"><inertial mass="0.0005" pos="0 0 0"/><geom name="d27" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.8000 -1.1000 0.5"/></body>
+      <body name="dust_28"><inertial mass="0.0005" pos="0 0 0"/><geom name="d28" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.3000 -0.3000 0.5"/></body>
+      <body name="dust_29"><inertial mass="0.0005" pos="0 0 0"/><geom name="d29" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.1500 -0.4000 0.5"/></body>
+      <body name="dust_30"><inertial mass="0.0005" pos="0 0 0"/><geom name="d30" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.0000 -0.1690 0.5"/></body>
+      <body name="dust_31"><inertial mass="0.0005" pos="0 0 0"/><geom name="d31" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.1000 -0.8000 0.5"/></body>
+      <body name="dust_32"><inertial mass="0.0005" pos="0 0 0"/><geom name="d32" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.0008 -1.1000 0.5"/></body>
+      <body name="dust_33"><inertial mass="0.0005" pos="0 0 0"/><geom name="d33" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.2000 -0.0500 0.5"/></body>
+      <body name="dust_34"><inertial mass="0.0005" pos="0 0 0"/><geom name="d34" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.7000 -0.5500 0.5"/></body>
+      <body name="dust_35"><inertial mass="0.0005" pos="0 0 0"/><geom name="d35" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.1000 -0.2000 0.5"/></body>
+      <body name="dust_36"><inertial mass="0.0005" pos="0 0 0"/><geom name="d36" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.6000 -1.3000 0.5"/></body>
+      <body name="dust_37"><inertial mass="0.0005" pos="0 0 0"/><geom name="d37" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2000 -1.2000 0.5"/></body>
+      <body name="dust_38"><inertial mass="0.0005" pos="0 0 0"/><geom name="d38" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.1000 -0.1000 0.5"/></body>
+      <body name="dust_39"><inertial mass="0.0005" pos="0 0 0"/><geom name="d39" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.5000 -0.3000 0.5"/></body>
+      <body name="dust_40"><inertial mass="0.0005" pos="0 0 0"/><geom name="d40" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.9008 -0.1590 0.5"/></body>
+      <body name="dust_41"><inertial mass="0.0005" pos="0 0 0"/><geom name="d41" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2500 -1.3000 0.5"/></body>
+      <body name="dust_42"><inertial mass="0.0005" pos="0 0 0"/><geom name="d42" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.0008 -0.9500 0.5"/></body>
+      <body name="dust_43"><inertial mass="0.0005" pos="0 0 0"/><geom name="d43" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.3008 -1.1000 0.5"/></body>
+      <body name="dust_44"><inertial mass="0.0005" pos="0 0 0"/><geom name="d44" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.0000 0.0000 0.5"/></body>
+      <body name="dust_45"><inertial mass="0.0005" pos="0 0 0"/><geom name="d45" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.2000 -0.125500 0.5"/></body>
+      <body name="dust_46"><inertial mass="0.0005" pos="0 0 0"/><geom name="d46" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.5000 -0.9000 0.5"/></body>
+      <body name="dust_47"><inertial mass="0.0005" pos="0 0 0"/><geom name="d47" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-2.2000 -0.4000 0.5"/></body>
+      <body name="dust_48"><inertial mass="0.0005" pos="0 0 0"/><geom name="d48" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.8008 -0.1800 0.5"/></body>
+      <body name="dust_49"><inertial mass="0.0005" pos="0 0 0"/><geom name="d49" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-1.8000 -1.1000 0.5"/></body>
+      <body name="dust_50"><inertial mass="0.0005" pos="0 0 0"/><geom name="d50" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust" pos="-0.2500 0.0000 0.5"/></body>
+
+  </worldbody>
+
+  <actuator>
+    <position class="position" name="shoulder_pan_act" joint="shoulder_pan"/>
+    <position class="position" name="shoulder_lift_act" joint="shoulder_lift"/>
+    <position class="position_limited" name="elbow_act" joint="elbow"/>
+    <position class="position_small" name="wrist_1_act" joint="wrist_1"/>
+    <position class="position_small" name="wrist_2_act" joint="wrist_2"/>
+    <position class="position_small" name="wrist_3_act" joint="wrist_3"/>
+  </actuator>
+</mujoco>

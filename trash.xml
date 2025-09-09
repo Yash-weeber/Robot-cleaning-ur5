@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="ur5e_with_mop">
+  <compiler angle="radian" meshdir="assets" autolimits="true" />
+  <option integrator="implicitfast" timestep="0.01" />
+
+  
+  <default>
+    <default class="ur5e">
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3" />
+        <default class="eef_collision">
+          <geom type="cylinder" />
+        </default>
+      </default>
+      <joint axis="0 1 0" range="-6.28319 6.28319" />
+      <default class="joint_limited">
+        <joint range="-3.1415 3.1415" />
+      </default>
+      <default class="position">
+        <position ctrlrange="-6.2831 6.2831" kp="2000" kv="100" forcerange="-150 150" />
+        <default class="position_limited">
+          <position ctrlrange="-3.1415 3.1415" />
+        </default>
+        <default class="position_small">
+          <position kp="500" kv="25" forcerange="-28 28" />
+        </default>
+      </default>
+    </default>
+  </default>
+
+  
+  <asset>
+    <material name="black" rgba="0.033 0.033 0.033 1" />
+    <material name="jointgray" rgba="0.278 0.278 0.278 1" />
+    <material name="linkgray" rgba="0.82 0.82 0.82 1" />
+    <material name="urblue" rgba="0.49 0.678 0.8 1" />
+    <material name="table_material" rgba="0.6 0.4 0.2 1" />
+
+    <mesh file="base_0.obj" />
+    <mesh file="base_1.obj" />
+    <mesh file="shoulder_0.obj" />
+    <mesh file="shoulder_1.obj" />
+    <mesh file="shoulder_2.obj" />
+    <mesh file="upperarm_0.obj" />
+    <mesh file="upperarm_1.obj" />
+    <mesh file="upperarm_2.obj" />
+    <mesh file="upperarm_3.obj" />
+    <mesh file="forearm_0.obj" />
+    <mesh file="forearm_1.obj" />
+    <mesh file="forearm_2.obj" />
+    <mesh file="forearm_3.obj" />
+    <mesh file="wrist1_0.obj" />
+    <mesh file="wrist1_1.obj" />
+    <mesh file="wrist1_2.obj" />
+    <mesh file="wrist2_0.obj" />
+    <mesh file="wrist2_1.obj" />
+    <mesh file="wrist2_2.obj" />
+    <mesh file="wrist3.obj" />
+
+    <mesh file="test.stl" scale="0.28 0.29 0.1" name="table" />
+
+    <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002" />
+    <mesh name="handle_mesh" file="mop_handle.obj" scale="0.002 0.002 0.002" />
+  <material name="dust_material" rgba="0.4 0.3 0.2 1" />
+</asset>
+
+  
+  <worldbody>
+    <body name="table" pos="0.3 0 0">
+      <inertial mass="50" pos="0 0 0.4" diaginertia="10 10 5" />
+      <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual" />
+      <geom name="table_collision" type="mesh" mesh="table" group="3" class="collision" />
+    </body>
+
+    <body name="base" pos="-0.875 -0.2 0.5" quat="1 0 0 1" childclass="ur5e">
+      <inertial mass="4" pos="0 0 0" diaginertia="0.0044 0.0044 0.0072" />
+      <geom mesh="base_0" material="black" class="visual" />
+      <geom mesh="base_1" material="jointgray" class="visual" />
+
+      <body name="shoulder_link" pos="0 0 0.163">
+        <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102 0.0102 0.0066" />
+        <joint name="shoulder_pan" axis="0 0 1" />
+        <geom mesh="shoulder_0" material="urblue" class="visual" />
+        <geom mesh="shoulder_1" material="black" class="visual" />
+        <geom mesh="shoulder_2" material="jointgray" class="visual" />
+
+        <body name="upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
+          <inertial mass="8.39" pos="0 0 0.2125" diaginertia="0.133 0.133 0.015" />
+          <joint name="shoulder_lift" />
+          <geom mesh="upperarm_0" material="linkgray" class="visual" />
+          <geom mesh="upperarm_1" material="black" class="visual" />
+          <geom mesh="upperarm_2" material="jointgray" class="visual" />
+          <geom mesh="upperarm_3" material="urblue" class="visual" />
+
+          <body name="forearm_link" pos="0 -0.131 0.425">
+            <inertial mass="2.27" pos="0 0 0.196" diaginertia="0.031 0.031 0.004" />
+            <joint name="elbow" class="joint_limited" />
+            <geom mesh="forearm_0" material="urblue" class="visual" />
+            <geom mesh="forearm_1" material="linkgray" class="visual" />
+            <geom mesh="forearm_2" material="black" class="visual" />
+            <geom mesh="forearm_3" material="jointgray" class="visual" />
+
+            <body name="wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
+              <inertial mass="1.219" pos="0 0.127 0" diaginertia="0.0025 0.0025 0.0021" />
+              <joint name="wrist_1" />
+              <geom mesh="wrist1_0" material="black" class="visual" />
+              <geom mesh="wrist1_1" material="urblue" class="visual" />
+              <geom mesh="wrist1_2" material="jointgray" class="visual" />
+
+              <body name="wrist_2_link" pos="0 0.127 0">
+                <inertial mass="1.219" pos="0 0 0.1" diaginertia="0.0025 0.0025 0.0021" />
+                <joint name="wrist_2" axis="0 0 1" />
+                <geom mesh="wrist2_0" material="black" class="visual" />
+                <geom mesh="wrist2_1" material="urblue" class="visual" />
+                <geom mesh="wrist2_2" material="jointgray" class="visual" />
+
+                <body name="wrist_3_link" pos="0 0 0.1">
+                  <inertial mass="0.188" pos="0 0.077 0" diaginertia="0.00013 0.0001 0.0001" />
+                  <joint name="wrist_3" />
+                  <geom mesh="wrist3" material="linkgray" class="visual" />
+                  <site name="ee_site" pos="0 0.08 0" size="0.01" rgba="1 0 0 1" />
+
+                  
+                  <body name="mop_mount" pos="0 0.08 0" quat="1 0 0 1">
+                    
+                    <body name="mop_tool" pos="0 -0.6 0">
+                      <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1" />
+                      <body name="mop_head">
+                        
+                        <joint name="mop_socket" type="ball" damping="0.5" limited="false" />
+                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1" />
+                      </body>
+                    </body>
+                  </body>
+                  
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  <body name="dust_particle_1" pos="0.237010 -0.871406 0.095010">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_1" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_2" pos="0.587100 0.772864 0.064606">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_2" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_3" pos="-1.336841 -0.325990 0.058484">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_3" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_4" pos="-0.518719 -0.991128 0.140804">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_4" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_5" pos="-0.870900 0.977501 0.111625">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_5" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_6" pos="-0.154241 0.006480 0.124379">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_6" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_7" pos="-1.406206 0.231765 0.141077">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_7" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_8" pos="-1.253234 0.158080 0.121640">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_8" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_9" pos="0.120821 0.595798 0.098485">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_9" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_10" pos="-1.417474 0.744786 0.094675">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_10" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_11" pos="-1.162248 0.859188 0.052566">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_11" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_12" pos="0.628931 0.698642 0.078436">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_12" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_13" pos="0.812734 0.105044 0.193152">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_13" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_14" pos="0.513141 0.250972 0.151026">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_14" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_15" pos="-0.304033 0.029359 0.086528">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_15" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_16" pos="-0.232341 -0.577089 0.187299">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_16" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_17" pos="-1.409420 -0.312137 0.093351">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_17" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_18" pos="-0.333234 0.027643 0.124909">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_18" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_19" pos="-0.957897 -0.659940 0.061879">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_19" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_20" pos="-0.511117 0.763324 0.090758">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_20" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_21" pos="-0.387234 -0.632750 0.074289">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_21" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_22" pos="0.006272 -0.216365 0.142087">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_22" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_23" pos="0.604817 -0.397238 0.052401">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_23" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_24" pos="-0.034873 -0.464281 0.174683">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_24" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_25" pos="0.126628 -0.872097 0.167874">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_25" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_26" pos="0.694334 0.934225 0.192981">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_26" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_27" pos="0.109036 0.820352 0.164633">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_27" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_28" pos="0.776480 -0.213934 0.133759">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_28" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_29" pos="0.690307 -0.088104 0.140394">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_29" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_30" pos="-0.193739 -0.885205 0.194639">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_30" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_31" pos="-1.173880 -0.098346 0.199012">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_31" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_32" pos="0.125114 0.980673 0.147530">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_32" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_33" pos="0.185435 0.388367 0.141987">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_33" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_34" pos="-0.191405 0.498917 0.110609">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_34" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_35" pos="-1.407240 -0.421459 0.066409">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_35" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_36" pos="-0.880083 0.624268 0.051070">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_36" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_37" pos="0.415253 0.289098 0.152434">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_37" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_38" pos="0.718874 0.193258 0.168422">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_38" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_39" pos="-0.392998 -0.873913 0.150154">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_39" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+<body name="dust_particle_40" pos="0.354023 0.667130 0.113643">
+<inertial mass="0.001" diaginertia="0.0001 0.0001 0.0001" />
+<geom name="dust_geom_40" type="sphere" size="0.002" material="dust_material" density="1000" friction="0.7 0.1 0.05" condim="3" />
+</body>
+</worldbody>
+
+  
+  <actuator>
+    <position class="position" name="shoulder_pan_act" joint="shoulder_pan" />
+    <position class="position" name="shoulder_lift_act" joint="shoulder_lift" />
+    <position class="position_limited" name="elbow_act" joint="elbow" />
+    <position class="position_small" name="wrist_1_act" joint="wrist_1" />
+    <position class="position_small" name="wrist_2_act" joint="wrist_2" />
+    <position class="position_small" name="wrist_3_act" joint="wrist_3" />
+  </actuator>
+
+
+
+
+
+
+
+</mujoco>
