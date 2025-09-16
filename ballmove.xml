@@ -173,10 +173,10 @@
 <!--    </body>-->
 
       <!-- Dust particles - stable until mop pushes them -->
-    <body name="dust_111" pos="-1.2340 -0.6502 0.5">
+    <body name="dust_1" pos="-1.2340 -0.6502 0.5">
       <freejoint/>
       <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
-      <geom name="d111" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+      <geom name="d1" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
     </body>
 
     <body name="dust_2" pos="-0.5004 -0.503 0.5">
@@ -472,6 +472,460 @@
       <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
       <geom name="d50" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
     </body>
+
+
+
+<!--      <body name="dust_51" pos="-1.4200 -0.7600 0.5">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>-->
+<!--      <geom name="d51" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>-->
+<!--    </body>-->
+
+<!--    <body name="dust_52" pos="-0.6500 -0.9800 0.5">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>-->
+<!--      <geom name="d52" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>-->
+<!--    </body>-->
+
+<!--    <body name="dust_53" pos="-2.0500 -0.3500 0.5">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>-->
+<!--      <geom name="d53" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>-->
+<!--    </body>-->
+
+<!--    <body name="dust_54" pos="-1.2000 -1.1500 0.5">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>-->
+<!--      <geom name="d54" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>-->
+<!--    </body>-->
+
+<!--    <body name="dust_55" pos="-0.3000 -0.4000 0.5">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>-->
+<!--      <geom name="d55" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>-->
+<!--    </body>-->
+
+    <body name="dust_51" pos="-2.2000 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d51" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_52" pos="-1.9000 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d52" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_53" pos="-1.9000  -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d53" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_54" pos="-1.9000  -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d54" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_55" pos="-1.9000 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d55" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_56" pos="-1.9000 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d56" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_57" pos="-1.9000  -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d57" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_58" pos="-1.9667 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d58" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_59" pos="-1.9667 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d59" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_60" pos="-1.9667 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d60" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_61" pos="-1.9667 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d61" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_62" pos="-1.9667 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d62" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_63" pos="-1.9667 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d63" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_64" pos="-1.9667 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d64" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_65" pos="-1.7333 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d65" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_66" pos="-1.7333 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d66" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_67" pos="-1.7333 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d67" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_68" pos="-1.7333 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d68" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_69" pos="-1.7333 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d69" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_70" pos="-1.7333 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d70" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_71" pos="-1.7333 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d71" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_72" pos="-1.5000 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d72" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_73" pos="-1.5000 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d73" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_74" pos="-1.5000 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d74" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_75" pos="-1.5000 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d75" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_76" pos="-1.5000 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d76" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_77" pos="-1.5000 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d77" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_78" pos="-1.5000 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d78" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_79" pos="-1.2667 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d79" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_80" pos="-1.2667 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d80" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_81" pos="-1.2667 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d81" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_82" pos="-1.2667 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d82" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_83" pos="-1.2667 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d83" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_84" pos="-1.2667 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d84" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_85" pos="-1.2667 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d85" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_86" pos="-1.0333 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d86" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_87" pos="-1.0333 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d87" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_88" pos="-1.0333 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d88" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_89" pos="-1.0333 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d89" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_90" pos="-1.0333 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d90" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_91" pos="-1.0333 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d91" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_92" pos="-1.0333 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d92" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_93" pos="-0.8000 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d93" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_94" pos="-0.8000 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d94" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_95" pos="-0.8000 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d95" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_96" pos="-0.8000 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d96" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_97" pos="-0.8000 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d97" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_98" pos="-0.8000 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d98" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_99" pos="-0.8000 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d99" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_100" pos="-1.5667 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d100" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_101" pos="-0.5667 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d101" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_102" pos="-0.5667 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d102" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_103" pos="-0.5667 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d103" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_104" pos="-0.5667 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d104" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_105" pos="-0.5667 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d105" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_106" pos="-0.5667 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d106" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_107" pos="-1.3333 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d107" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_108" pos="-0.3333 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d108" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_109" pos="-0.3333 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d109" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_110" pos="-0.3333 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d110" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_111" pos="-0.3333 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d111" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_112" pos="-0.3333 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d112" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_113" pos="-0.3333 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d113" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_114" pos="-1.7500 -1.3000 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d114" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_115" pos="-0.1000 -1.1083 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d115" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_116" pos="-0.1000 -0.9167 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d116" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_117" pos="-0.1000 -0.7250 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d117" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_118" pos="-0.1000 -0.5333 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d118" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_119" pos="-0.1000 -0.3417 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d119" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+    <body name="dust_120" pos="-0.1000 -0.1500 0.5">
+      <freejoint/>
+      <inertial mass="0.03" diaginertia="2e-5 2e-5 2e-5" pos="0 0 0"/>
+      <geom name="d120" type="mesh" mesh="dust_ball_mesh" material="dust_material" class="dust"/>
+    </body>
+
+
 
   </worldbody>
 
