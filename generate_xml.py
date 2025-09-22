@@ -67,7 +67,8 @@ if __name__ == "__main__":
     num_balls = 100  # Number of balls to generate
     radius = 0.02  # Ball radius (meters)
     mass = 0.53    # Ball mass (kg)
-    inertia = 2/5 * mass * radius**2  # Sphere inertia formula
+    # inertia = 2/5 * mass * radius**2  # Sphere inertia formula
+    inertia = 3e-3  # Approximate inertia value for small spheres
     radii = [radius] * num_balls
     inertias = [(inertia, inertia, inertia)] * num_balls
 
@@ -100,13 +101,13 @@ if __name__ == "__main__":
     # Generate balls.xml with the random positions
     generate_balls_xml(num_balls, radii, positions, inertias, "balls.xml")
 
-    # Merge balls.xml into main MuJoCo XML and write combined.xml
-    main_xml = "ballmove.xml"
+    # Merge balls.xml into main MuJoCo XML and write ballmove.xml
+    main_xml = "world_ur5e_table.xml"
     balls_xml = "balls.xml"
-    output_xml = "combined.xml"
+    output_xml = "ballmove.xml"
     merge_xml(main_xml, balls_xml, output_xml)
-    
-    model = mujoco.MjModel.from_xml_path("combined.xml")
+
+    model = mujoco.MjModel.from_xml_path("ballmove.xml")
     data = mujoco.MjData(model)
 
     joint_names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
