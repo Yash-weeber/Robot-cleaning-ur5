@@ -545,14 +545,22 @@ class DMPController:
         self.joint_names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
         self.site_name = "ee_site"
         self.site_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, self.site_name)
+        self.joint_ids = [mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, jn) for jn in self.joint_names]
 
         if self.site_id == -1:
             raise RuntimeError(f"Site '{self.site_name}' not found in model")
 
         # Default start position
-        self.start_joint_positions = np.array([
-            -2.89, -1.07, 0.377, -0.314, -0.0628, -0.503
-        ])
+        # self.start_joint_positions = np.array([
+        #     -2.89, -1.07, 0.377, -0.314, -0.0628, -0.503
+        # ])
+        self.start_joint_positions = np.array([0.377, -1.88, -1.04, -4.84, 0.0, 0.0])
+        for idx, joint_name, joint_q in zip(self.joint_ids, self.joint_names, self.start_joint_positions):
+            if idx == -1:
+                raise RuntimeError(f"Joint '{joint_name}' not found in model")
+            self.data.qpos[idx] = joint_q
+        
+        mujoco.mj_forward(self.model, self.data)
 
         # Initialize viewer
         self.viewer = ViewerAdapter(self.model, self.data)
