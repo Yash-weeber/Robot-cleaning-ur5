@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="ur5e_with_mop_and_dust">
+  <compiler angle="radian" meshdir="assets" autolimits="true"/>
+  <option integrator="implicitfast" timestep="0.01" viscosity="0.01"/>
+
+  <!-- ================= DEFAULT SETTINGS ================= -->
+  <default>
+    <default class="ur5e">
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+        <default class="eef_collision">
+          <geom type="cylinder"/>
+        </default>
+      </default>
+      <joint axis="0 1 0" range="-6.28319 6.28319"/>
+      <default class="joint_limited">
+        <joint range="-3.1415 3.1415"/>
+      </default>
+      <default class="position">
+        <position ctrlrange="-6.2831 6.2831" kp="2000" kv="100" forcerange="-150 150"/>
+        <default class="position_limited">
+          <position ctrlrange="-3.1415 3.1415"/>
+        </default>
+        <default class="position_small">
+          <position kp="500" kv="25" forcerange="-28 28"/>
+        </default>
+      </default>
+    </default>
+    <!-- Improved dust particle physics for MuJoCo 3.3.5 -->
+    <default class="dust">
+      <geom type="sphere" size="0.008" density="600" friction="0.8 0.1 0.05" condim="3"
+            contype="1" conaffinity="1" group="1"
+            solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+    </default>
+  </default>
+
+  <!-- ================= MATERIALS + MESHES ================= -->
+  <asset>
+    <material name="black" rgba="0.033 0.033 0.033 1"/>
+    <material name="jointgray" rgba="0.278 0.278 0.278 1"/>
+    <material name="linkgray" rgba="0.82 0.82 0.82 1"/>
+    <material name="urblue" rgba="0.49 0.678 0.8 1"/>
+    <material name="table_material" rgba="0.6 0.4 0.2 1"/>
+    <material name="dust_material" rgba="0.4 0.3 0.2 0.8"/>
+
+    <!-- Robot meshes -->
+    <mesh file="base_0.obj"/>
+    <mesh file="base_1.obj"/>
+    <mesh file="shoulder_0.obj"/>
+    <mesh file="shoulder_1.obj"/>
+    <mesh file="shoulder_2.obj"/>
+    <mesh file="upperarm_0.obj"/>
+    <mesh file="upperarm_1.obj"/>
+    <mesh file="upperarm_2.obj"/>
+    <mesh file="upperarm_3.obj"/>
+    <mesh file="forearm_0.obj"/>
+    <mesh file="forearm_1.obj"/>
+    <mesh file="forearm_2.obj"/>
+    <mesh file="forearm_3.obj"/>
+    <mesh file="wrist1_0.obj"/>
+    <mesh file="wrist1_1.obj"/>
+    <mesh file="wrist1_2.obj"/>
+    <mesh file="wrist2_0.obj"/>
+    <mesh file="wrist2_1.obj"/>
+    <mesh file="wrist2_2.obj"/>
+    <mesh file="wrist3.obj"/>
+
+    <!-- Table and tool meshes -->
+    <mesh file="test.stl" scale="0.28 0.29 0.1" name="table"/>
+    <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002"/>
+    <mesh name="handle_mesh" file="mop_handle.obj" scale="0.002 0.002 0.002"/>
+    <mesh name="dust_ball_mesh" file="simple_small_ball.stl" scale="0.005 0.005 0.005"/>
+  </asset>
+
+  <!-- ================= WORLD OBJECTS ================= -->
+  <worldbody>
+    <!-- Ground with proper contact properties -->
+    <geom name="ground" type="plane" size="3 3 0.1" rgba="0.5 0.5 0.5 1" pos="0 0 0"
+          solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05"/>
+
+    <!-- Table positioned as base platform -->
+    <body name="table" pos="0.3 0 0">
+      <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5"/>
+      <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"/>
+      <geom name="table_collision" type="mesh" mesh="table"
+            material="table_material" group="0" contype="1" conaffinity="1"
+            solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05"/>
+    </body>
+
+    <!-- UR5e Robot mounted ON the table surface -->
+    <body name="base" pos="-0.875 -0.2 0.5" quat="1 0 0 1" childclass="ur5e">
+      <inertial mass="4" pos="0 0 0" diaginertia="0.0044 0.0044 0.0072"/>
+      <geom mesh="base_0" material="black" class="visual"/>
+      <geom mesh="base_1" material="jointgray" class="visual"/>
+      <!-- Base collision geometry to sit on table -->
+      <geom name="base_collision" type="cylinder" size="0.06 0.02" pos="0 0 -0.01"
+            contype="1" conaffinity="1" group="3" friction="0.8 0.1 0.05"/>
+
+      <body name="shoulder_link" pos="0 0 0.163">
+        <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102 0.0102 0.0066"/>
+        <joint name="shoulder_pan" axis="0 0 1"/>
+        <geom mesh="shoulder_0" material="urblue" class="visual"/>
+        <geom mesh="shoulder_1" material="black" class="visual"/>
+        <geom mesh="shoulder_2" material="jointgray" class="visual"/>
+
+        <body name="upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
+          <inertial mass="8.39" pos="0 0 0.2125" diaginertia="0.133 0.133 0.015"/>
+          <joint name="shoulder_lift"/>
+          <geom mesh="upperarm_0" material="linkgray" class="visual"/>
+          <geom mesh="upperarm_1" material="black" class="visual"/>
+          <geom mesh="upperarm_2" material="jointgray" class="visual"/>
+          <geom mesh="upperarm_3" material="urblue" class="visual"/>
+
+          <body name="forearm_link" pos="0 -0.131 0.425">
+            <inertial mass="2.27" pos="0 0 0.196" diaginertia="0.031 0.031 0.004"/>
+            <joint name="elbow" class="joint_limited"/>
+            <geom mesh="forearm_0" material="urblue" class="visual"/>
+            <geom mesh="forearm_1" material="linkgray" class="visual"/>
+            <geom mesh="forearm_2" material="black" class="visual"/>
+            <geom mesh="forearm_3" material="jointgray" class="visual"/>
+
+            <body name="wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
+              <inertial mass="1.219" pos="0 0.127 0" diaginertia="0.0025 0.0025 0.0021"/>
+              <joint name="wrist_1"/>
+              <geom mesh="wrist1_0" material="black" class="visual"/>
+              <geom mesh="wrist1_1" material="urblue" class="visual"/>
+              <geom mesh="wrist1_2" material="jointgray" class="visual"/>
+
+              <body name="wrist_2_link" pos="0 0.127 0">
+                <inertial mass="1.219" pos="0 0 0.1" diaginertia="0.0025 0.0025 0.0021"/>
+                <joint name="wrist_2" axis="0 0 1"/>
+                <geom mesh="wrist2_0" material="black" class="visual"/>
+                <geom mesh="wrist2_1" material="urblue" class="visual"/>
+                <geom mesh="wrist2_2" material="jointgray" class="visual"/>
+
+                <body name="wrist_3_link" pos="0 0 0.1">
+                  <inertial mass="0.188" pos="0 0.077 0" diaginertia="0.00013 0.0001 0.0001"/>
+                  <joint name="wrist_3"/>
+                  <geom mesh="wrist3" material="linkgray" class="visual"/>
+                  <site name="ee_site" pos="0 0.08 0" size="0.01" rgba="1 0 0 1"/>
+
+                  <!-- Mop tool attachment -->
+                  <body name="mop_mount" pos="0 0.08 0" quat="1 0 0 1">
+                    <body name="mop_tool" pos="0 -0.6 0">
+                      <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01"/>
+                      <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1"/>
+
+                      <body name="mop_head">
+                        <joint name="mop_socket" type="ball" damping="0.5" limited="false"/>
+                        <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
+                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- Dust particles properly positioned on table surface around the robot -->
+    <!-- Distributed in a cleaning area away from robot base -->
+          <!-- Dust balls (stable with solver parameters) -->
+<!--    <body name="dust_1" pos="-1.2340 -0.6502 0.4">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.5" diaginertia="5e-5 5e-5 5e-5" pos="0 0 0"/>-->
+<!--      <geom name="d1" class="dust" material="dust_material"/>-->
+<!--    </body>-->
+
+      <!-- Dust particles - stable until mop pushes them -->
+
+
+  <body name="ball_1" pos="-1.5222 -0.9484 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_2" pos="-0.653 -0.4185 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_3" pos="-1.7738 -0.276 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_4" pos="-1.6138 -0.4262 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_5" pos="-1.8581 -1.1289 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_6" pos="-1.8292 -0.3809 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_7" pos="-1.7148 -1.2061 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_8" pos="-0.843 -1.1582 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_9" pos="-1.4615 -0.8624 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_10" pos="-0.5566 -0.3379 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_11" pos="-1.0753 -0.8486 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_12" pos="-1.2136 -0.4724 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_13" pos="-1.8108 -0.2533 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_14" pos="-0.2847 -1.2425 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_15" pos="-0.8157 -0.8778 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_16" pos="-0.893 -1.194 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_17" pos="-1.103 -0.582 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_18" pos="-0.1731 -1.0382 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_19" pos="-0.6663 -1.0016 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_20" pos="-0.9113 -0.2805 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_21" pos="-0.1037 -0.8053 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_22" pos="-1.3075 -0.5415 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_23" pos="-1.3126 -0.768 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_24" pos="-1.3538 -0.2373 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_25" pos="-0.4255 -0.4803 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_26" pos="-0.302 -0.9712 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_27" pos="-0.4803 -1.1601 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_28" pos="-1.5064 -0.7971 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_29" pos="-0.9955 -0.4769 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_30" pos="-1.0227 -0.507 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_31" pos="-1.0982 -0.2563 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_32" pos="-1.4814 -0.3567 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_33" pos="-1.8128 -0.9355 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_34" pos="-0.7704 -0.7982 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_35" pos="-1.5188 -0.827 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_36" pos="-0.4829 -0.4382 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_37" pos="-1.2936 -0.868 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_38" pos="-1.245 -1.2335 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_39" pos="-1.4506 -1.2757 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_40" pos="-0.4631 -0.6974 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_41" pos="-0.8751 -0.8381 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_42" pos="-1.3362 -0.5342 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_43" pos="-0.6028 -1.1377 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_44" pos="-0.4997 -0.2291 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_45" pos="-0.7428 -0.7866 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_46" pos="-0.2335 -1.1879 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_47" pos="-0.8542 -0.8102 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_48" pos="-1.8402 -0.7249 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_49" pos="-0.6991 -0.7187 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_50" pos="-0.2204 -1.1792 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_51" pos="-0.4715 -0.575 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_52" pos="-0.4878 -1.2054 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_53" pos="-0.4736 -0.2476 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_54" pos="-1.7268 -0.3369 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_55" pos="-1.0163 -0.9246 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_56" pos="-1.6182 -0.724 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_57" pos="-0.4345 -1.0027 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_58" pos="-1.9364 -1.2069 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_59" pos="-0.2111 -1.2828 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_60" pos="-1.8475 -0.9094 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_61" pos="-1.1795 -0.9806 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_62" pos="-1.3809 -0.6924 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_63" pos="-0.1814 -1.1213 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_64" pos="-1.2075 -0.4559 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_65" pos="-0.2814 -0.6615 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_66" pos="-0.627 -1.058 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_67" pos="-0.5364 -0.6055 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_68" pos="-1.9285 -1.0085 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_69" pos="-1.2212 -0.776 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_70" pos="-0.9312 -1.2656 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_71" pos="-0.9698 -1.1165 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_72" pos="-1.4267 -0.8044 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_73" pos="-1.1677 -0.5847 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_74" pos="-1.2673 -0.9088 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_75" pos="-1.864 -1.1503 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_76" pos="-0.6813 -0.3893 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_77" pos="-1.3293 -0.9348 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_78" pos="-1.8039 -1.0424 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_79" pos="-0.5736 -0.6397 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_80" pos="-1.4594 -0.4211 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_81" pos="-1.4735 -1.2598 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_82" pos="-0.68 -0.2415 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_83" pos="-1.9493 -0.2539 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_84" pos="-1.5878 -0.9683 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_85" pos="-0.9398 -0.2252 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_86" pos="-1.5564 -1.0351 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_87" pos="-0.8904 -0.6736 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_88" pos="-0.9086 -0.4468 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_89" pos="-1.6156 -0.5679 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_90" pos="-1.5904 -0.6011 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_91" pos="-1.5681 -0.637 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_92" pos="-0.8396 -0.5872 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_93" pos="-1.7915 -1.1726 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_94" pos="-0.7984 -1.2271 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_95" pos="-0.2929 -0.4 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_96" pos="-0.5278 -1.2778 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_97" pos="-0.2945 -0.6646 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_98" pos="-0.336 -0.6019 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_99" pos="-1.5092 -0.6085 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+<body name="ball_100" pos="-0.4055 -0.3461 0.5">
+  <freejoint/>
+  <inertial mass="0.03" diaginertia="8.480000000000001e-05 8.480000000000001e-05 8.480000000000001e-05" pos="0 0 0"/>
+  <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+</body>
+</worldbody>
+
+  <!-- ================= ACTUATORS ================= -->
+  <actuator>
+    <position class="position" name="shoulder_pan_act" joint="shoulder_pan"/>
+    <position class="position" name="shoulder_lift_act" joint="shoulder_lift"/>
+    <position class="position_limited" name="elbow_act" joint="elbow"/>
+    <position class="position_small" name="wrist_1_act" joint="wrist_1"/>
+    <position class="position_small" name="wrist_2_act" joint="wrist_2"/>
+    <position class="position_small" name="wrist_3_act" joint="wrist_3"/>
+  </actuator>
+
+</mujoco>
