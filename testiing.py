@@ -34,7 +34,7 @@ SITE_NAME = "ee_site"
 UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
 
 # 🎯 MOP CONFIGURATION
-MOP_Z_HEIGHT = 0.6442  # Constant Z coordinate for mop
+MOP_Z_HEIGHT = 0.59  # Constant Z coordinate for mop
 HOME_JOINT_POSITIONS = np.array([
     -2.89,  # shoulder_pan
     -1.07,  # shoulder_lift
@@ -407,7 +407,7 @@ class SimpleRythmicDMP:
         self.freq = 1.0  # Hz
 
         # Basis functions for rhythmic patterns
-        self.centers = np.linspace(0, -2 * np.pi, n_bfs)
+        self.centers = np.linspace(0, 2 * np.pi, n_bfs)
         self.widths = np.ones(n_bfs) * n_bfs / (2 * np.pi)
 
         # Weights and amplitudes
@@ -589,7 +589,7 @@ class RealTimeMouseControl:
         self.width = width
         self.height = height
         self.active = False
-        self.current_pos = np.array([0.3, 0.0])  # Default position
+        self.current_pos = np.array([-0.2, 0.0])  # Default position
         self.trajectory_log = []
 
         # Create window
@@ -652,16 +652,16 @@ class RealTimeMouseControl:
         nx = np.clip(canvas_x / self.width, 0.0, 1.0)
         ny = np.clip(canvas_y / self.height, 0.0, 1.0)
 
-        xrange = (self.y_max - self.x_min) * self.sensitivity
-        yrange = (self.x_max - self.y_min) * self.sensitivity
+        xrange = (self.x_max - self.x_min) * self.sensitivity
+        yrange = (self.y_max - self.y_min) * self.sensitivity
 
-        x = self.y_min + nx * xrange
-        y = self.x_max - ny * yrange
+        x = self.x_min + nx * xrange
+        y = self.y_max - ny * yrange
 
         # Clamp to original workspace limits
         x = float(np.clip(x, min(self.x_min, self.x_max), max(self.x_min, self.x_max)))
         y = float(np.clip(y, min(self.y_min, self.y_max), max(self.y_min, self.y_max)))
-        return np.array([x, y])
+        return np.array([y,x])
 
     def mouse_move(self, event):
         if self.active:
