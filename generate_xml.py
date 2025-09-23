@@ -75,10 +75,10 @@ if __name__ == "__main__":
     inertias = [(inertia, inertia, inertia)] * num_balls
 
     # Position limits for random generation
-    x_pos_low = -1.95
-    x_pos_high = -0.1
-    y_pos_low = -1.3
-    y_pos_high = -0.2
+    x_pos_low = -2.3
+    x_pos_high = 0.2
+    y_pos_low = -1.35
+    y_pos_high = -0.05
     z_pos_low = 0.51
     z_pos_high = 0.51  # Fixed z position
 
