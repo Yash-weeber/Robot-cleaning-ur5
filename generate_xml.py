@@ -2,6 +2,7 @@ import random
 import mujoco
 import mujoco.viewer
 import numpy as np
+import threading  # NEW
 
 def is_in_exclusion(x, y, x_center, y_center, excl_width, excl_length):
     """
@@ -56,7 +57,7 @@ def generate_balls_xml(num_balls, radii, positions, inertias, output_path="balls
             f'   <body name="ball_{i+1}" pos="{positions[i][0]} {positions[i][1]} {positions[i][2]}">\n'
             f'      <freejoint/>\n'
             f'      <inertial mass="0.03" diaginertia="{inertias[i][0]} {inertias[i][1]} {inertias[i][2]}" pos="0 0 0"/>\n'
-            f'      <geom type="sphere" size="{radii[i]}" rgba="1 0 0 1"/>\n'
+            f'      <geom type="sphere" size="{radii[i]}" material="dust_material"/>\n'
             f'   </body>\n'
         )
 
@@ -113,7 +114,8 @@ if __name__ == "__main__":
 
     # Desired joint angles (radians) in UR5e joint order
     joint_names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-    desired_pose = [0.188, -2.2, -0.88, 0.0, np.pi/2, np.pi/2]
+    desired_pose = [0.188, -2.2, -0.87, 0.0, np.pi/2, np.pi/2]
+    # from -1.45 to 1.76
 
     # Set qpos using qpos addresses (not joint IDs)
     for jname, q in zip(joint_names, desired_pose):
@@ -134,8 +136,54 @@ if __name__ == "__main__":
     data.qvel[:] = 0
     mujoco.mj_forward(model, data)
 
+    # Cyclical motion setup for shoulder_pan
+    shoulder_min = -1.5
+    shoulder_max = 1.76
+    shoulder_mid = 0.5 * (shoulder_min + shoulder_max)
+    shoulder_amp = 0.5 * (shoulder_max - shoulder_min)
+    shoulder_freq_hz = 0.3  # oscillation frequency (Hz)
+    shoulder_act = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, "shoulder_pan_act")
+
+    # Initialize shoulder target at mid to avoid a jump
+    data.ctrl[shoulder_act] = shoulder_mid
+
+    # ---- Command listener (runs in background) ----
+    start_event = threading.Event()
+    quit_event = threading.Event()
+
+    def command_loop():
+        print("Commands: start | pause | resume | quit")
+        while not quit_event.is_set():
+            try:
+                cmd = input("> ").strip().lower()
+            except EOFError:
+                break
+            if cmd in ("start", "resume"):
+                start_event.set()
+                print("Motion: RUNNING")
+            elif cmd == "pause":
+                start_event.clear()
+                print("Motion: PAUSED")
+            elif cmd == "quit":
+                quit_event.set()
+                print("Quitting...")
+            elif cmd:
+                print("Unknown command. Use: start | pause | resume | quit")
+
+    cmd_thread = threading.Thread(target=command_loop, daemon=True)
+    cmd_thread.start()
+
     # Launch viewer
     with mujoco.viewer.launch_passive(model, data) as viewer:
-        while viewer.is_running():
+        while viewer.is_running() and not quit_event.is_set():
+            # Time (s) advances with mj_step
+            t = data.time
+
+            if start_event.is_set():
+                q_target = shoulder_mid + shoulder_amp * np.sin(2 * np.pi * shoulder_freq_hz * t)
+            else:
+                q_target = shoulder_mid  # hold mid while paused/not started
+
+            data.ctrl[shoulder_act] = q_target
             mujoco.mj_step(model, data)
             viewer.sync()

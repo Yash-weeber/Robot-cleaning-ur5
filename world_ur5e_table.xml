@@ -55,6 +55,10 @@
     <material name="urblue" rgba="0.49 0.678 0.8 1"/>
     <material name="table_material" rgba="0.6 0.4 0.2 1"/>
     <material name="dust_material" rgba="0.4 0.3 0.2 0.8"/>
+    <!-- Purple material for the mop -->
+    <material name="mop_purple" rgba="0.18 0.05 0.35 1" specular="0.5" shininess="0.6"/>
+    <!-- Dark green material for the mop -->
+    <material name="mop_dark_green" rgba="0.05 0.35 0.15 1" specular="0.4" shininess="0.5"/>
 
     <!-- Robot meshes -->
     <mesh file="base_0.obj"/>
@@ -93,7 +97,7 @@
   <worldbody>
     <!-- Key lights -->
     <light name="sun_key" directional="true" pos="0 0 5" dir="0 0 -1"
-           diffuse="0.1 0.1 0.1" ambient="0.1 0.1 0.1" specular="0.1 0.1 0.1" castshadow="false"/>
+           diffuse="0.15 0.15 0.15" ambient="0.15 0.15 0.15" specular="0.15 0.15 0.15" castshadow="false"/>
     <!-- <light name="fill" pos="2 2 3" dir="-1 -1 -1"
            diffuse="0.6 0.6 0.7" ambient="0.2 0.2 0.2" specular="0.1 0.1 0.1" castshadow="false"/> -->
     <!-- Ground with proper contact properties -->
@@ -192,7 +196,7 @@
                       <body name="mop_head">
                         <joint name="mop_socket" type="ball" damping="0.5" limited="false"/>
                         <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
-                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1"/>
+                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1" material="mop_dark_green"/>
                       </body>  <!-- mop_head -->
                     </body>    <!-- mop_tool -->
                   </body>      <!-- mop_mount -->
