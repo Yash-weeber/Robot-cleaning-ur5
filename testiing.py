@@ -554,7 +554,7 @@ class DMPController:
         # self.start_joint_positions = np.array([
         #     -2.89, -1.07, 0.377, -0.314, -0.0628, -0.503
         # ])
-        self.start_joint_positions = np.array([0.377, -1.88, -1.04, -4.84, 0.0, 0.0])
+        self.start_joint_positions = np.array([0.188, -2.2, -0.887, 0.0628, np.pi/2, np.pi/2])
         for idx, joint_name, joint_q in zip(self.joint_ids, self.joint_names, self.start_joint_positions):
             if idx == -1:
                 raise RuntimeError(f"Joint '{joint_name}' not found in model")

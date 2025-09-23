@@ -1,6 +1,7 @@
 import random
 import mujoco
 import mujoco.viewer
+import numpy as np
 
 def is_in_exclusion(x, y, x_center, y_center, excl_width, excl_length):
     """
@@ -52,11 +53,11 @@ def generate_balls_xml(num_balls, radii, positions, inertias, output_path="balls
     xml = ""
     for i in range(num_balls):
         xml += (
-            f'<body name="ball_{i+1}" pos="{positions[i][0]} {positions[i][1]} {positions[i][2]}">\n'
-            f'  <freejoint/>\n'
-            f'  <inertial mass="0.03" diaginertia="{inertias[i][0]} {inertias[i][1]} {inertias[i][2]}" pos="0 0 0"/>\n'
-            f'  <geom type="sphere" size="{radii[i]}" rgba="1 0 0 1"/>\n'
-            f'</body>\n'
+            f'   <body name="ball_{i+1}" pos="{positions[i][0]} {positions[i][1]} {positions[i][2]}">\n'
+            f'      <freejoint/>\n'
+            f'      <inertial mass="0.03" diaginertia="{inertias[i][0]} {inertias[i][1]} {inertias[i][2]}" pos="0 0 0"/>\n'
+            f'      <geom type="sphere" size="{radii[i]}" rgba="1 0 0 1"/>\n'
+            f'   </body>\n'
         )
 
     with open(output_path, "w") as f:
@@ -67,8 +68,8 @@ if __name__ == "__main__":
     num_balls = 100  # Number of balls to generate
     radius = 0.02  # Ball radius (meters)
     mass = 0.53    # Ball mass (kg)
-    # inertia = 2/5 * mass * radius**2  # Sphere inertia formula
-    inertia = 3e-3  # Approximate inertia value for small spheres
+    inertia = 2/5 * mass * radius**2  # Sphere inertia formula
+    # inertia = 3e-3  # Approximate inertia value for small spheres
     radii = [radius] * num_balls
     inertias = [(inertia, inertia, inertia)] * num_balls
 
@@ -77,8 +78,8 @@ if __name__ == "__main__":
     x_pos_high = -0.1
     y_pos_low = -1.3
     y_pos_high = -0.2
-    z_pos_low = 0.5
-    z_pos_high = 0.5  # Fixed z position
+    z_pos_low = 0.51
+    z_pos_high = 0.51  # Fixed z position
 
     # Center of exclusion rectangle
     x_pos_center = (x_pos_low + x_pos_high) / 2
@@ -110,12 +111,27 @@ if __name__ == "__main__":
     model = mujoco.MjModel.from_xml_path("ballmove.xml")
     data = mujoco.MjData(model)
 
+    # Desired joint angles (radians) in UR5e joint order
     joint_names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-    joint_indices = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name) for name in joint_names]
+    desired_pose = [0.188, -2.2, -0.88, 0.0, np.pi/2, np.pi/2]
 
-    desired_pose = [0.377, -1.88, -1.04, -4.84, 0.0, 0.0]
-    for idx, val in zip(joint_indices, desired_pose):
-        data.qpos[idx] = val
+    # Set qpos using qpos addresses (not joint IDs)
+    for jname, q in zip(joint_names, desired_pose):
+        jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jname)  # joint id
+        qadr = model.jnt_qposadr[jid]                                      # start index in qpos
+        data.qpos[qadr] = q
+
+    # Match actuator targets to the same angles so the controller holds the pose
+    actuator_names = [
+        "shoulder_pan_act", "shoulder_lift_act", "elbow_act",
+        "wrist_1_act", "wrist_2_act", "wrist_3_act"
+    ]
+    for aname, q in zip(actuator_names, desired_pose):
+        aid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, aname)
+        data.ctrl[aid] = q
+
+    # Zero velocities and propagate state
+    data.qvel[:] = 0
     mujoco.mj_forward(model, data)
 
     # Launch viewer

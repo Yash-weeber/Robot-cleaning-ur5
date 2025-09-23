@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <mujoco model="ur5e_with_mop_and_dust">
   <compiler angle="radian" meshdir="assets" autolimits="true"/>
   <option integrator="implicitfast" timestep="0.01" viscosity="0.01"/>
@@ -37,8 +38,17 @@
     </default>
   </default>
 
+  <!-- ================= VISUAL SETTINGS ================= -->
+
+
   <!-- ================= MATERIALS + MESHES ================= -->
   <asset>
+    <texture name="skybox" type="skybox" builtin="gradient"
+             rgb1="0.7 0.85 1" rgb2="0.2 0.3 0.5" width="512" height="512"/>
+    <texture name="ground_tex" type="2d" builtin="checker" width="512" height="512"
+         rgb1="0.2 0.4 0.8" rgb2="0.9 0.9 1" mark="cross" random="0.01"/>
+    <material name="ground_mat" texture="ground_tex" texrepeat="4 4"
+          rgba="1 1 1 1" specular="1" shininess="1" reflectance="0.5"/>
     <material name="black" rgba="0.033 0.033 0.033 1"/>
     <material name="jointgray" rgba="0.278 0.278 0.278 1"/>
     <material name="linkgray" rgba="0.82 0.82 0.82 1"/>
@@ -72,22 +82,53 @@
     <mesh file="test.stl" scale="0.28 0.29 0.1" name="table"/>
     <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002"/>
     <mesh name="handle_mesh" file="mop_handle.obj" scale="0.002 0.002 0.002"/>
-    <mesh name="dust_ball_mesh" file="simple_small_ball.stl" scale="0.005 0.005 0.005"/>
   </asset>
+
+  <!-- Visual settings: skybox + haze for infinite horizon look -->
+  <visual>
+    <map znear="0.01" zfar="200" fogstart="8" fogend="60"/>
+  </visual>
 
   <!-- ================= WORLD OBJECTS ================= -->
   <worldbody>
+    <!-- Key lights -->
+    <light name="sun_key" directional="true" pos="0 0 5" dir="0 0 -1"
+           diffuse="0.1 0.1 0.1" ambient="0.1 0.1 0.1" specular="0.1 0.1 0.1" castshadow="false"/>
+    <!-- <light name="fill" pos="2 2 3" dir="-1 -1 -1"
+           diffuse="0.6 0.6 0.7" ambient="0.2 0.2 0.2" specular="0.1 0.1 0.1" castshadow="false"/> -->
     <!-- Ground with proper contact properties -->
-    <geom name="ground" type="plane" size="3 3 0.1" rgba="0.5 0.5 0.5 1" pos="0 0 0"
-          solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05"/>
+    <geom name="ground" type="plane" size="10 10 0.1" material="ground_mat"
+      rgba="0.5 0.5 0.5 1" pos="0 0 0"
+      solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05"/>
 
     <!-- Table positioned as base platform -->
     <body name="table" pos="0.3 0 0">
       <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5"/>
-      <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"/>
-      <geom name="table_collision" type="mesh" mesh="table"
-            material="table_material" group="0" contype="1" conaffinity="1"
+      <geom name="table_collision" type="box" size="1.35 0.7 0.5" pos="-1.35 -0.7 -0.01"
+            material="table_material" group="3" contype="1" conaffinity="1"
             solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05"/>
+      <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"/>
+      <!-- 45-deg wedges along table edges (width ≈ 0.10 m, thickness ≈ 0.02 m) -->
+      <!-- Table collision box extents in table frame: x in [-2.7, 0], y in [-1.4, 0], top z ≈ 0.49 -->
+      <!-- y = 0 edge (north), tilt toward -y -->
+      <geom name="wedge_y_pos" type="box" size="1.35 0.05 0.01"
+            pos="-1.35 0.0 0.50" axisangle="1 0 0 0.7854"
+            group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1"/>
+
+      <!-- y = -1.4 edge (south), tilt toward +y -->
+      <geom name="wedge_y_neg" type="box" size="1.35 0.05 0.01"
+            pos="-1.35 -1.4 0.50" axisangle="1 0 0 -0.7854"
+            group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1"/>
+
+      <!-- x = 0 edge (east), tilt toward -x -->
+      <geom name="wedge_x_pos" type="box" size="0.05 0.7 0.01"
+            pos="0 -0.7 0.50" axisangle="0 1 0 -0.7854"
+            group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1"/>
+
+      <!-- x = -2.7 edge (west), tilt toward +x -->
+      <geom name="wedge_x_neg" type="box" size="0.05 0.7 0.01"
+            pos="-2.7 -0.7 0.50" axisangle="0 1 0 0.7854"
+            group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1"/>      
     </body>
 
     <!-- UR5e Robot mounted ON the table surface -->
@@ -152,16 +193,16 @@
                         <joint name="mop_socket" type="ball" damping="0.5" limited="false"/>
                         <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
                         <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1"/>
-                      </body>
-                    </body>
-                  </body>
-                </body>
-              </body>
-            </body>
-          </body>
-        </body>
-      </body>
-    </body>
+                      </body>  <!-- mop_head -->
+                    </body>    <!-- mop_tool -->
+                  </body>      <!-- mop_mount -->
+                </body>        <!-- wrist_3_link -->
+              </body>          <!-- wrist_2_link -->
+            </body>            <!-- wrist_1_link -->
+          </body>              <!-- forearm_link -->
+        </body>                <!-- upper_arm_link -->
+      </body>                  <!-- shoulder_link -->
+    </body>                    <!-- base -->
 
     <!-- Dust particles properly positioned on table surface around the robot -->
     <!-- Distributed in a cleaning area away from robot base -->
