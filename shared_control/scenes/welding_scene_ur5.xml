@@ -1,0 +1,20 @@
+<mujoco>
+    <compiler angle="radian" meshdir="../meshes/"/>
+    <option timestep="0.002" solver="CG" iterations="10" tolerance="1e-6" gravity="0 0 0"/>
+
+    <visual>
+        <quality shadowsize="64"/>
+        <map stiffness="100" shadowscale="0"/>
+    </visual>
+
+    <worldbody>
+        <body name="hand_ur5right" pos="0 0 -0.15" mocap="true">
+            <geom type="box" size=".03 .03 .03" rgba="1 0 1 .5" contype="2" conaffinity="2"/>
+        </body>
+    </worldbody>
+
+    <size njmax="2000" nconmax="500"/>
+    <include file="world_lowres.xml"/>
+    <!-- <include file="spaceship.xml"/> -->
+    <include file="ur5.xml"/>
+</mujoco>

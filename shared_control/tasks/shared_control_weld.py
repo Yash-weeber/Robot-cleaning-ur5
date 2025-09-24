@@ -1,0 +1,402 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+import mujoco
+import mujoco.viewer
+import numpy as np
+from typing import Dict
+import threading
+import time
+from shared_control import OSC, MujocoApp
+from transforms3d.euler import euler2quat, quat2mat, mat2euler
+from transforms3d.quaternions import qmult
+from transforms3d.affines import compose
+from shared_control.utils import Target
+from shared_control.input_devices.space_mouse import SpaceMouse
+from shared_control.perception import PerceptionSystem
+
+class Lock:
+    GRAB = {
+        "base_offset": np.array([0.0, -0.25, 0.0]),
+        "rotation_sequence": [
+            np.array([np.pi/2, np.pi/4, 0]),
+            np.array([0, 0, np.pi/2]),
+        ]
+    }
+
+    WELD = {
+        "base_offset": np.array([0.45, 0.3, 0.3]),
+        "rotation_sequence": [
+            np.array([-np.pi, 0, 0]),
+            # np.array([0, -np.pi, 0]),
+        ]
+    }
+
+
+class Welding(MujocoApp):
+    """A task for controlling a UR5 robot with a space mouse, allowing the user to grab, move, and weld hexagon plates."""
+
+    def __init__(self, robot_config_file: str = None, scene_file: str = None):
+        super().__init__(robot_config_file, scene_file, use_sim=True)
+
+        self.robot = self.get_robot(robot_name="UR5")
+
+        osc_device_configs = [
+            ("base", self.get_controller_config("osc2")),
+            ("ur5", self.get_controller_config("osc2")),
+        ]
+
+        # Controller
+        nullspace_config = self.get_controller_config("nullspace")
+        self.controller = OSC(
+            self.robot, self.model, self.data, osc_device_configs, nullspace_config
+        )
+
+        # Gripper
+        self.gripper_motor_id = mujoco.mj_name2id(
+            self.model, mujoco.mjtObj.mjOBJ_ACTUATOR, "gripper_motor"
+        )
+        self.gripper_closed_val = 0.08
+        self.gripper_open_val = -0.08
+
+        self.prev_button2_pressed = False
+
+        self.last_target_pos = None
+        self.last_target_quat = None
+
+        self.lock_initial_sm_pos = None
+        self.lock_initial_sm_rot = None
+
+        # Axis lock feature
+        self.axis_lock_enabled = False
+        self.locked_axis_direction = None
+        self.lock_reference_pos = None
+
+        # Store current marker data for axis calculations
+        self.current_marker_pos = None
+        self.current_marker_quat = None
+
+        # Initialize perception system
+        self.perception = PerceptionSystem(
+            model=self.model,
+            data=self.data,
+            marker_size=0.10,  # 10cm marker (MuJoCo box size 0.05 is half-extent)
+            image_width=self.image_width,
+            image_height=self.image_height,
+        )
+        self.aruco_detection_interval = 10
+        self.aruco_ids = [3, 0]
+        self._current_aruco_idx = 0
+        self.lock = None
+
+        self.sm = SpaceMouse(origin=[0.0]*6)
+        self.viewer = None
+
+    def _generate_control_signals(self, target_world_pos, target_world_quat, sm_pos_offset=None, sm_rot_offset=None):
+
+        # manual control
+        if sm_pos_offset is not None:
+            target_world_pos += sm_pos_offset * 0.5
+        if sm_rot_offset is not None:
+            target_world_quat = qmult(target_world_quat, sm_rot_offset)
+
+        # Apply axis lock constraint if enabled
+        if self.axis_lock_enabled:
+            target_world_pos = self._apply_axis_lock_constraint(target_world_pos)
+
+        # target for end-effector
+        ee_target = Target()
+        ee_target.set_xyz(target_world_pos)
+        ee_target.set_quat(target_world_quat)
+
+        # Update mocap target visualization
+        target_body_id = mujoco.mj_name2id(
+            self.model, mujoco.mjtObj.mjOBJ_BODY, "target"
+        )
+        if target_body_id != -1:
+            mocap_id = self.model.body_mocapid[target_body_id]
+            if mocap_id != -1 and 0 <= mocap_id < self.model.nmocap:
+                self.data.mocap_pos[mocap_id] = np.array(target_world_pos)
+                self.data.mocap_quat[mocap_id] = np.array(target_world_quat)
+
+        self.last_target_pos = np.array(target_world_pos)
+        self.last_target_quat = np.array(target_world_quat)
+
+        # Generate control signals
+        ctrl = self.controller.generate({"ur5": ee_target})
+        return ctrl
+
+    def _apply_sequential_rotations(
+        self, marker_quat: np.ndarray, rotations: np.ndarray
+    ) -> np.ndarray:
+        for rot in rotations:
+            marker_quat = qmult(marker_quat, euler2quat(*rot, axes="sxyz"))
+        return marker_quat
+
+    def lock_ee_to_target(
+        self,
+        marker_pos,
+        marker_quat,
+        sm_pos_offset=None,
+        sm_rot_offset=None,
+    ):
+        # default fallback position and orientation
+        if marker_pos is None or marker_quat is None:
+            self.lock = None
+            fallback_quat = euler2quat(
+                self.lock_initial_sm_rot[1],  # pitch
+                self.lock_initial_sm_rot[0],  # roll
+                self.lock_initial_sm_rot[2],  # yaw
+                axes="rxyz"
+            )
+            return self._generate_control_signals(
+                self.lock_initial_sm_pos, fallback_quat, sm_pos_offset, sm_rot_offset
+            )
+
+        marker_pos_offset = marker_pos + self.lock["base_offset"]
+        marker_quat_offset = self._apply_sequential_rotations(
+                marker_quat,
+                self.lock["rotation_sequence"]
+            )
+
+        target_world_pos, target_world_quat = self.perception.camera_to_world_transform(
+            marker_pos_offset, marker_quat_offset, "main_arm"
+        )
+
+        # the end effector orientation is:
+        print(f"End effector target orientation in euler: {mat2euler(quat2mat(target_world_quat), axes='rxyz')}")
+
+        return self._generate_control_signals(
+            target_world_pos, target_world_quat, sm_pos_offset, sm_rot_offset
+        )
+
+    def key_callback(self, key):
+        print(f"Key pressed: {key}")
+
+        # Unlock end-effector state from controller
+        if key == ord("1"):
+            # self.lock_ee_state = False
+            self.lock = None
+            if self.last_target_pos is not None and self.last_target_quat is not None:
+                self.sm.state.x = self.last_target_pos[0]
+                self.sm.state.y = self.last_target_pos[1]
+                self.sm.state.z = self.last_target_pos[2]
+                orientation = mat2euler(quat2mat(self.last_target_quat), axes="rxyz")
+
+                self.sm.state.roll = orientation[1]
+                self.sm.state.pitch = orientation[0]
+                self.sm.state.yaw = orientation[2]
+
+            print("EE state: Unlocked to current position and orientation")
+            return True
+
+        # strong gripper control for plate movement
+        elif key == ord("2"):
+            self.gripper_closed_val = 2.0
+            return True
+
+        # Toggle axis lock feature
+        elif key == ord("3"):
+            if not self.axis_lock_enabled:
+                # Enable axis lock - determine which hexagon edge to align with
+                if self.lock and self.current_marker_pos is not None and self.current_marker_quat is not None:
+                    # Transform marker orientation to world frame first
+                    marker_world_pos, marker_world_quat = self.perception.camera_to_world_transform(
+                        self.current_marker_pos, self.current_marker_quat, "main_arm"
+                    )
+
+                    # Get hexagon edge directions in world frame
+                    edge_direction = self._get_hexagon_edge_direction(marker_world_quat)
+                    
+                    # Use the current end effector position as reference
+                    current_ee_pos = self.last_target_pos if self.last_target_pos is not None else np.array([0, 0, 0])
+
+                    self.locked_axis_direction = edge_direction # X-axis of ArUco frame
+                    self.lock_reference_pos = current_ee_pos.copy()
+                    self.axis_lock_enabled = True
+                    print(f"Axis lock ENABLED - Movement constrained to ArUco X-axis direction: {self.locked_axis_direction}")
+                else:
+                    print("Cannot enable axis lock - end effector not locked to target or no marker detected")
+            else:
+                # Disable axis lock
+                self.axis_lock_enabled = False
+                self.locked_axis_direction = None
+                self.lock_reference_pos = None
+                print("Axis lock DISABLED - Full movement restored")
+            return True
+            
+        return False
+
+    def run_task(self, demo_duration: int):
+        self.timer_running = True
+        time_thread = threading.Thread(target=self.sleep_for, args=(demo_duration,))
+        time_thread.daemon = True
+        time_thread.start()
+
+        targets: Dict[str, Target] = {"ur5": Target(), "base": Target()}
+        frame_counter = 0
+
+        with mujoco.viewer.launch_passive(self.model, self.data, key_callback=self.key_callback) as viewer:
+            self.viewer = viewer
+            while self.timer_running and viewer.is_running():
+                # Set the target values for the robot's devices
+                x, y, z, roll, pitch, yaw, button1_pressed, button2_pressed = (
+                    self.sm.update_state()
+                )
+
+                if button2_pressed and not self.prev_button2_pressed:
+                    self._current_aruco_idx = (self._current_aruco_idx + 1) % len(self.aruco_ids)
+                    self.lock = Lock.GRAB if self.aruco_ids[self._current_aruco_idx] % 2 == 0 else Lock.WELD
+
+                    self.lock_initial_sm_pos = np.array([x, y, z])
+                    self.lock_initial_sm_rot = np.array([roll, pitch, yaw])
+                    print(f"Locked with {self.lock} approach")
+
+                self.prev_button2_pressed = button2_pressed
+
+                if frame_counter % self.aruco_detection_interval == 0:
+                    camera_image = self.perception.get_camera_image("main_arm")
+                    marker_pos, marker_quat = self.perception.detect_aruco_marker(
+                        camera_image, marker_id=self.aruco_ids[self._current_aruco_idx]
+                    )
+
+                    # Store current marker data for axis lock feature
+                    self.current_marker_pos = marker_pos
+                    self.current_marker_quat = marker_quat
+
+                frame_counter += 1
+
+                angle = euler2quat(
+                    pitch, roll, yaw, axes="rxyz"
+                )  # pitch and roll are flipped from SM API
+                angle_mat = quat2mat(angle)
+
+                tfmat_r = compose([x, y, z], angle_mat, [1, 1, 1])
+                r_xyz = tfmat_r[0:3, -1].flatten()
+                r_ang = np.array(mat2euler(tfmat_r[:3, :3]))
+
+                targets["ur5"].set_xyz(r_xyz)
+                targets["ur5"].set_abg(r_ang)
+                targets["base"].set_abg([0, 0, np.arctan2(y, x) - np.pi / 2])
+
+                if self.lock:
+                    # Calculate space mouse offsets from initial locked position
+                    sm_pos_offset = np.array([x, y, z]) - self.lock_initial_sm_pos
+                    sm_rot_offset_roll, sm_rot_offset_pitch, sm_rot_offset_yaw = (
+                        np.array([roll, pitch, yaw]) - self.lock_initial_sm_rot
+                    )
+
+                    # Convert rotation offset to quaternion
+                    sm_rot_quat = euler2quat(
+                        sm_rot_offset_pitch,
+                        sm_rot_offset_roll,
+                        sm_rot_offset_yaw,
+                        axes="rxyz",
+                    )
+
+                    ctrlr_output = self.lock_ee_to_target(
+                        marker_pos,
+                        marker_quat,
+                        sm_pos_offset,
+                        sm_rot_quat,
+                    )
+
+                    # Scale down control forces when locked to target for slower movement
+                    for force_idx, force in zip(*ctrlr_output):
+                        self.data.ctrl[force_idx] = force * 0.2
+
+                else:
+                    ctrlr_output = self.controller.generate(targets)
+                    
+                    for force_idx, force in zip(*ctrlr_output):
+                        self.data.ctrl[force_idx] = force
+
+                if self.gripper_motor_id != -1:
+                    if button1_pressed:
+                        print("Gripper button pressed, toggling gripper state")
+                        self.data.ctrl[self.gripper_motor_id] = self.gripper_open_val
+                    else:
+                        self.data.ctrl[self.gripper_motor_id] = self.gripper_closed_val
+
+                if (
+                    mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "target")
+                    != -1
+                ):
+                    body_id = mujoco.mj_name2id(
+                        self.model, mujoco.mjtObj.mjOBJ_BODY, "target"
+                    )
+
+                    mocap_id = self.model.body_mocapid[body_id]
+                    if mocap_id != -1 and 0 <= mocap_id < self.model.nmocap:
+                        if not self.lock:
+                            self.data.mocap_pos[mocap_id] = r_xyz
+                            self.data.mocap_quat[mocap_id] = euler2quat(
+                                r_ang[0], r_ang[1], r_ang[2]
+                            )
+
+                mujoco.mj_step(self.model, self.data)
+                viewer.sync()
+                time.sleep(0.001)
+
+        time_thread.join()
+
+    def sleep_for(self, duration: int):
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            time.sleep(0.1)
+        self.timer_running = False
+
+    def _apply_axis_lock_constraint(self, target_pos):
+        """
+        Apply axis lock constraint to limit movement to the locked axis direction.
+        """
+        if not self.axis_lock_enabled or self.locked_axis_direction is None or self.lock_reference_pos is None:
+            return target_pos
+            
+        # Calculate movement vector from reference position
+        movement_vector = target_pos - self.lock_reference_pos
+        
+        # Project movement onto the locked axis direction
+        projected_movement = np.dot(movement_vector, self.locked_axis_direction) * self.locked_axis_direction
+        
+        # Calculate constrained position
+        constrained_pos = self.lock_reference_pos + projected_movement
+
+        return constrained_pos
+
+    def _get_hexagon_edge_direction(self, marker_quat):
+        # Quat -> Rotation matrix
+        rot_matrix = quat2mat(marker_quat)
+        print("Current marker position:")
+        print(self.current_marker_pos)
+
+        marker_edge_mask = np.array([1, 0, 0])
+        if self.lock:
+            print(rot_matrix.shape)
+            marker_edge = self.lock["base_offset"]
+            print(marker_edge)
+            marker_quat_rotated = self._apply_sequential_rotations(
+                rot_matrix,
+                self.lock["rotation_sequence"]
+            )
+
+            # rot_matrix = quat2mat(marker_quat_rotated)
+
+        return rot_matrix @ marker_edge
+
+
+if __name__ == "__main__":
+    debug_mode = False
+    
+
+    if debug_mode:
+        scene_file = "welding_scene_ur5_debug.xml"
+    else:
+        scene_file = "welding_scene_ur5.xml"
+
+    sim = Welding(
+        robot_config_file="ur5_xyz_abg.yaml", scene_file=scene_file
+    )
+    sim.run_task(400)

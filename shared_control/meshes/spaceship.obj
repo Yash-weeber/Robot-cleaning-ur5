@@ -1,0 +1,85 @@
+# Spaceship base platform - central section only
+# Minimal flat platform with raised center
+o SpaceshipBase
+
+# Main platform vertices (compact rectangular base)
+# Top surface (z = 0) - Main platform
+v -0.8 -0.6 0.0
+v 0.8 -0.6 0.0
+v 0.8 0.6 0.0
+v -0.8 0.6 0.0
+
+# Bottom surface (z = -0.1) - Platform bottom
+v -0.8 -0.6 -0.1
+v 0.8 -0.6 -0.1
+v 0.8 0.6 -0.1
+v -0.8 0.6 -0.1
+
+# Central raised section for arm mounting
+# Top surface (z = 0.02) - Raised center
+v -0.3 -0.3 0.02
+v 0.3 -0.3 0.02
+v 0.3 0.3 0.02
+v -0.3 0.3 0.02
+
+# Bottom of raised section (z = 0.0)
+v -0.3 -0.3 0.0
+v 0.3 -0.3 0.0
+v 0.3 0.3 0.0
+v -0.3 0.3 0.0
+
+# Face definitions
+# Main platform top
+f 1 2 3 4
+
+# Main platform bottom
+f 5 8 7 6
+
+# Main platform sides
+f 1 5 6 2
+f 2 6 7 3
+f 3 7 8 4
+f 4 8 5 1
+
+# Central raised section top
+f 9 10 11 12
+
+# Central raised section sides
+f 9 13 14 10
+f 10 14 15 11
+f 11 15 16 12
+f 12 16 13 9
+
+# Connect raised section to main platform
+f 13 1 2 14
+f 14 2 3 15
+f 15 3 4 16
+f 16 4 1 13
+
+# Face definitions
+# Main platform top
+f 1 2 3 4
+
+# Main platform bottom
+f 5 8 7 6
+
+# Main platform sides
+f 1 5 6 2
+f 2 6 7 3
+f 3 7 8 4
+f 4 8 5 1
+
+# Central raised section top
+f 9 10 11 12
+
+# Central raised section sides
+f 9 13 14 10
+f 10 14 15 11
+f 11 15 16 12
+f 12 16 13 9
+
+# Connect raised section to main platform
+f 13 1 2 14
+f 14 2 3 15
+f 15 3 4 16
+f 16 4 1 13

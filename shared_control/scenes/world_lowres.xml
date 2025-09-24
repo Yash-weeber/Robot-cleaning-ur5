@@ -1,0 +1,25 @@
+<mujocoimport>
+    <asset>
+        <material name="x_axis" rgba="1 0 0 1"/>  <!-- Red for X-axis -->
+        <material name="y_axis" rgba="0 1 0 1"/>  <!-- Green for Y-axis -->
+        <material name="z_axis" rgba="0 0 1 1"/>  <!-- Blue for Z-axis -->
+
+        <texture name="starry" file="../meshes/starry_texture.png" type="skybox"/>
+        <material name="sky" texture="starry" rgba="1 1 1 1"/>
+
+        <material name="silver" specular="1" shininess="0.5" reflectance="1" emission="0.25" rgba="0.82 0.82 0.82 1"/>
+        <material name="grey" specular="1" shininess="0.5" reflectance="1" emission="0.1" rgba="0.5 0.5 0.5 1"/>
+        <material name="blue" specular="1" shininess="0.5" reflectance="1" emission="0" rgba="0.678 0.847 0.902 1"/>
+        <material name="black" specular="1" shininess="0.5" reflectance="1" emission="0" rgba="0.2 0.2 0.2 1"/>
+    </asset>
+
+    <visual>
+        <rgba haze="0 0 0 0"/>
+        <quality shadowsize="128"/>
+        <map stiffness="500" shadowscale="0" fogstart="100" fogend="100" zfar="10" haze="0"/>
+    </visual>
+
+    <worldbody>
+        <light directional="true" diffuse=".5 .5 .5" pos="0 0 3.0" dir="0 0 -1" castshadow="false"/>
+    </worldbody>
+</mujocoimport>

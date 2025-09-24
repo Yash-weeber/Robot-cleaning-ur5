@@ -1,0 +1,23 @@
+<mujocoimport>
+    <asset>
+        <mesh name="spaceship" file="../meshes/spaceship.obj"/>
+
+        <material name="spaceship_hull" rgba="0.35 0.35 0.35 1" specular="0.4" shininess="0.3" reflectance="0.1"/>
+        <material name="spaceship_detail" rgba="0.3 0.3 0.3 1" specular="0.5" shininess="0.4" reflectance="0.15"/>
+        <material name="spaceship_dark" rgba="0.2 0.2 0.2 1" specular="0.2" shininess="0.1"/>
+    </asset>
+
+    <worldbody>
+        <!-- Minimal spaceship base platform - raised to connect with UR5 base -->
+        <!-- Robot base is at (-0.35, -0.35, 1), so position spaceship to connect -->
+        <body name="spaceship_base" pos="-0.35 -0.75 0.9">
+            <!-- Compact base platform - cuboid extending only to robot arm base -->
+            <!-- Size: width=0.4, length=1.0 (to reach robot), height=0.1 -->
+            <geom type="box" size="0.2 0.5 0.05" material="spaceship_hull" mass="200"/>
+
+            <!-- Central docking ring for robot arm - positioned under robot base -->
+            <geom name="docking_ring" type="cylinder" size="0.15 0.01" pos="0 0 0.02" material="spaceship_detail"/>
+            <geom name="inner_ring" type="cylinder" size="0.12 0.005" pos="0 0 0.025" material="spaceship_dark"/>
+        </body>
+    </worldbody>
+</mujocoimport>
