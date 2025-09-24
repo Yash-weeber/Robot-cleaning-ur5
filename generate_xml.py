@@ -36,7 +36,7 @@ def merge_xml(main_xml_path, balls_xml_path, output_xml_path):
     with open(output_xml_path, "w") as f:
         f.write(merged)
 
-def generate_balls_xml(num_balls, radii, positions, inertias, output_path="balls.xml"):
+def generate_balls_xml(num_balls, mass, radii, positions, inertias, output_path="balls.xml"):
     """
     Generate balls.xml with specified parameters for each ball.
 
@@ -56,7 +56,7 @@ def generate_balls_xml(num_balls, radii, positions, inertias, output_path="balls
         xml += (
             f'   <body name="ball_{i+1}" pos="{positions[i][0]} {positions[i][1]} {positions[i][2]}">\n'
             f'      <freejoint/>\n'
-            f'      <inertial mass="0.03" diaginertia="{inertias[i][0]} {inertias[i][1]} {inertias[i][2]}" pos="0 0 0"/>\n'
+            f'      <inertial mass="{mass}" diaginertia="{inertias[i][0]} {inertias[i][1]} {inertias[i][2]}" pos="0 0 0"/>\n'
             f'      <geom type="sphere" size="{radii[i]}" material="dust_material"/>\n'
             f'   </body>\n'
         )
@@ -75,10 +75,10 @@ if __name__ == "__main__":
     inertias = [(inertia, inertia, inertia)] * num_balls
 
     # Position limits for random generation
-    x_pos_low = -2.3
-    x_pos_high = 0.2
-    y_pos_low = -1.35
-    y_pos_high = -0.05
+    x_pos_low = -1.3
+    x_pos_high = 1.3
+    y_pos_low = -0.6
+    y_pos_high = 0.6
     z_pos_low = 0.51
     z_pos_high = 0.51  # Fixed z position
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     # Exclusion rectangle dimensions (centered in x/y range)
     swiffer_head_length = 0.3  # x direction
-    swiffer_head_width = 0.15    # y direction
+    swiffer_head_width = 1.4    # y direction
 
     # Generate random positions, excluding the rectangle
     positions = []
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             positions.append((x, y, z))
 
     # Generate balls.xml with the random positions
-    generate_balls_xml(num_balls, radii, positions, inertias, "balls.xml")
+    generate_balls_xml(num_balls, mass, radii, positions, inertias, "balls.xml")
 
     # Merge balls.xml into main MuJoCo XML and write ballmove.xml
     main_xml = "world_ur5e_table.xml"
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     # Desired joint angles (radians) in UR5e joint order
     joint_names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-    desired_pose = [0.188, -2.2, -0.87, 0.0, np.pi/2, np.pi/2]
+    desired_pose = [0.188, -2.15, -0.87, 0.0, np.pi/2, np.pi/2]
     # from -1.45 to 1.76
 
     # Set qpos using qpos addresses (not joint IDs)

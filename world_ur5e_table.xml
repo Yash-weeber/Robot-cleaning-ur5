@@ -21,7 +21,7 @@
         <joint range="-3.1415 3.1415" />
       </default>
       <default class="position">
-        <position ctrlrange="-6.2831 6.2831" kp="2000" kv="100" forcerange="-150 150" />
+        <position ctrlrange="-6.2831 6.2831" kp="500" kv="25" forcerange="-150 150" />
         <default class="position_limited">
           <position ctrlrange="-3.1415 3.1415" />
         </default>
@@ -109,7 +109,7 @@
     <!-- Table positioned as base platform -->
     <body name="table" pos="0 0 0">
       <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5" />
-      <geom name="table_collision" type="box" size="1.4 0.7 0.5" pos="0.0 0.0 0.0"
+      <geom name="table_collision" type="box" size="1.4 0.7 0.5" pos="0.0 0.0 -0.01"
         material="table_material" group="3" contype="1" conaffinity="1"
         solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05" />
       <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"
@@ -191,13 +191,14 @@
 
                   <!-- Mop tool attachment -->
                   <body name="mop_mount" pos="0 0.08 0" quat="1 0 0 1">
-                    <site name="ee_site" pos="0 0.08 0" size="0.01" rgba="1 0 0 1" />
+                    
                     <body name="mop_tool" pos="0 -0.6 0">
                       <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01" />
                       <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1" />
 
                       <body name="mop_head">
                         <joint name="mop_socket" type="ball" damping="0.5" limited="false" />
+                        <site name="ee_site" pos="0 -0.02 0.0" size="0.01" rgba="1 0 0 1" group="4" />
                         <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005" />
                         <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1"
                           pos="0 -0.05 -0.1" material="mop_dark_green" />

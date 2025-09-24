@@ -3,7 +3,8 @@
 # Dynamic Movement Primitives System for UR5e Robot in MuJoCo
 # Modes: Discrete (XY waypoints), Rhythmic (draw XY), Real-time Mouse (XY)
 # Z is held constant at CONSTANT_Z for all modes.
-
+#%%
+import math
 import time
 import numpy as np
 import mujoco
@@ -19,7 +20,9 @@ import queue
 
 try:
     from movement_primitives.dmp import DMP, CartesianDMP
-    from movement_primitives.dmp_fast import RythmicDMP
+    # from movement_primitives.dmp_fast import RythmicDMP
+    # from movement_primitives.dmp_fast import DiscreteDMP
+    from dmps.dmp_discrete import DMPs_discrete
 
     MOVEMENT_PRIMITIVES_AVAILABLE = True
 except ImportError:
@@ -34,15 +37,16 @@ SITE_NAME = "ee_site"
 UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
 
 # 🎯 MOP CONFIGURATION
-MOP_Z_HEIGHT = 0.59  # Constant Z coordinate for mop
-HOME_JOINT_POSITIONS = np.array([
-    -2.89,  # shoulder_pan
-    -1.07,  # shoulder_lift
-    0.377,  # elbow
-    -0.314,  # wrist_1
-    -0.0628,  # wrist_2
-    -0.503  # wrist_3
-])
+MOP_Z_HEIGHT = 0.52  # Constant Z coordinate for mop
+# HOME_JOINT_POSITIONS = np.array([
+#     -2.89,  # shoulder_pan
+#     -1.07,  # shoulder_lift
+#     0.377,  # elbow
+#     -0.314,  # wrist_1
+#     -0.0628,  # wrist_2c
+#     -0.503  # wrist_3
+# ])
+HOME_JOINT_POSITIONS = np.array([0.188, -2.18, -0.87, 0.0, np.pi/2, np.pi/2])
 
 # Enhanced IK Parameters
 INIT_LAMBDA = 0.15
@@ -149,11 +153,15 @@ def get_joint_positions(model, data, joint_names):
 
 def _interpolate_path(p0, p1, max_step=0.03):
     """Linear path from p0 to p1 with small steps for smooth movement"""
+    print(f"Interpolating path... from p0: {p0} to p1: {p1}")
     p0 = np.asarray(p0, float)
     p1 = np.asarray(p1, float)
     dist = np.linalg.norm(p1 - p0)
+    print(f"Interpolating path: {p0} -> {p1}, distance {dist:.3f} m")
     if dist <= max_step:
         return [p1]
+    if math.isnan(dist) or math.isinf(dist):
+        integer_value = int(0.0)
     n = int(np.ceil(dist / max_step))
     alphas = np.linspace(0.0, 1.0, n + 1)[1:]  # skip p0
     return [p0 * (1 - a) + p1 * a for a in alphas]
@@ -284,6 +292,7 @@ def animate_robot_movement(model, data, viewer, joint_names, start_joints, targe
 
         # Update physics and render
         mujoco.mj_forward(model, data)
+        mujoco.mj_step(model, data)
         viewer.draw()
 
         # Control frame rate
@@ -521,8 +530,8 @@ class DrawingInterface:
         instructions.pack()
 
         # Coordinate transformation parameters (robot workspace)
-        self.x_min, self.x_max = -0.0, -1.35  # Robot workspace in meters
-        self.y_min, self.y_max = -0.0, -0.7
+        self.x_min, self.x_max = -1.35, 1.35  # Robot workspace in meters
+        self.y_min, self.y_max = -0.7, 0.7
 
     def canvas_to_robot_coords(self, canvas_x, canvas_y):
         # Convert canvas coordinates to robot workspace coordinates
@@ -786,7 +795,9 @@ class EnhancedDMPController:
 
                 # Reset to start position for animation
                 set_joint_positions(self.model, self.data, self.joint_names, start_joints)
-                mujoco.mj_forward(self.model, self.data)
+                # mujoco.mj_forward(self.model, self.data)
+                # mujoco.mj_step(self.model, self.data)
+                # self.viewer.draw()
 
                 # Animate smooth movement
                 animate_robot_movement(self.model, self.data, self.viewer, self.joint_names,
@@ -857,6 +868,7 @@ class EnhancedDMPController:
 
         # Get waypoints
         waypoints = self.get_discrete_waypoints()
+        print(waypoints)
         if waypoints is None:
             print("Cancelled by user")
             return
@@ -867,15 +879,16 @@ class EnhancedDMPController:
 
         # Create discrete DMP for 2D (X,Y) movement
         if MOVEMENT_PRIMITIVES_AVAILABLE:
-            self.discrete_dmp = CartesianDMP(n_dmps=2, dt=0.01)
+            # self.discrete_dmp = CartesianDMP(n_dmps=2, dt=0.01)
+            self.discrete_dmp = DMPs_discrete(n_dmps=2, n_bfs=50, dt=0.01)
         else:
-            self.discrete_dmp = SimpleDMP(n_dmps=2, dt=0.01)
+            self.discrete_dmp = DMPs_discrete(n_dmps=2, dt=0.01)
 
         # Train DMP on waypoints
-        self.discrete_dmp.imitate_path(waypoints)
+        self.discrete_dmp.imitate_path(waypoints.T)
 
         # Execute trajectory
-        self.discrete_dmp.reset_state()
+        # self.discrete_dmp.reset_state()
         trajectory = []
 
         print("🎬 Executing discrete trajectory...")
@@ -888,11 +901,17 @@ class EnhancedDMPController:
                 break
 
             # Get next 2D position from DMP
-            dmp_pos_2d = self.discrete_dmp.step()
+            dmp_pos_2d, _, _ = self.discrete_dmp.step()
+            print(dmp_pos_2d)
+            print(dmp_pos_2d.shape)
+            print(f" DMP Step {step}: ({dmp_pos_2d[0]:.3f}, {dmp_pos_2d[1]:.3f})")
 
             # Create 3D target with constant Z
             target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
-
+            # if math.isnan(target_3d).any():
+            #     integer_values = int(0)
+            # else:
+            #     integer_values = int(target_3d)
             # Solve IK and move robot (without animation for real-time)
             success, _ = enhanced_ik_solver(
                 self.model, self.data, self.site_id, target_3d, self.joint_names,
@@ -901,6 +920,7 @@ class EnhancedDMPController:
 
             if success:
                 mujoco.mj_forward(self.model, self.data)
+                mujoco.mj_step(self.model, self.data)
                 trajectory.append(target_3d.copy())
 
             # Update visualization
@@ -1096,6 +1116,37 @@ class EnhancedDMPController:
             print("Invalid coordinates. Please use format: x, y")
         except Exception as e:
             print(f"Error during movement: {e}")
+            
+    def rotate_base(self):
+        """Rotate the robot base by a specified angle"""
+        try:
+            angle_str = input("Enter rotation angle in degrees (positive for CCW, negative for CW): ").strip()
+            if not angle_str:
+                return
+
+            angle_deg = float(angle_str)
+            angle_rad = np.deg2rad(angle_deg)
+
+            # Get current joint positions
+            current_joints = get_joint_positions(self.model, self.data, self.joint_names)
+
+            # Rotate base joint (first joint)
+            current_joints[0] += angle_rad
+
+            # Set new joint positions
+            set_joint_positions(self.model, self.data, self.joint_names, current_joints)
+            _clamp_limits(self.model, self.data.qpos, self.joint_names)
+            mujoco.mj_forward(self.model, self.data)
+
+            print(f"✅ Base rotated by {angle_deg:.1f} degrees")
+
+            # Update viewer
+            self.viewer.draw()
+
+        except ValueError:
+            print("Invalid angle. Please enter a numeric value.")
+        except Exception as e:
+            print(f"Error during rotation: {e}")
 
 
 def main():
@@ -1116,3 +1167,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# %%
