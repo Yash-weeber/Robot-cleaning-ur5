@@ -1,0 +1,26 @@
+<mujoco>
+  <compiler angle="radian" meshdir="assets" autolimits="true" />
+  <option integrator="implicitfast" timestep="0.01" viscosity="0.01" />
+
+  <asset>
+    <texture name="skybox" type="skybox" builtin="gradient"
+      rgb1="0.7 0.85 1" rgb2="0.2 0.3 0.5" width="512" height="512" />
+    <texture name="ground_tex" type="2d" builtin="checker" width="512" height="512"
+      rgb1="0.2 0.4 0.8" rgb2="0.9 0.9 1" mark="cross" random="0.01" />
+    <material name="ground_mat" texture="ground_tex" texrepeat="4 4"
+      rgba="1 1 1 1" specular="1" shininess="1" reflectance="0.5" />
+  </asset>
+
+  <visual>
+    <map znear="0.01" zfar="200" fogstart="8" fogend="60" />
+  </visual>
+
+  <worldbody>
+    <!-- Key light -->
+    <light name="sun_key" directional="true" pos="0 0 5" dir="0 0 -1"
+      diffuse="0.15 0.15 0.15" ambient="0.15 0.15 0.15" specular="0.15 0.15 0.15" castshadow="false" />
+    <!-- Ground plane -->
+    <geom name="ground" type="plane" size="10 10 0.1" material="ground_mat"
+      solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05" />
+  </worldbody>
+</mujoco>

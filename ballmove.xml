@@ -21,12 +21,12 @@
         <joint range="-3.1415 3.1415" />
       </default>
       <default class="position">
-        <position ctrlrange="-6.2831 6.2831" kp="500" kv="25" forcerange="-150 150" />
+        <position ctrlrange="-6.2831 6.2831" kp="200" kv="25" forcerange="-150 150" />
         <default class="position_limited">
           <position ctrlrange="-3.1415 3.1415" />
         </default>
         <default class="position_small">
-          <position kp="500" kv="25" forcerange="-28 28" />
+          <position kp="200" kv="25" forcerange="-28 28" />
         </default>
       </default>
     </default>

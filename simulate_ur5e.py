@@ -113,9 +113,11 @@ class ImpedanceController:
         self.data.qfrc_applied[self.robot_dof_indices] = u
 
         mujoco.mj_step(self.model, self.data)
+        
 
 # --- Main Simulation Setup ---
-model = mujoco.MjModel.from_xml_path("ballmove.xml")
+XML_PATH = "robot-cleaning-scene/scene/robot_cleaning_scene.xml"
+model = mujoco.MjModel.from_xml_path(XML_PATH)
 data = mujoco.MjData(model)
 model.opt.timestep = 0.002
 model.opt.iterations = 50
@@ -137,9 +139,10 @@ mujoco.mj_forward(model, data)
 
 # --- Instantiate Controller ---
 controller = ImpedanceController(model, data, ee_site_name, robot_joint_names)
-
+controller.kp = 200
+controller.kv = 50
 # --- Target Pose ---
-target_xyz = np.array([0.5, 0.2, 0.52], dtype=float)
+target_xyz = np.array([0.5, 0.2, 0.51], dtype=float)
 target_rpy = np.array([1.57079633, -0.07159265, -1.38279633])
 target_quat = controller.euler_rpy_to_quat(*target_rpy)
 

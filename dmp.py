@@ -5,9 +5,9 @@ import time
 from typing import List
 
 try:
-    from pydmps.dmp_discrete import DMPs_discrete
+    from dmps.dmp_discrete import DMPs_discrete
     PYDMP_AVAILABLE = True
-    print(" PyDMP loaded from pydmps")
+    print(" PyDMP loaded from dmps")
 except ImportError:
     PYDMP_AVAILABLE = True
 

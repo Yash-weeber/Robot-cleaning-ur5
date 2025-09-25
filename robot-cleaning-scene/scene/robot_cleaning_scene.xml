@@ -1,0 +1,8 @@
+<mujoco model="robot_cleaning_scene">
+    <compiler angle="radian" meshdir="../assets" autolimits="true" />
+    <option integrator="implicitfast" timestep="0.01" viscosity="0.01" />
+    <include file="world_settings.xml"/>
+    <include file="table.xml"/>
+    <include file="ur5e_with_mop.xml"/>
+    <include file="balls.xml"/>
+</mujoco>
