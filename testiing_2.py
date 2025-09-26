@@ -8,7 +8,7 @@ import time
 import numpy as np
 import mujoco
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import N, messagebox, simpledialog
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
@@ -18,10 +18,11 @@ import queue
 # pip install movement_primitives
 
 try:
-    from movement_primitives.dmp import DMP, CartesianDMP
+    # from movement_primitives.dmp import DMP, CartesianDMP
     # from movement_primitives.dmp_fast import RythmicDMP
     # from movement_primitives.dmp_fast import DiscreteDMP
-    from dmps.dmp_discrete import DMPs_discrete
+    from pydmps.dmp_discrete import DMPs_discrete
+    from pydmps.dmp_rhythmic import DMPs_rhythmic
 
     MOVEMENT_PRIMITIVES_AVAILABLE = True
 except ImportError:
@@ -36,7 +37,7 @@ SITE_NAME = "ee_site"
 UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
 
 # 🎯 MOP CONFIGURATION
-MOP_Z_HEIGHT = 0.52  # Constant Z coordinate for mop
+MOP_Z_HEIGHT = 0.54  # Constant Z coordinate for mop
 # HOME_JOINT_POSITIONS = np.array([
 #     -2.89,  # shoulder_pan
 #     -1.07,  # shoulder_lift
@@ -143,6 +144,7 @@ def set_joint_positions(model, data, joint_names, positions):
 def get_joint_positions(model, data, joint_names):
     """Get current joint positions as numpy array"""
     positions = np.zeros(len(joint_names))
+    mujoco.mj_forward(model, data)
     for i, jn in enumerate(joint_names):
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
         qadr = model.jnt_qposadr[jid]
@@ -529,8 +531,8 @@ class DrawingInterface:
         instructions.pack()
 
         # Coordinate transformation parameters (robot workspace)
-        self.x_min, self.x_max = -1.35, 1.35  # Robot workspace in meters
-        self.y_min, self.y_max = -0.7, 0.7
+        self.x_min, self.x_max = -1.2, 1.2  # Robot workspace in meters
+        self.y_min, self.y_max = -0.5, 0.5
 
     def canvas_to_robot_coords(self, canvas_x, canvas_y):
         # Convert canvas coordinates to robot workspace coordinates
@@ -724,7 +726,7 @@ class EnhancedDMPController:
         self.joint_names = UR5E_JOINTS
         self.site_name = SITE_NAME
         self.site_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, self.site_name)
-
+        self.dt = 0.002  # Simulation timestep
         if self.site_id == -1:
             raise RuntimeError(f"Site '{self.site_name}' not found in model")
 
@@ -861,11 +863,17 @@ class EnhancedDMPController:
         root.destroy()
         return np.array(points)
 
-    def apply_discrete_dmp(self):
+    def apply_discrete_dmp(self, draw_waypoints=False):
         """Generate joint trajectory from discrete DMP waypoints (does not execute)"""
         print("\n🎯 === DISCRETE DMP MODE (3D) ===")
-
-        waypoints = self.get_discrete_waypoints()
+        if draw_waypoints:
+            drawing_interface = DrawingInterface(title="Draw Rhythmic Pattern")
+            waypoints = drawing_interface.get_trajectory()
+            # Add current ee_site position as the first entry in the trajectory
+            # current_pos = self.data.site_xpos[self.site_id]
+            # waypoints = np.vstack(([current_pos[:2]], waypoints))
+        else:
+            waypoints = self.get_discrete_waypoints()
         if waypoints is None:
             print("Cancelled by user")
             return None
@@ -876,17 +884,19 @@ class EnhancedDMPController:
 
         # Create discrete DMP for 2D (X,Y) movement
         if MOVEMENT_PRIMITIVES_AVAILABLE:
-            self.discrete_dmp = DMPs_discrete(n_dmps=2, n_bfs=50, dt=0.01)
+            self.discrete_dmp = DMPs_discrete(n_dmps=2, n_bfs=100, dt=self.dt)
         else:
-            self.discrete_dmp = DMPs_discrete(n_dmps=2, dt=0.01)
+            self.discrete_dmp = DMPs_discrete(n_dmps=2, n_bfs=100, dt=self.dt)
 
         self.discrete_dmp.imitate_path(waypoints.T)
+        self.discrete_dmp.reset_state()
+        print("✅ DMP trained on waypoints")
 
-        dt = 0.01
+        dt = self.dt
         max_steps = int(5.0 / dt)
         task_traj = []
 
-        for step in range(max_steps):
+        for step in range(self.discrete_dmp.timesteps):
             if not self.viewer.is_running():
                 break
             dmp_pos_2d, _, _ = self.discrete_dmp.step()
@@ -894,8 +904,10 @@ class EnhancedDMPController:
             task_traj.append(target_3d)
             if hasattr(self.discrete_dmp, 'x') and self.discrete_dmp.x < 0.01:
                 break
+            print(f"Step {step}: DMP pos: {dmp_pos_2d}, 3D target: {target_3d}" )
 
         print(f"Generated {len(task_traj)} task-space waypoints from DMP.")
+        
 
         joint_traj = []
         for idx, target_3d in enumerate(task_traj):
@@ -911,8 +923,9 @@ class EnhancedDMPController:
 
         print(f"Generated {len(joint_traj)} joint-space waypoints.")
         return joint_traj
-    def execute_rhythmic_mode(self):
-        """Execute rhythmic DMP mode with 3D movement"""
+    
+    def apply_rhythmic_mode(self):
+        """Apply rhythmic DMP mode with 3D movement"""
 
 
         # Get trajectory from drawing interface
@@ -922,62 +935,58 @@ class EnhancedDMPController:
         if trajectory is None:
             print("Cancelled by user")
             return
-
-        print(f"Trajectory captured: {len(trajectory)} points")
+        # Add current ee_site position as the first entry in the trajectory
+        current_pos = self.data.site_xpos[self.site_id]
+        trajectory = np.vstack(([current_pos[:2]], trajectory))
+        print(f"Trajectory captured: {trajectory.shape} points")
         print(f"X range: {trajectory[:, 0].min():.3f} to {trajectory[:, 0].max():.3f}")
         print(f"Y range: {trajectory[:, 1].min():.3f} to {trajectory[:, 1].max():.3f}")
         print(f"Z constant: {MOP_Z_HEIGHT:.4f}")
 
         # Create rhythmic DMP for 2D movement
-        if MOVEMENT_PRIMITIVES_AVAILABLE:
-            try:
-                from movement_primitives.dmp import RhythmicDMP
-                self.rhythmic_dmp = RhythmicDMP(n_dmps=2, dt=0.01)
-            except ImportError:
-                self.rhythmic_dmp = SimpleRythmicDMP(n_dmps=2, dt=0.01)
-        else:
-            self.rhythmic_dmp = SimpleRythmicDMP(n_dmps=2, dt=0.01)
+        # if MOVEMENT_PRIMITIVES_AVAILABLE:
+        #     try:
+        #         from movement_primitives.dmp import RhythmicDMP
+        #         self.rhythmic_dmp = DMPs_rhythmic(n_dmps=2, n_bfs=100, dt=self.dt, tau=0.5)
+        #     except ImportError:
+        #         self.rhythmic_dmp = DMPs_rhythmic(n_dmps=2, n_bfs=100, dt=self.dt, )
+        # else:
+        #     self.rhythmic_dmp = DMPs_rhythmic(n_dmps=2, n_bfs=100, dt=self.dt)
+        self.rhythmic_dmp = DMPs_rhythmic(n_dmps=2, n_bfs=100, dt=self.dt)
 
         # Train DMP on drawn trajectory
-        self.rhythmic_dmp.imitate_path(trajectory)
+        self.rhythmic_dmp.imitate_path(trajectory.T)
+        self.rhythmic_dmp.reset_state()
         print("✅ Rhythmic DMP trained on drawn pattern")
 
-        # Execute rhythmic movement
-        self.rhythmic_dmp.reset_state()
 
+        # Generate rhythmic DMP trajectory
+        dt = self.dt
+        max_steps = int(5.0 / dt)  # 5 seconds of movement
+        task_traj = []
 
+        for step in range(self.rhythmic_dmp.timesteps):
+            dmp_pos_2d, _, _ = self.rhythmic_dmp.step(tau=3.0)  # higher tau for faster execution
+            target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
+            task_traj.append(target_3d)
 
-        dt = 0.01
-        try:
-            while self.viewer.is_running():
-                # Get next 2D position from rhythmic DMP
-                dmp_pos_2d = self.rhythmic_dmp.step()
+        print(f"Generated {len(task_traj)} task-space waypoints from rhythmic DMP.")
 
-                # Add offset to center the pattern on table
-                center_offset = np.array([0.3, 0.0])  # Table center
-                final_pos_2d = center_offset + dmp_pos_2d * 0.1  # Scale down pattern
+        # Generate joint trajectory via IK
+        joint_traj = []
+        for idx, target_3d in enumerate(task_traj):
+            success, _ = enhanced_ik_solver(
+                self.model, self.data, self.site_id, target_3d, self.joint_names,
+                max_iters_per_wp=30, print_every=1000
+            )
+            if success:
+                joints = get_joint_positions(self.model, self.data, self.joint_names)
+                joint_traj.append(joints.copy())
+            else:
+                print(f"❌ IK failed for waypoint {idx}, skipping.")
 
-                # Create 3D target with constant Z
-                target_3d = np.array([final_pos_2d[0], final_pos_2d[1], MOP_Z_HEIGHT])
-
-                # Solve IK and move robot
-                success, _ = enhanced_ik_solver(
-                    self.model, self.data, self.site_id, target_3d, self.joint_names,
-                    max_iters_per_wp=30, print_every=1000  # Reduced for real-time
-                )
-
-                if success:
-
-                    mujoco.mj_forward(self.model, self.data)
-                    mujoco.mj_step(self.model, self.data)
-
-                # Update visualization
-
-                self.viewer.draw()
-                time.sleep(dt)
-
-        except KeyboardInterrupt:
-            print("\n⏹️ Rhythmic movement stopped by user")
+        print(f"Generated {len(joint_traj)} joint-space waypoints.")
+        return joint_traj
 
     def execute_realtime_mode(self):
         """Execute real-time mouse control mode with 3D movement"""
@@ -1036,31 +1045,38 @@ class EnhancedDMPController:
         while self.running and self.viewer.is_running():
             print("\n📋 MAIN MENU:")
             print("1. Discrete DMP Mode (waypoint navigation with constant Z)")
-            print("2. Rhythmic DMP Mode (mouse-drawn patterns with constant Z)")
-            print("3. Real-time Mouse Control (X-Y plane with constant Z)")
-            print("4. Reset Robot to Home Position")
-            print("5. Move to Custom Position (X, Y)")
-            print("6. Quit")
+            print("2. Discrete DMP Mode (Draw waypoints)")
+            print("3. Rhythmic DMP Mode (mouse-drawn patterns with constant Z)")
+            print("4. Real-time Mouse Control (X-Y plane with constant Z)")
+            print("5. Reset Robot to Home Position")
+            print("6. Move to Custom Position (X, Y)")
+            print("7. Quit")
 
             try:
-                choice = input("\nSelect mode (1-6): ").strip()
+                choice = input("\nSelect mode (1-7): ").strip()
 
                 if choice == '1':
                     joint_traj = self.apply_discrete_dmp()
                     if joint_traj is not None and len(joint_traj) > 0:
                         self.execute_joint_trajectory(joint_traj)
                 elif choice == '2':
-                    self.execute_rhythmic_mode()
+                    joint_traj = self.apply_discrete_dmp(draw_waypoints=True)
+                    if joint_traj is not None and len(joint_traj) > 0:
+                        self.execute_joint_trajectory(joint_traj)
                 elif choice == '3':
-                    self.execute_realtime_mode()
+                    joint_traj = self.apply_rhythmic_mode()
+                    if joint_traj is not None and len(joint_traj) > 0:
+                        self.execute_joint_trajectory(joint_traj)
                 elif choice == '4':
-                    self.reset_robot_to_home()
+                    self.execute_realtime_mode()
                 elif choice == '5':
-                    self.manual_move_prompt()
+                    self.reset_robot_to_home()
                 elif choice == '6':
+                    self.manual_move_prompt()
+                elif choice == '7':
                     self.running = False
                 else:
-                    print("Invalid choice. Please select 1-6.")
+                    print("Invalid choice. Please select 1-7.")
 
                 # Brief pause between operations
                 time.sleep(0.5)
@@ -1129,13 +1145,20 @@ class EnhancedDMPController:
             print(f"Error during rotation: {e}")
 
     def execute_joint_trajectory(self, joint_traj, dt=0.01):
-        """Send joint trajectory to MuJoCo's built-in controller"""
         print(f"Executing joint trajectory with {len(joint_traj)} waypoints...")
+
+        # Reset robot to initial joint configuration
+        if len(joint_traj) > 0:
+            set_joint_positions(self.model, self.data, self.joint_names, joint_traj[0])
+            mujoco.mj_forward(self.model, self.data)
+            self.viewer.draw()
+            time.sleep(self.dt)
+
         for joints in joint_traj:
             self.data.ctrl[:] = joints
             mujoco.mj_step(self.model, self.data)
             self.viewer.draw()
-            time.sleep(dt)
+            time.sleep(self.dt)
         print("Discrete trajectory execution complete.")
 
 

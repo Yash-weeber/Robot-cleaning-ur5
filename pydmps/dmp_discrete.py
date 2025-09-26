@@ -1,4 +1,4 @@
-from dmps.dmp import DMPs  # Import the base DMPs class from the dmps.dmp module
+from pydmps.dmp import DMPs  # Import the base DMPs class from the dmps.dmp module
 import numpy as np         # Import numpy for numerical operations
 
 class DMPs_discrete(DMPs):  # Define a class for discrete DMPs, inheriting from DMPs

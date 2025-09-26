@@ -56,8 +56,8 @@ class EnhancedDMPController:
         self.dof_indices = np.array(self.dof_indices, dtype=int)
 
         # Controller params (tweak for speed / smoothness)
-        self.dt = 0.005            
-        self.pos_k = 1.5       
+        self.dt = 0.002            
+        self.pos_k = 5       
         self.max_dq = 0.08        
         self.speed_factor = 0.6   
         self.pos_tol = 0.02       
@@ -236,7 +236,7 @@ def main_user_input():
         data.qpos[adr] = angle
     mujoco.mj_forward(model, data)
 
-    fixed_z_value = 0.54  # change z here(might need as some friction)
+    fixed_z_value = 0.55  # change z here(might need as some friction)
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
         try:

@@ -1,4 +1,4 @@
-from dmps.dmp import DMPs  # Import the base DMPs class from the dmps.dmp module
+from pydmps.dmp import DMPs  # Import the base DMPs class from the dmps.dmp module
 import numpy as np         # Import numpy for numerical operations
 
 class DMPs_rhythmic(DMPs):  # Define a class for rhythmic DMPs, inheriting from DMPs
@@ -64,7 +64,7 @@ class DMPs_rhythmic(DMPs):  # Define a class for rhythmic DMPs, inheriting from 
         """
         if isinstance(x, np.ndarray):
             return np.ones(x.shape)  # Return an array of ones if x is an array
-        return 1  # Return 1 if x is a scalar
+        return 1  # Return 1 
     
     def gen_goal(self, y_des):
         """

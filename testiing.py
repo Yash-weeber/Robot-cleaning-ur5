@@ -22,7 +22,7 @@ try:
     from movement_primitives.dmp import DMP, CartesianDMP
     # from movement_primitives.dmp_fast import RythmicDMP
     # from movement_primitives.dmp_fast import DiscreteDMP
-    from dmps.dmp_discrete import DMPs_discrete
+    from pydmps.dmp_discrete import DMPs_discrete
 
     MOVEMENT_PRIMITIVES_AVAILABLE = True
 except ImportError:

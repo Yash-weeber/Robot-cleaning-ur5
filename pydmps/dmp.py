@@ -1,5 +1,5 @@
 import numpy as np
-from dmps.CanonicalSystem import CanonicalSystem
+from pydmps.CanonicalSystem import CanonicalSystem
 
 class DMPs:
     def __init__(self, n_dmps, n_bfs, dt=0.01, y0=0, goal=1, w=None, ay=None, by=None, **kwargs):
@@ -59,7 +59,7 @@ class DMPs:
             self.goal += 1e-4 * np.sign(self.goal - self.y0 + 1e-4)
     
     def imitate_path(self, y_des:np.array, plot=False):
-        """Takes the desired path and computes the parameters for to follow it
+        """Takes the desired path and computes the parameters to follow it
         y_des: desired path (n_dmps x timesteps)
         """
         # set initial state and goal

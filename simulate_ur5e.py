@@ -15,11 +15,11 @@ class ImpedanceController:
         self.joint_ids = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name) for name in joint_names]
         self.robot_dof_indices = np.array([model.jnt_dofadr[jid] for jid in self.joint_ids])
         self.kp = 400
-        self.ko = 5
+        self.ko = 50
         self.kv = 300
         self.kv_null = 100.0
         self.ctrlr_dof = np.array([True, True, True, False, False, False])
-        self.torque_limit = 120.0
+        self.torque_limit = 200.0
 
     def euler_rpy_to_quat(self, roll, pitch, yaw):
         cr, sr = np.cos(roll/2), np.sin(roll/2)
@@ -58,7 +58,7 @@ class ImpedanceController:
     def get_Mx(self, J, M):
         M_inv = self.svd_solve(M)
         Mx_inv = J @ M_inv @ J.T
-        threshold = 1e-4
+        threshold = 1e-3
         if abs(np.linalg.det(Mx_inv)) >= threshold:
             Mx = self.svd_solve(Mx_inv)
         else:
@@ -139,10 +139,13 @@ mujoco.mj_forward(model, data)
 
 # --- Instantiate Controller ---
 controller = ImpedanceController(model, data, ee_site_name, robot_joint_names)
-controller.kp = 200
-controller.kv = 50
+controller.kp = np.array([200, 200, 500])
+controller.kv = np.array([200, 200, 500, 200, 200, 200])
+controller.kv_null = 150 * np.ones(len(robot_joint_names))
+controller.kv_null[2] = 500  # More damping on elbow joint
+controller.ko = 10
 # --- Target Pose ---
-target_xyz = np.array([0.5, 0.2, 0.51], dtype=float)
+target_xyz = np.array([0.5, 0.0, 0.51], dtype=float)
 target_rpy = np.array([1.57079633, -0.07159265, -1.38279633])
 target_quat = controller.euler_rpy_to_quat(*target_rpy)
 
