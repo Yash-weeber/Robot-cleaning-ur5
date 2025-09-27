@@ -137,10 +137,10 @@ class DMPs_discrete(DMPs):  # Define a class for discrete DMPs, inheriting from 
 
         psi_track = self.gen_psi(x_track)  # Compute the basis function activations for the rollout
         
-        # csalculate the basis function weights using weighted linear regression
+        # calculate the basis function weights using weighted linear regression
         self.w = np.zeros((self.n_dmps, self.n_bfs))  # Initialize the weights array
         for d in range(self.n_dmps):  # Loop over each DMP dimension
-            # spacial spacing
+            # spatial spacing
             k = self.goal[d] - self.y0[d]  # Compute the scaling factor for the movement
             for b in range(self.n_bfs):    # Loop over each basis function
                 # weighted linear regression

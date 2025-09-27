@@ -132,7 +132,7 @@ class DMPs_rhythmic(DMPs):  # Define a class for rhythmic DMPs, inheriting from 
         x_track = self.cs.rollout()  # Roll out the canonical system to get the phase variable over time
         psi_track = self.gen_psi(x_track)  # Compute the basis function activations over time
 
-        # efficiently calculate BF weights using weighted linear regression
+        # calculate BF weights using weighted linear regression
         for d in range(self.n_dmps):
             for b in range(self.n_bfs):
                 self.w[d, b] = np.dot(psi_track[:, b], f_target[:, d]) / (
