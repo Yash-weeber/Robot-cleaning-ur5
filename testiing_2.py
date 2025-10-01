@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
 import queue
-
+# from waypoint_generator import generate_initial_pattern
 # Movement Primitives Installation:
 # pip install movement_primitives
 
@@ -30,7 +30,7 @@ except ImportError:
     MOVEMENT_PRIMITIVES_AVAILABLE = False
 
 # ---------------------------------------------------------
-# Configuration Constants
+# Configuration Constant
 # ---------------------------------------------------------
 XML_PATH = "ballmove.xml"
 SITE_NAME = "ee_site"
@@ -732,6 +732,9 @@ class EnhancedDMPController:
 
         # Initialize viewer
         self.viewer = ViewerAdapter(self.model, self.data)
+        self._qpos0 = self.data.qpos.copy()
+        self._qvel0 = self.data.qvel.copy()
+        self._act0  = self.data.act.copy() if hasattr(self.data, "act") else None
 
         # DMP instances
         self.dmp = None
@@ -766,6 +769,50 @@ class EnhancedDMPController:
         self.viewer.draw()
 
         return True
+    # ------------------------
+    # World/Viewer Reset Utils
+    # ------------------------
+    def reset_grid_counters(self):
+        """Clear per-iteration counters and logs."""
+        try:
+            self.grid_count[:] = 0
+        except Exception:
+            self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
+        self.grid_count_log.clear()
+
+    def hard_reset_from_home(self, redraw: bool = True):
+        """
+        Reset world/balls to initial snapshot but place robot at HOME_JOINT_POSITIONS.
+        - Restores qpos/qvel for everything from snapshot
+        - Then overwrites robot joint qpos to HOME and zeros their qvel entries
+        - Resets actuators and counters
+        - Runs mj_forward and optionally redraws
+        """
+        # 1) Restore full snapshot (balls, free bodies, etc.)
+        np.copyto(self.data.qpos, self._qpos0)
+        np.copyto(self.data.qvel, self._qvel0)
+        if self._act0 is not None and hasattr(self.data, "act"):
+            np.copyto(self.data.act, self._act0)
+
+        # 2) Overwrite robot joints to HOME and zero their qvel
+        for i, jn in enumerate(self.joint_names):
+            jid  = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+            qadr = self.model.jnt_qposadr[jid]       # index into qpos
+            dadr = self.model.jnt_dofadr[jid]        # index into qvel (1 dof per hinge)
+            self.data.qpos[qadr] = HOME_JOINT_POSITIONS[i]
+            self.data.qvel[dadr] = 0.0
+
+        # 3) Rebuild physics + clear per-iter counters
+        mujoco.mj_forward(self.model, self.data)
+        self.reset_grid_counters()
+
+        # 4) Optional redraw
+        if redraw and hasattr(self, "viewer") and self.viewer is not None:
+            try:
+                self.viewer.draw()
+            except Exception:
+                pass
+
 
     def move_to_3d_position(self, target_xy, animate=True):
         """
@@ -833,7 +880,7 @@ class EnhancedDMPController:
             j = min(max(j, 0), self.num_y_segments - 1)
             grid_counts[i, j] += 1
             
-        grid_counts = grid_counts[:, ::-1].T # reverse columns then transpose to match visual layout
+        grid_counts = grid_counts[:, ::-1] # reverse columns then transpose to match visual layout
 
         # Print results
         for i in range(self.num_x_segments):
@@ -841,7 +888,7 @@ class EnhancedDMPController:
                 print(f"Grid cell ({i+1},{j+1}) x:[{x_edges[i]:.2f},{x_edges[i+1]:.2f}] y:[{y_edges[j]:.2f},{y_edges[j+1]:.2f}]: {grid_counts[i, j]} balls")
         self.grid_count_log.append(grid_counts.copy())
         self.grid_count = grid_counts.copy()
-        # return grid_counts
+        return grid_counts
     
     def get_discrete_waypoints(self):
         """Get waypoints for discrete mode with improved UI"""
@@ -948,7 +995,7 @@ class EnhancedDMPController:
             print(f"Step {step}: DMP pos: {dmp_pos_2d}, 3D target: {target_3d}" )
 
         print(f"Generated {len(task_traj)} task-space waypoints from DMP.")
-        
+
 
         joint_traj = []
         for idx, target_3d in enumerate(task_traj):
@@ -1234,4 +1281,4 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 
-# %%
+#%%

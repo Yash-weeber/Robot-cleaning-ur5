@@ -119,22 +119,22 @@
         0.49 -->
       <!-- y = 0 edge (north), tilt toward -y -->
       <geom name="wedge_y_pos" type="box" size="1.35 0.05 0.01"
-        pos="0.0 0.7 0.50" axisangle="1 0 0 0.7854"
+        pos="0.0 0.7 0.48" axisangle="1 0 0  0.1745329"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- y = -1.4 edge (south), tilt toward +y -->
       <geom name="wedge_y_neg" type="box" size="1.35 0.05 0.01"
-        pos="0.0 -0.7 0.50" axisangle="1 0 0 -0.7854"
+        pos="0.0 -0.7 0.48" axisangle="1 0 0  -0.1745329"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- x = 0 edge (east), tilt toward -x -->
       <geom name="wedge_x_pos" type="box" size="0.05 0.7 0.01"
-        pos="1.35 0.0 0.50" axisangle="0 1 0 -0.7854"
+        pos="1.35 0.0 0.48" axisangle="0 1 0 -0.1745329"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- x = -2.7 edge (west), tilt toward +x -->
       <geom name="wedge_x_neg" type="box" size="0.05 0.7 0.01"
-        pos="-1.35 0.0 0.50" axisangle="0 1 0 0.7854"
+        pos="-1.35 0.0 0.48" axisangle="0 1 0 0.1745329"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
     </body>
 

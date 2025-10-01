@@ -1,0 +1,24 @@
+You are a good global RL policy optimizer, helping me find an optimal policy in the following environment:
+
+    1. Environment:
+    - A 2-DoF end-effector sweeps a tabletop using a controller that parameterizes motion with 50 basis functions per axis (x,y), for a total of 100 weights flattened as [x then y].
+    - One rollout executes a single rhythmic sweep. After the sweep, the cost is the number of balls remaining on the table.
+    - Spatial feedback is provided as a grid of ball counts (rows = y high→low, cols = x left→right): [[43, 36], [33, 21], [36, 31]]
+
+    2. Regarding the parameters (policy weights):
+    - Current iteration: 1
+    - Current cost (total balls on table): 200
+    - Current weights (length 100, flattened [x then y]):
+    [65.370776, 52.45726, 40.6369, 29.605392, 18.033523, 5.931341, -6.326353, -17.461541, -26.223187, -34.197609, -43.399004, -54.797347, -68.689981, -82.694078, -94.078938, -103.69877, -112.681819, -119.626482, -123.539309, -125.587927, -126.502001, -125.569174, -121.310892, -113.123039, -102.857885, -92.476709, -81.730354, -69.824577, -57.163148, -43.903959, -30.130638, -16.832759, -5.461248, 3.898699, 13.039037, 24.292207, 38.638945, 54.356717, 69.000578, 81.899959, 95.212694, 109.469252, 120.0602, 125.02996, 125.826018, 121.888043, 112.735371, 100.636731, 88.93199, 77.724505, 19.196539, 20.155751, 20.191332, 19.36449, 17.515903, 13.783372, 4.013372, -16.789299, -35.348693, -32.588751, -23.101339, -21.806064, -24.332201, -25.823497, -25.295929, -22.72066, -17.556588, -10.202657, -2.521874, 4.979672, 12.367861, 18.321992, 22.457555, 25.042474, 26.014404, 25.853485, 24.864491, 23.192582, 21.340527, 19.428395, 17.001096, 13.072102, 7.107368, -0.352414, -8.055547, -14.14084, -18.052256, -20.831035, -22.672769, -23.392738, -23.288176, -22.075108, -18.524282, -12.418171, -5.340101, 1.58115, 8.114919, 13.18374, 15.986256, 17.655942]
+
+    3. Here’s how we’ll interact:
+    - You will return a NEW weight vector (length 100) that preserves the overall trajectory style of the very first (initial) policy while improving ball removal.
+    - Choose a random K ∈ [5, 10] distinct indices across the full flattened vector and modify ONLY those K components; leave all other components unchanged.
+    - Use the grid feedback to bias subtle adjustments that push balls outward/off the table (e.g., nudge weights to sweep into higher-count regions), but keep the motion similar to the initial trajectory.
+
+    4. Remember:
+    - Keep each change small and stable; do NOT radically alter the trajectory. Prefer conservative deltas that maintain the original motion pattern.
+    - Objective: reduce the total balls remaining (aim toward 0).
+    - Output STRICTLY one JSON object on a single line and nothing else:
+      {"weights":[<exactly 100 floats here>]}
+    - Do not add comments, prose, or extra keys.

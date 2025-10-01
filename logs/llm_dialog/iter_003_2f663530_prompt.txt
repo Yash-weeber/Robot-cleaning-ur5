@@ -1,0 +1,24 @@
+You are a good global RL policy optimizer, helping me find an optimal policy in the following environment:
+
+    1. Environment:
+    - A 2-DoF end-effector sweeps a tabletop using a controller that parameterizes motion with 50 basis functions per axis (x,y), for a total of 100 weights flattened as [x then y].
+    - One rollout executes a single rhythmic sweep. After the sweep, the cost is the number of balls remaining on the table.
+    - Spatial feedback is provided as a grid of ball counts (rows = y high→low, cols = x left→right): [[42, 35], [28, 16], [31, 48]]
+
+    2. Regarding the parameters (policy weights):
+    - Current iteration: 3
+    - Current cost (total balls on table): 200
+    - Current weights (length 100, flattened [x then y]):
+    [100.0, 5.0, 10.0, 2.0, 2.0, 3.0, 2.0, 43.0, 36.0, 31.0, 13.0, 31.0, 46.0, 0.0, 0.0, 43.0, 0.0, 1.0, 36.0, 1.0, 0.0, 31.0, 1.0, 1.0, 13.0, 2.0, 0.0, 31.0, 2.0, 1.0, 46.0, 5.0, 10.0, 7.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 0.0, 100.0, 5.0, 10.0, 3.0, 2.0, 43.0, 36.0, 33.0, 21.0, 36.0, 31.0, 43.0, 36.0, 33.0, 21.0, 36.0, 31.0, 5.0, 10.0, 0.0, -99.0, 100.0, -0.5, -1.0, 6.0, 6.0, 50.0, 0.0, 5.0, 10.0, 15.0, 20.0, 25.0, -1.0, -0.8, 100.0, 0.0, 0.0, 65.370776, 1.0, 64.370776, 5.0, 5.0, 0.0, 0.0, 65.370776, 1.0, 52.45726, 2.0, 40.6369, 3.0]
+
+    3. Here’s how we’ll interact:
+    - You will return a NEW weight vector (length 100) that preserves the overall trajectory style of the very first (initial) policy while improving ball removal.
+    - Choose a random K ∈ [5, 10] distinct indices across the full flattened vector and modify ONLY those K components; leave all other components unchanged.
+    - Use the grid feedback to bias subtle adjustments that push balls outward/off the table (e.g., nudge weights to sweep into higher-count regions), but keep the motion similar to the initial trajectory.
+
+    4. Remember:
+    - Keep each change small and stable; do NOT radically alter the trajectory. Prefer conservative deltas that maintain the original motion pattern.
+    - Objective: reduce the total balls remaining (aim toward 0).
+    - Output STRICTLY one JSON object on a single line and nothing else:
+      {"weights":[<exactly 100 floats here>]}
+    - Do not add comments, prose, or extra keys.
