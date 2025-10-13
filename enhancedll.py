@@ -43,11 +43,11 @@ IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
 IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
 
 N_BFS = 25
-MAX_ITERS = 510
+MAX_ITERS = 50
 IK_MAX_ITERS = 50
 DECI_BUILD = 2  # keep every k-th DMP step when building joints (1=all)
 
-GEMINI_MODEL = "gemini-2.0-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
+GEMINI_MODEL = "gemini-2.5-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
 GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 builtins.input = lambda *a, **k: "7"
@@ -177,17 +177,18 @@ def log_iteration(iter_idx, grid_mat, total_balls, traj_len, out_csv):
 def save_trajectory_data(iter_idx, task_trajectory, csv_path):
     """Save X,Y trajectory coordinates for this iteration."""
     file_exists = os.path.exists(csv_path)
-    if iter_idx % 2 == 1:
+    # if iter_idx % 2 == 1:
 
-        with open(csv_path, "a", newline="") as f:
-            w = csv.writer(f)
-            if not file_exists:
-                w.writerow(["iter", "step", "x", "y", "timestamp"])
+    with open(csv_path, "a", newline="") as f:
+        w = csv.writer(f)
+        if not file_exists:
+            w.writerow(["iter", "step", "x", "y", "timestamp"])
 
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            for step_idx, target in enumerate(task_trajectory):
-                x, y = target[0], target[1]  # Extract X,Y (Z is constant)
-                w.writerow([iter_idx, step_idx, float(x), float(y), timestamp])
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        for step_idx, target in enumerate(task_trajectory):
+            x, y = target[0], target[1]  # Extract X,Y (Z is constant)
+            w.writerow([iter_idx, step_idx, float(x), float(y), timestamp])
+
 
 
 def load_trajectory_history(csv_path, max_iters=20):
@@ -406,7 +407,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
             # Define a waypoint sanity threshold (exclude truncated or invalid runs)
             waypoint_median = iter_df["traj_waypoints"].median()
-            waypoint_cutoff = max(waypoint_median * 0.8, waypoint_median - 200)
+            waypoint_cutoff = max(waypoint_median * 0.9, waypoint_median - 150)
 
             valid_df = iter_df[iter_df["traj_waypoints"] >= waypoint_cutoff]
 
@@ -546,7 +547,7 @@ Next :
      weights = {json.dumps(w_example1)} and {json.dumps(w_example2)},
      Trajectory = {TRAJECTORY_HISTORY_WINDOW}
      Total cost = {total_balls}
-     Grid cost = {total_balls}
+     Grid cost = {grid_list}
      
      
 # Historical Feedback Summary (last {feedback_window} iterations){feedback_text}

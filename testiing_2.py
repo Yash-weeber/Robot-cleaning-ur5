@@ -37,7 +37,7 @@ SITE_NAME = "ee_site"
 UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
 
 # 🎯 MOP CONFIGURATION
-MOP_Z_HEIGHT = 0.54  # Constant Z coordinate for mop
+MOP_Z_HEIGHT = 0.52  # Constant Z coordinate for mop
 # HOME_JOINT_POSITIONS = np.array([
 #     -2.89,  # shoulder_pan
 #     -1.07,  # shoulder_lift
@@ -531,8 +531,8 @@ class DrawingInterface:
         instructions.pack()
 
         # Coordinate transformation parameters (robot workspace)
-        self.x_min, self.x_max = -1.2, 1.2  # Robot workspace in meters
-        self.y_min, self.y_max = -0.5, 0.5
+        self.x_min, self.x_max = -1.3, 1.3  # Robot workspace in meters
+        self.y_min, self.y_max = -0.6, 0.6
 
     def canvas_to_robot_coords(self, canvas_x, canvas_y):
         # Convert canvas coordinates to robot workspace coordinates
@@ -856,18 +856,56 @@ class EnhancedDMPController:
             print(f"❌ IK Failed! Final error: {error:.6f} m")
             return False
 
+    # def count_balls_in_grid(self):
+    #     x_edges = np.linspace(self.x_min, self.x_max, self.num_x_segments + 1)
+    #     y_edges = np.linspace(self.y_min, self.y_max, self.num_y_segments + 1)
+    #     grid_counts = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
+    #
+    #     ball_names = [f"ball_{i+1}" for i in range(self.num_balls)]
+    #     ball_positions = []
+    #     for name in ball_names:
+    #         body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
+    #         if body_id != -1:
+    #             pos = self.data.xpos[body_id][:2]  # x, y position
+    #             ball_positions.append(pos)
+    #     ball_positions = np.array(ball_positions)
+    #
+    #     for pos in ball_positions:
+    #         x, y = pos
+    #         # Find which grid cell (i, j) the ball is in
+    #         i = np.searchsorted(x_edges, x, side='right') - 1
+    #         j = np.searchsorted(y_edges, y, side='right') - 1
+    #         # Clamp indices to valid range
+    #         i = min(max(i, 0), self.num_x_segments - 1)
+    #         j = min(max(j, 0), self.num_y_segments - 1)
+    #         grid_counts[i, j] += 1
+    #
+    #     grid_counts = grid_counts[:, ::-1] # reverse columns then transpose to match visual layout
+    #
+    #     # Print results
+    #     for i in range(self.num_x_segments):
+    #         for j in range(self.num_y_segments):
+    #             print(f"Grid cell ({i+1},{j+1}) x:[{x_edges[i]:.2f},{x_edges[i+1]:.2f}] y:[{y_edges[j]:.2f},{y_edges[j+1]:.2f}]: {grid_counts[i, j]} balls")
+    #     self.grid_count_log.append(grid_counts.copy())
+    #     self.grid_count = grid_counts.copy()
+    #     return grid_counts
+
+
+
     def count_balls_in_grid(self):
         x_edges = np.linspace(self.x_min, self.x_max, self.num_x_segments + 1)
         y_edges = np.linspace(self.y_min, self.y_max, self.num_y_segments + 1)
         grid_counts = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
 
-        ball_names = [f"ball_{i+1}" for i in range(self.num_balls)]
+        ball_names = [f"ball_{i + 1}" for i in range(self.num_balls)]
         ball_positions = []
         for name in ball_names:
             body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
             if body_id != -1:
                 pos = self.data.xpos[body_id][:2]  # x, y position
-                ball_positions.append(pos)
+                # Only include balls inside the grid bounds
+                if (self.x_min <= pos[0] <= self.x_max) and (self.y_min <= pos[1] <= self.y_max):
+                    ball_positions.append(pos)
         ball_positions = np.array(ball_positions)
 
         for pos in ball_positions:
@@ -879,17 +917,21 @@ class EnhancedDMPController:
             i = min(max(i, 0), self.num_x_segments - 1)
             j = min(max(j, 0), self.num_y_segments - 1)
             grid_counts[i, j] += 1
-            
-        grid_counts = grid_counts[:, ::-1] # reverse columns then transpose to match visual layout
+
+        grid_counts = grid_counts[:, ::-1]  # reverse columns then transpose to match visual layout
 
         # Print results
         for i in range(self.num_x_segments):
             for j in range(self.num_y_segments):
-                print(f"Grid cell ({i+1},{j+1}) x:[{x_edges[i]:.2f},{x_edges[i+1]:.2f}] y:[{y_edges[j]:.2f},{y_edges[j+1]:.2f}]: {grid_counts[i, j]} balls")
+                print(
+                    f"Grid cell ({i + 1},{j + 1}) x:[{x_edges[i]:.2f},{x_edges[i + 1]:.2f}] y:[{y_edges[j]:.2f},{y_edges[j + 1]:.2f}]: {grid_counts[i, j]} balls")
+        print("total balls counted:", np.sum(grid_counts))
         self.grid_count_log.append(grid_counts.copy())
         self.grid_count = grid_counts.copy()
         return grid_counts
-    
+
+
+
     def get_discrete_waypoints(self):
         """Get waypoints for discrete mode with improved UI"""
         root = tk.Tk()
