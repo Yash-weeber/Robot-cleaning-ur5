@@ -1,0 +1,38 @@
+You are optimizing rhythmic DMP weights for a 2-DoF end-effector sweeping task.
+
+    System:
+    You are good global RL policy optimizer, helping me find the global optimal policy in the following environment:
+    # Environment :
+A planar end-effector (2-DoF in x,y) performs a rhythmic sweep over a tabletop covered with light balls. One rollout = one full sweep. After the sweep, we observe remaining balls via a coarse grid.
+    - Controller uses Rhythimic DMPS with n_bfs=25. Weights are flattened [x then y] with total length 50.
+    - A single rollout executes one full sweep; cost = total balls remaining on the table.
+    - Spatial feedback is a 3x2 grid of ball counts (rows = y high→low, cols = x left→right): [[40, 40], [33, 14], [37, 34]]
+
+    Hard constraints (must follow):
+    - XY WORKSPACE LIMITS (meters): x ∈ [-1.350, 1.350], y ∈ [-0.700, 0.700]
+      Any path implied by your weights must keep the 2D end-effector trajectory strictly within these bounds.
+      If you propose weights that drive points outside these bounds, the IK will fail (waypoints rejected).
+    - FULL-GRID COVERAGE PER CYCLE: design the sweep so it passes through ALL grid sectors (do NOT tunnel on a single side).
+      Prioritize cells with higher ball counts, but ensure at least one pass over each sector every cycle.
+
+    Stability and continuity:
+    - Preserve the overall "style" of the prior motion. Prefer small, smooth, coordinated updates.
+    - Modify at most 12 weights out of 50 (subset updates). For any changed weight w[i]:
+        - Absolute delta limit: |Δw[i]| ≤ 5.0
+        - Relative delta limit: |Δw[i]| ≤ 0.08 * max(1e-6, |w_prev[i]|)
+
+    Current state:
+    - Iteration: 1
+    - Current cost (total balls): 198
+    - Current weights (length 50, flattened [x then y]):
+    [65.370776, 40.17725383333333, 17.02500783333333, -7.718251500000002, -27.552257333333333, -45.77365879166667, -72.19100525000002, -96.88472233333333, -114.99670666666667, -124.30754075, -126.11332308333334, -117.55812604166665, -97.66729699999999, -75.28139145833332, -49.42862108333337, -21.819463624999948, 0.7787166666666661, 21.010032416666665, 50.42727400000005, 79.21258795833337, 107.093159, 124.40874000000001, 122.21620758333331, 101.14084100000001, 77.724505, 19.196539, 20.15688025, 17.20485875, 1.4130381249999968, -34.88870266666667, -22.831490041666665, -24.705025000000003, -24.544808875, -15.105277666666668, 0.2912057500000098, 14.848748916666668, 23.64230954166667, 25.9339445, 23.958873625, 20.225116666666672, 14.545474749999983, 2.1341799999999997, -12.365962875, -20.136340250000007, -23.242744458333338, -22.277286, -13.18143487499999, 1.004379083333352, 12.972539124999994, 17.655942]
+    - Recent history (oldest→newest, up to last 25 proposals/executions):
+    []
+
+    Objective:
+    - Reduce total balls toward 0 while satisfying bounds and full-grid coverage.
+    - Keep the trajectory coherent and rhythmic; avoid large amplitude jumps or drift.
+
+    Output STRICTLY one JSON object on a single line (no code fences). Include a brief 'Reason' and the 'weights':
+    {"Reason":"<one sentence explaining coverage + bounds adherence>", "weights":[<exactly 50 floats>]}
+    

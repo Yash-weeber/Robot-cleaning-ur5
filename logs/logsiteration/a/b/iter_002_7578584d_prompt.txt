@@ -1,0 +1,27 @@
+You are a good global RL policy optimizer, helping me find an optimal policy in the following environment:
+
+    1. Environment:
+    - A 2-DoF end-effector sweeps a tabletop using a controller that parameterizes motion with 50 basis functions per axis (x,y), for a total of 100 weights flattened as [x then y].
+    - One rollout executes a single rhythmic sweep. After the sweep, the cost is the number of balls remaining on the table.
+    - Spatial feedback is provided as a grid of ball counts (rows = y high→low, cols = x left→right): [[43, 35], [34, 14], [30, 42]]
+
+    2. Regarding the parameters (policy weights):
+    - Current iteration: 2
+    - Current cost (total balls on table): 198
+    - Current weights (length 100, flattened [x then y]):
+    [41.0, 36.0, 36.0, 21.0, 33.0, 31.0, 3.0, 2.0, 41.0, 36.0, 36.0, 21.0, 33.0, 31.0, 41.0, 36.0, 36.0, 21.0, 33.0, 31.0, 198.0, 100.0, 50.0, 50.0, 41.0, 1.2, 50.0, 50.0, -5.0, 5.0, 1.1, 1.0, 50.0, 0.0, 65.370776, 1.0, 52.45726, 2.0, 40.6369, 3.0, 29.605392, 4.0, 18.033523, 5.0, 5.931341, 6.0, -6.326353, 7.0, -17.461541, 8.0, -26.223187, 9.0, -34.197609, 10.0, -43.399004, 11.0, -54.797347, 12.0, -68.689981, 13.0, -82.694078, 14.0, -94.078938, 15.0, -103.69877, 16.0, -112.681819, 17.0, -119.626482, 18.0, -123.539309, 19.0, -125.587927, 20.0, -126.502001, 21.0, -125.569174, 22.0, -121.310892, 23.0, -113.123039, 24.0, -102.857885, 25.0, -92.476709, 26.0, -81.730354, 27.0, -69.824577, 28.0, -57.163148, 29.0, -43.903959, 30.0, -30.130638, 31.0, -16.832759, 32.0, -5.461248, 33.0]
+    - History of past weights (oldest→newest, for all previous iterations):
+    [[41.0, 36.0, 36.0, 21.0, 33.0, 31.0, 3.0, 2.0, 41.0, 36.0, 36.0, 21.0, 33.0, 31.0, 41.0, 36.0, 36.0, 21.0, 33.0, 31.0, 198.0, 100.0, 50.0, 50.0, 41.0, 1.2, 50.0, 50.0, -5.0, 5.0, 1.1, 1.0, 50.0, 0.0, 65.370776, 1.0, 52.45726, 2.0, 40.6369, 3.0, 29.605392, 4.0, 18.033523, 5.0, 5.931341, 6.0, -6.326353, 7.0, -17.461541, 8.0, -26.223187, 9.0, -34.197609, 10.0, -43.399004, 11.0, -54.797347, 12.0, -68.689981, 13.0, -82.694078, 14.0, -94.078938, 15.0, -103.69877, 16.0, -112.681819, 17.0, -119.626482, 18.0, -123.539309, 19.0, -125.587927, 20.0, -126.502001, 21.0, -125.569174, 22.0, -121.310892, 23.0, -113.123039, 24.0, -102.857885, 25.0, -92.476709, 26.0, -81.730354, 27.0, -69.824577, 28.0, -57.163148, 29.0, -43.903959, 30.0, -30.130638, 31.0, -16.832759, 32.0, -5.461248, 33.0]]
+
+    3. Here’s how we’ll interact:
+    - You will return a NEW weight vector (length 100) that may adjust some or all components as needed to improve ball removal.
+    - Use the grid feedback to bias adjustments that push balls outward/off the table, but keep the motion trajectory coherent and stable.
+
+    4. Remember:
+    - Keep changes stable; do NOT output random noise. Prefer smooth, coordinated updates that maintain a consistent sweeping motion.
+    - Propose weights that keep the entire sweep inside these bounds. If necessary, reduce amplitude rather than shifting outside.
+    - Objective: reduce the total balls remaining (aim toward 0).
+    - Output STRICTLY one JSON object on a single line and reason and nothing else:
+        Reason: <your explanation here>
+      {"weights":[<exactly 100 floats here>]}
+    - Do not add comments, prose, or extra keys.
