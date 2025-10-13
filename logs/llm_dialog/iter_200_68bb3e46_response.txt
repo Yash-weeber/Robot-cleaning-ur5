@@ -1,0 +1,3 @@
+```json
+{"reason": "To improve coverage, especially in the upper-left and upper-right regions, the new weights generate a serpentine trajectory that oscillates horizontally across the full x-range while sweeping vertically across the entire y-range, ensuring adherence to bounds.", "weights": [0.0, 12.367861, 24.363998, 35.606838, 45.722538, 54.379058, 61.309072, 66.291778, 69.167096, 69.885069, 68.454728, 64.954716, 59.544717, 52.45726, 44.013372, 34.54915, 24.363998, 13.783372, 3.106509, -7.303905, -17.461541, -26.223187, -33.455577, -39.02968, -42.80164, 150.0, 137.5, 125.0, 112.5, 100.0, 87.5, 75.0, 62.5, 50.0, 37.5, 25.0, 12.5, 0.0, -12.5, -25.0, -37.5, -50.0, -62.5, -75.0, -87.5, -100.0, -112.5, -125.0, -137.5, -150.0]}
+```

@@ -1,0 +1,3 @@
+```json
+{"reason": "Generated weights aim for a comprehensive sweep across the entire X-range using a triangular wave pattern, combined with a linear descent across the Y-range, to ensure full tabletop coverage and minimize remaining balls, while adhering to workspace limits.", "weights": [-150.0, -125.0, -100.0, -75.0, -50.0, -25.0, 0.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 125.0, 100.0, 75.0, 50.0, 25.0, 0.0, -25.0, -50.0, -75.0, -100.0, -125.0, -150.0, 100.0, 91.666667, 83.333333, 75.0, 66.666667, 58.333333, 50.0, 41.666667, 33.333333, 25.0, 16.666667, 8.333333, 0.0, -8.333333, -16.666667, -25.0, -33.333333, -41.666667, -50.0, -58.333333, -66.666667, -75.0, -83.333333, -91.666667, -100.0]}
+```
