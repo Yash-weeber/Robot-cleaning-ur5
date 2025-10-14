@@ -109,32 +109,32 @@
     <!-- Table positioned as base platform -->
     <body name="table" pos="0 0 0">
       <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5" />
-      <geom name="table_collision" type="box" size="1.4 0.7 0.5" pos="0.0 0.0 -0.01"
+      <geom name="table_collision" type="box" size="1.3 0.65 0.45" pos="0.0 0.0 0.01"
         material="table_material" group="3" contype="1" conaffinity="1"
         solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05" />
       <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"
-        pos="1.35 0.7 0" />
+        pos="1.28 0.65 0" />
       <!-- 45-deg wedges along table edges (width ≈ 0.10 m, thickness ≈ 0.02 m) -->
       <!-- Table collision box extents in table frame: x in [-2.7, 0], y in [-1.4, 0], top z ≈
         0.49 -->
       <!-- y = 0 edge (north), tilt toward -y -->
       <geom name="wedge_y_pos" type="box" size="1.35 0.05 0.01"
-        pos="0.0 0.7 0.50" axisangle="1 0 0 0.7854"
+        pos="0.0 0.7 0.4552" axisangle="1 0 0 0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- y = -1.4 edge (south), tilt toward +y -->
       <geom name="wedge_y_neg" type="box" size="1.35 0.05 0.01"
-        pos="0.0 -0.7 0.50" axisangle="1 0 0 -0.7854"
+        pos="0.0 -0.7 0.4552" axisangle="1 0 0 -0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- x = 0 edge (east), tilt toward -x -->
       <geom name="wedge_x_pos" type="box" size="0.05 0.7 0.01"
-        pos="1.35 0.0 0.50" axisangle="0 1 0 -0.7854"
+        pos="1.35 0.0 0.4552" axisangle="0 1 0 -0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- x = -2.7 edge (west), tilt toward +x -->
       <geom name="wedge_x_neg" type="box" size="0.05 0.7 0.01"
-        pos="-1.35 0.0 0.50" axisangle="0 1 0 0.7854"
+        pos="-1.35 0.0 0.4552" axisangle="0 1 0 0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
     </body>
 
@@ -191,7 +191,7 @@
 
                   <!-- Mop tool attachment -->
                   <body name="mop_mount" pos="0 0.08 0" quat="1 0 0 1">
-                    
+
                     <body name="mop_tool" pos="0 -0.6 0">
                       <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01" />
                       <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1" />
