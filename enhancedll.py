@@ -23,6 +23,12 @@ CSV_MOVE_PATH = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleanin
 WEIGHTS_TXT = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight.txt"
 WEIGHTS_TXT2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight2.txt"
 BASE_DIR = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/"
+TRAJ_TXT1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject1.txt"
+TRAJ_TXT2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject2.txt"
+TOTAL1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total1.txt"
+TOTAL2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total2.txt"
+GRID1 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist1.txt"
+GRID2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist2.txt"
 # # ==============================
 # ====== EDIT THESE PATHS ======
 # CSV_MOVE_PATH   = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/move.csv"
@@ -43,7 +49,7 @@ IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
 IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
 
 N_BFS = 25
-MAX_ITERS = 50
+MAX_ITERS = 500
 IK_MAX_ITERS = 50
 DECI_BUILD = 2  # keep every k-th DMP step when building joints (1=all)
 
@@ -385,6 +391,21 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
         w_example2 = parse_weights_text(WEIGHTS_TXT2).tolist()
     except Exception:
         w_example2 = []
+    try :
+        trajectoy_1 = parse_weights_text(TRAJ_TXT1).tolist()
+        trajectoy_2 = parse_weights_text(TRAJ_TXT2).tolist()
+        total1=parse_weights_text(TOTAL1).tolist()
+        total2 = parse_weights_text(TOTAL2).tolist()
+        grid1 =parse_weights_text(GRID1).tolist()
+        grid2 = parse_weights_text(GRID2).tolist()
+    except:
+        trajectoy_1 =[]
+        trajectoy_2=[]
+        total1=[]
+        total2 =[]
+        grid1 =[]
+        grid2 = []
+
     xmin, xmax = bounds["xmin"], bounds["xmax"]
     ymin, ymax = bounds["ymin"], bounds["ymax"]
     grid_list = grid_mat.tolist()
@@ -393,6 +414,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     best_weight_feedback = ""
     best_iter_data = None
     best_weights = None
+    w_df = None
 
     try:
         # Load iteration and weight data if present
@@ -437,11 +459,12 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                 if best_weights:
                     w_min, w_max = np.min(best_weights), np.max(best_weights)
                     w_range = w_max - w_min
-                    max_step = round(w_range / 12, 3)
+                    wrange = 360
+                    max_step = round(wrange / 12, 3)
                     best_weight_feedback = (
                         f"# Weight Range Insight:\n"
-                        f"  Weight range = [{w_min:.3f}, {w_max:.3f}] "
-                        f"(Δ = {w_range:.3f}) → Suggested MAX_STEP = {max_step}\n"
+                        f"  Weight range = [-180,180]  "
+                        f"(Δ = {wrange:.3f}) → Suggested MAX_STEP = {max_step}\n"
                     )
 
     except Exception as e:
@@ -469,6 +492,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     feedback_text = ""
 
 
+
+
     if iter_log_data:
         recent_iters = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-feedback_window:]
         if recent_iters:
@@ -480,7 +505,6 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                     f"waypoints_executed={entry['traj_waypoints']}, "
                     f"grid_distribution={entry['cells']}\n"
                 )
-
 
     if traj_feedback_data:
         recent_traj_iters = sorted([k for k in traj_feedback_data.keys() if k < iter_idx])[-feedback_window:]
@@ -497,6 +521,30 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         f"  {_ordinal(i)} iteration: path_start={sample_start}, "
                         f"path_end={sample_end}, total_steps={len(pts)}\n"
                     )
+    if w_df is not None and not w_df.empty:
+        try:
+            executed_df = w_df[(w_df['tag'] == 'executed') & (w_df['iter'] < iter_idx)].copy()
+            executed_df['iter'] = executed_df['iter'].astype(int)
+            recent_executed = executed_df.sort_values(by='iter', ascending=False).head(feedback_window)
+
+            if not recent_executed.empty:
+                feedback_text += f"\n# Executed Weights History (last {len(recent_executed)} executed iterations):\n"
+
+                for _, row in recent_executed.sort_values(by='iter').iterrows():
+                    iter_num = int(row['iter'])
+                    weight_cols = [col for col in w_df.columns if col.startswith('w')]
+                    weights = pd.to_numeric(row[weight_cols], errors='coerce').dropna().tolist()
+
+                    if weights:
+                        # Convert the list of weights into a JSON string to include in the prompt
+                        # Rounding to 4 decimal places keeps it clean
+                        rounded_weights = [round(w, 4) for w in weights]
+                        feedback_text += (
+                            f"  {_ordinal(iter_num)} iteration: weights={json.dumps(rounded_weights)}\n"
+                        )
+        except Exception as e:
+            feedback_text += f"# ⚠️ Error processing executed weights history: {str(e)}\n"
+
 
     # Add performance trends analysis if we have enough data
     if iter_log_data and len([k for k in iter_log_data.keys() if k < iter_idx]) >= 3:
@@ -544,10 +592,17 @@ You are a global Reinforcement Learning policy optimizer, helping me find the gl
 
 Next :
      You will see examples of the dmp weights and their corresponding trajectory and cost.
-     weights = {json.dumps(w_example1)} and {json.dumps(w_example2)},
-     Trajectory = {TRAJECTORY_HISTORY_WINDOW}
-     Total cost = {total_balls}
-     Grid cost = {grid_list}
+      # Example 1:
+     weights =  {json.dumps(w_example1)} 
+     Trajectory = {json.dumps(trajectoy_1)} 
+     Total cost =  {json.dumps(total1)} 
+     Grid cost = {json.dumps(GRID1)} 
+     
+      # Example 2:
+     weights =  {json.dumps(w_example2)},
+     Trajectory =   {json.dumps(trajectoy_2)}
+     Total cost =  {json.dumps(total2)}
+     Grid cost = {json.dumps(GRID2)}
      
      
 # Historical Feedback Summary (last {feedback_window} iterations){feedback_text}
@@ -730,6 +785,7 @@ def call_gemini(prompt: str) -> str:
     - Adds thread safety, broader transient error detection, and capped backoff.
     """
     API_KEYS = [
+
         "GOOGLE_API_KEY_1",
         "GOOGLE_API_KEY_2",
         "GOOGLE_API_KEY_3",
