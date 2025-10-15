@@ -54,7 +54,7 @@
     <material name="linkgray" rgba="0.82 0.82 0.82 1" />
     <material name="urblue" rgba="0.49 0.678 0.8 1" />
     <material name="table_material" rgba="0.6 0.4 0.2 1" />
-    <material name="dust_material" rgba="0.4 0.3 0.2 0.8" />
+    <material name="dust_material" rgba="1 1 1 1" />
     <!-- Purple material for the mop -->
     <material name="mop_purple" rgba="0.18 0.05 0.35 1" specular="0.5" shininess="0.6" />
     <!-- Dark green material for the mop -->
@@ -83,7 +83,7 @@
     <mesh file="wrist3.obj" />
 
     <!-- Table and tool meshes -->
-    <mesh file="test.stl" scale="0.28 0.29 0.1" name="table" />
+    <mesh file="test.stl" scale="1 1 1" name="table" />
     <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002" />
     <mesh name="handle_mesh" file="mop_handle.obj" scale="0.002 0.002 0.002" />
   </asset>
@@ -92,6 +92,8 @@
   <visual>
     <map znear="0.01" zfar="200" fogstart="8" fogend="60" />
   </visual>
+
+  <!-- ================= WORLD OBJECTS ================= -->
 
   <!-- ================= WORLD OBJECTS ================= -->
   <worldbody>
@@ -109,37 +111,37 @@
     <!-- Table positioned as base platform -->
     <body name="table" pos="0 0 0">
       <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5" />
-      <geom name="table_collision" type="box" size="1.3 0.65 0.45" pos="0.0 0.0 0.01"
+      <geom name="table_collision" type="box" size="1 0.6 0.45" pos="0.0 0.0 0.01"
         material="table_material" group="3" contype="1" conaffinity="1"
         solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05" />
       <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"
-        pos="1.28 0.65 0" />
+        pos="1 0.6 0" />
       <!-- 45-deg wedges along table edges (width ≈ 0.10 m, thickness ≈ 0.02 m) -->
       <!-- Table collision box extents in table frame: x in [-2.7, 0], y in [-1.4, 0], top z ≈
         0.49 -->
       <!-- y = 0 edge (north), tilt toward -y -->
-      <geom name="wedge_y_pos" type="box" size="1.35 0.05 0.01"
-        pos="0.0 0.7 0.4552" axisangle="1 0 0 0.1054"
+      <geom name="wedge_y_pos" type="box" size="1.05 0.05 0.01"
+        pos="0.0 0.65 0.4552" axisangle="1 0 0 0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- y = -1.4 edge (south), tilt toward +y -->
-      <geom name="wedge_y_neg" type="box" size="1.35 0.05 0.01"
-        pos="0.0 -0.7 0.4552" axisangle="1 0 0 -0.1054"
+      <geom name="wedge_y_neg" type="box" size="1.05 0.05 0.01"
+        pos="0.0 -0.6 0.4552" axisangle="1 0 0 -0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- x = 0 edge (east), tilt toward -x -->
-      <geom name="wedge_x_pos" type="box" size="0.05 0.7 0.01"
-        pos="1.35 0.0 0.4552" axisangle="0 1 0 -0.1054"
+      <geom name="wedge_x_pos" type="box" size="0.08 0.65 0.01"
+        pos="1 0.0 0.4552" axisangle="0 1 0 -0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
 
       <!-- x = -2.7 edge (west), tilt toward +x -->
-      <geom name="wedge_x_neg" type="box" size="0.05 0.7 0.01"
-        pos="-1.35 0.0 0.4552" axisangle="0 1 0 0.1054"
+      <geom name="wedge_x_neg" type="box" size="0.08 0.65 0.01"
+        pos="-1 0.0 0.4552" axisangle="0 1 0 0.1054"
         group="3" contype="1" conaffinity="1" friction="0.8 0.1 0.05" rgba="0.8 0.8 0.8 1" />
     </body>
 
     <!-- UR5e Robot mounted ON the table surface -->
-    <body name="base" pos="0.0 0.6 0.5" quat="1 0 0 1" childclass="ur5e">
+    <body name="base" pos="0.0 0.5 0.45" quat="1 0 0 1" childclass="ur5e">
       <inertial mass="4" pos="0 0 0" diaginertia="0.0044 0.0044 0.0072" />
       <geom mesh="base_0" material="black" class="visual" />
       <geom mesh="base_1" material="jointgray" class="visual" />

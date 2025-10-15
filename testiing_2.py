@@ -37,7 +37,7 @@ SITE_NAME = "ee_site"
 UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
 
 # 🎯 MOP CONFIGURATION
-MOP_Z_HEIGHT = 0.52  # Constant Z coordinate for mop
+MOP_Z_HEIGHT = 0.49  # Constant Z coordinate for mop
 # HOME_JOINT_POSITIONS = np.array([
 #     -2.89,  # shoulder_pan
 #     -1.07,  # shoulder_lift
@@ -531,7 +531,7 @@ class DrawingInterface:
         instructions.pack()
 
         # Coordinate transformation parameters (robot workspace)
-        self.x_min, self.x_max = -1.3, 1.3  # Robot workspace in meters
+        self.x_min, self.x_max = -1.05, 1.05  # Robot workspace in meters
         self.y_min, self.y_max = -0.6, 0.6
 
     def canvas_to_robot_coords(self, canvas_x, canvas_y):
@@ -631,8 +631,8 @@ class RealTimeMouseControl:
         self.pos_label.pack()
 
         # Coordinate transformation parameters
-        self.x_min, self.x_max = -1.3, 1.3
-        self.y_min, self.y_max = -0.5, 0.5
+        self.x_min, self.x_max = -1.05, 1.05
+        self.y_min, self.y_max = -0.65, 0.65
 
         # ====== SENSITIVITY (ADDED) ======
         self.sensitivity = 2.0  # 1.0 = original mapping
@@ -746,8 +746,8 @@ class EnhancedDMPController:
 
         # Initialize robot position
         self.reset_robot_to_home()
-        self.x_min, self.x_max = -1.3, 1.3
-        self.y_min, self.y_max = -0.6, 0.6
+        self.x_min, self.x_max = -1.35, 1.35
+        self.y_min, self.y_max = -0.65, 0.65
         self.num_balls = 200 # Number of balls in the environment
         self.num_x_segments = 3 
         self.num_y_segments = 2
