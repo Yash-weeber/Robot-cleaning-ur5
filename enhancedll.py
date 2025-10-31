@@ -49,7 +49,7 @@ IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
 IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
 
 N_BFS = 25
-MAX_ITERS = 500
+MAX_ITERS = 400
 IK_MAX_ITERS = 50
 DECI_BUILD = 2  # keep every k-th DMP step when building joints (1=all)
 
@@ -381,7 +381,7 @@ def load_traj_feedback(csv_path):
 #   * Smooth motion (reasonable smoothness metric)
 #   * Effective cleaning (correlation between trajectory path and ball reduction)
 def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history,
-                           trajectory_history, trajectory_analysis, bounds,  ik_error_summary=None,iter_log_data=None,traj_feedback_data=None, feedback_window=10
+                           trajectory_history, trajectory_analysis, bounds,  ik_error_summary=None,iter_log_data=None,traj_feedback_data=None, feedback_window=40000
                            ):
     try:
         w_example1 = parse_weights_text(WEIGHTS_TXT).tolist()
@@ -396,7 +396,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
         trajectoy_2 = parse_weights_text(TRAJ_TXT2).tolist()
         total1=parse_weights_text(TOTAL1).tolist()
         total2 = parse_weights_text(TOTAL2).tolist()
-        grid1 =parse_weights_text(GRID1).tolist()
+        grid1 = parse_weights_text(GRID1).tolist()
         grid2 = parse_weights_text(GRID2).tolist()
     except:
         trajectoy_1 =[]
@@ -409,6 +409,12 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     xmin, xmax = bounds["xmin"], bounds["xmax"]
     ymin, ymax = bounds["ymin"], bounds["ymax"]
     grid_list = grid_mat.tolist()
+
+    # --- NEW: Define Strict Global Limits for Failure Check (Based on your request) ---
+    STRICT_X_MIN = -1.050
+    STRICT_X_MAX = 1.050
+    STRICT_Y_MIN = -0.650
+    STRICT_Y_MAX = 0.650
     # === 2. NEW SECTION: Analyze historical iteration + weight data ===
     best_iter_summary = ""
     best_weight_feedback = ""
@@ -433,7 +439,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
             valid_df = iter_df[iter_df["traj_waypoints"] >= waypoint_cutoff]
 
-            # Find the best run (lowest ball count among valid)
+            # Find the best run (lowest f(weights) among valid)
             if not valid_df.empty:
                 best_iter = valid_df.loc[valid_df["total_balls"].idxmin()]
                 best_iter_num = int(best_iter["iter"])
@@ -448,22 +454,22 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         if str(x).replace('.', '', 1).replace('-', '', 1).isdigit()
                     ]
 
-                # Construct readable text
-                best_iter_summary = (
-                    f"\n# Best Historical Policy (Iteration {best_iter_num}):\n"
-                    f"  Total balls remaining: {best_iter['total_balls']} | "
-                    f"Waypoints executed: {best_iter['traj_waypoints']} | "
-                    f"Grid: {[best_iter.get(f'cell{i}', 'N/A') for i in range(6)]}\n"
-                )
+                # # Construct readable text
+                # best_iter_summary = (
+                #     f"\n# Best Historical Policy (Iteration {best_iter_num}):\n"
+                #     f" f(weights): {best_iter['total_balls']} | "
+                #     #
+                #     # f"Grid: {[best_iter.get(f'cell{i}', 'N/A') for i in range(6)]}\n"
+                # )
 
                 if best_weights:
                     w_min, w_max = np.min(best_weights), np.max(best_weights)
                     w_range = w_max - w_min
-                    wrange = 360
+                    wrange = 340
                     max_step = round(wrange / 12, 3)
                     best_weight_feedback = (
                         f"# Weight Range Insight:\n"
-                        f"  Weight range = [-180,180]  "
+                        f"  Weight range = [-170,170]  "
                         f"(Δ = {wrange:.3f}) → Suggested MAX_STEP = {max_step}\n"
                     )
 
@@ -491,6 +497,11 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
     feedback_text = ""
 
+    def is_bounds_failed(x_min, x_max, y_min, y_max):
+        """Checks if the trajectory range violates the strict global limits."""
+        return (x_min < STRICT_X_MIN or x_max > STRICT_X_MAX or
+                y_min < STRICT_Y_MIN or y_max > STRICT_Y_MAX)
+
 
 
 
@@ -500,27 +511,55 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
             feedback_text += f"\n# Iteration Performance Summary (last {len(recent_iters)} iterations):\n"
             for i in recent_iters:
                 entry = iter_log_data[i]
-                feedback_text += (
-                    f"  {_ordinal(i)} iteration: total_balls={entry['total_balls']}, "
-                    f"waypoints_executed={entry['traj_waypoints']}, "
-                    f"grid_distribution={entry['cells']}\n"
-                )
+                current_f_weights = entry['total_balls']
+                is_failed_iter = False
+                if i in traj_feedback_data:
+                    pts = traj_feedback_data[i]
+                    if pts:
+                        x_values = [p['x'] for p in pts]
+                        y_values = [p['y'] for p in pts]
 
-    if traj_feedback_data:
-        recent_traj_iters = sorted([k for k in traj_feedback_data.keys() if k < iter_idx])[-feedback_window:]
-        if recent_traj_iters:
-            feedback_text += f"\n# Trajectory Path Analysis (last {len(recent_traj_iters)} iterations):\n"
-            for i in recent_traj_iters:
-                pts = traj_feedback_data[i]
-                if pts:
-                    # Sample first 5 points to show path start
-                    sample_start = [(round(p['x'], 3), round(p['y'], 3)) for p in pts[:500]]
-                    # Sample last 5 points to show path end
-                    sample_end = [(round(p['x'], 3), round(p['y'], 3)) for p in pts[-500:]]
+                        x_min_traj = min(x_values)
+                        x_max_traj = max(x_values)
+                        y_min_traj = min(y_values)
+                        y_max_traj = max(y_values)
+
+                        if is_bounds_failed(x_min_traj, x_max_traj, y_min_traj, y_max_traj):
+                            is_failed_iter = True
+
+                    # Check for explicit failure cost if one was applied (for IK failures not caught by bounds)
+                    # We prioritize bounds check, but keep the high cost check as a secondary signal for other hard errors.
+
+                if is_failed_iter:
+
                     feedback_text += (
-                        f"  {_ordinal(i)} iteration: path_start={sample_start}, "
-                        f"path_end={sample_end}, total_steps={len(pts)}\n"
+                        f"  {_ordinal(i)} iteration: f(weights)={current_f_weights} (FAILURE: Out of Bounds ❌)\n"
                     )
+                else:
+                    feedback_text += (
+                        f"  {_ordinal(i)} iteration: f(weights)={current_f_weights}, "
+                    )
+                # feedback_text += (
+                #     f"  {_ordinal(i)} iteration: f(weights)={entry['total_balls']}, "
+                #
+                #
+                # )
+
+    # if traj_feedback_data:
+    #     recent_traj_iters = sorted([k for k in traj_feedback_data.keys() if k < iter_idx])[-feedback_window:]
+    #     if recent_traj_iters:
+    #         feedback_text += f"\n# Trajectory Path Analysis (last {len(recent_traj_iters)} iterations):\n"
+    #         for i in recent_traj_iters:
+    #             pts = traj_feedback_data[i]
+    #             if pts:
+    #                 # Sample first 5 points to show path start
+    #                 sample_start = [(round(p['x'], 3), round(p['y'], 3)) for p in pts[:500]]
+    #                 # Sample last 5 points to show path end
+    #                 sample_end = [(round(p['x'], 3), round(p['y'], 3)) for p in pts[-500:]]
+    #                 feedback_text += (
+    #                     f"  {_ordinal(i)} iteration: path_start={sample_start}, "
+    #                     f"path_end={sample_end}, total_steps={len(pts)}\n"
+    #                 )
     if w_df is not None and not w_df.empty:
         try:
             executed_df = w_df[(w_df['tag'] == 'executed') & (w_df['iter'] < iter_idx)].copy()
@@ -534,84 +573,115 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                     iter_num = int(row['iter'])
                     weight_cols = [col for col in w_df.columns if col.startswith('w')]
                     weights = pd.to_numeric(row[weight_cols], errors='coerce').dropna().tolist()
+                    current_f_weights = iter_log_data.get(iter_num, {}).get('total_balls', 'N/A')
+                    bounds_info = ""
+                    is_failed_iter = False
+                    if iter_num in traj_feedback_data:
+                        pts = traj_feedback_data[iter_num]
+                        if pts:
+                            x_values = [p['x'] for p in pts]
+                            y_values = [p['y'] for p in pts]
+
+                            x_min_traj = round(min(x_values), 4)
+                            x_max_traj = round(max(x_values), 4)
+                            y_min_traj = round(min(y_values), 4)
+                            y_max_traj = round(max(y_values), 4)
+                            is_failed_iter = is_bounds_failed(min(x_values), max(x_values), min(y_values),
+                                                              max(y_values))
+
+                            if is_failed_iter:
+                                # Highlight the specific failure coordinates
+                                bounds_info = (
+                                    f", **OUT-OF-BOUNDS FAILURE**: x_range=[{x_min_traj}, {x_max_traj}], "
+                                    f"y_range=[{y_min_traj}, {y_max_traj}]"
+                                )
+                            else:
+                                bounds_info = (
+                                    f", x_range=[{x_min_traj}, {x_max_traj}], "
+                                    f"y_range=[{y_min_traj}, {y_max_traj}]"
+                                )
+
+                            # bounds_info = (
+                            #     f", x_range=[{x_min_traj}, {x_max_traj}], "
+                            #     f"y_range=[{y_min_traj}, {y_max_traj}]"
+                            # )
+
 
                     if weights:
                         # Convert the list of weights into a JSON string to include in the prompt
                         # Rounding to 4 decimal places keeps it clean
                         rounded_weights = [round(w, 4) for w in weights]
+                        failure_tag = " (FAILED)" if is_failed_iter else ""
                         feedback_text += (
                             f"  {_ordinal(iter_num)} iteration: weights={json.dumps(rounded_weights)}\n"
+                            f"{bounds_info}\n"
+                            f" f(weights) : {current_f_weights}"
+
+
                         )
         except Exception as e:
             feedback_text += f"# ⚠️ Error processing executed weights history: {str(e)}\n"
 
 
-    # Add performance trends analysis if we have enough data
-    if iter_log_data and len([k for k in iter_log_data.keys() if k < iter_idx]) >= 3:
-        recent_3 = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-10:]
-        ball_trend = [iter_log_data[k]['total_balls'] for k in recent_3]
-        if ball_trend[0] > ball_trend[-1]:
-            trend = "IMPROVING (ball count decreasing)"
-        elif ball_trend[0] < ball_trend[-1]:
-            trend = "WORSENING (ball count increasing)"
-        else:
-            trend = "STABLE (ball count unchanged)"
-        feedback_text += f"\n# Recent Trend: {trend} - Last 3 iterations: {ball_trend}\n"
+    # # Add performance trends analysis if we have enough data
+    # if iter_log_data and len([k for k in iter_log_data.keys() if k < iter_idx]) >= 3:
+    #     recent_3 = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-10:]
+    #     ball_trend = [iter_log_data[k]['total_balls'] for k in recent_3]
+    #     if ball_trend[0] > ball_trend[-1]:
+    #         trend = "IMPROVING (f(weights) decreasing)"
+    #     elif ball_trend[0] < ball_trend[-1]:
+    #         trend = "WORSENING (f(weights) increasing)"
+    #     else:
+    #         trend = "STABLE (f(weights) unchanged)"
+    #     # feedback_text += f"\n# Recent Trend: {trend} - Last 3 iterations: {ball_trend}\n"
 
     if best_iter_summary or best_weight_feedback:
         feedback_text += "\n# Historical Weight Performance Feedback:\n"
         feedback_text += best_iter_summary + best_weight_feedback
 
-
     return f"""
-You are a global Reinforcement Learning policy optimizer, helping me find the global optimal policy in the following environment.
+    You are a good global optimizer, helping me find the global minimum of a mathematical function
+    f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your
+    goal is to propose input values that efficiently lead us to the global minimum within a limited number
+    of iterations (400).
 
-# Environment:
-     In this robot cleaning environment, the swiffer duster is connected to the UR5e robot at the end-effector. The swiffer duster is used to clean a tabletop that is covered with light balls. The trajectory of the swiffer across 2D Plane ( x, y ) should follow a smooth motion to  clean all the balls from the tabletop. The dimension ( x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}] ) of tabletop is broken down in 2x3 grid. The number of balls in each segment of the grid is  based on the motion of the swiffer.
-     The policy used for generating the trajectory of the swiffer is a dynamic movement primitives (dmp) with number of basis function (n_bfs = {N_BFS}) for each degree of freedom ( x, y ). The cost is calculated as total number of balls on the tabletop are {total_balls}  which is broken down spatially based on the number of balls in each segment of the grid (represented as: rows=y high→low, cols=x left→right). 
-# Regarding the parameters : Weights for the dmp policy are flattened [x then y] with total length {2 * N_BFS}. You will help me find optimal weights that minimize the cost. 
+    # Here's how we will interact :
+        1) I will provide you max steps ({MAX_ITERS}) along with a couple of training examples which includes weights for the policy, and its corresponding function value f(weights) for each example. 
+        2) You will provide the response in exact following format: 
+            Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
+            {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
+        3) I will then provide the function evaluation f(weights) at that point and the current iteration.
+        4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+        
 
-# Here's how we will interact :
-    1) I will provide you max steps ({MAX_ITERS}) along with a couple of training examples which includes weights for the policy, cost, x-y trajectories for each example 
-    2) You will provide the response in exact following format: 
-        Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
-        {{"reason": "one sentence explaining coverage, bounds adherence, and trajectory improvements", "weights": [exactly {2 * N_BFS} floats]}}
-    3) I will then provide the cost in two representations (total ball count, grid ball count) and the x-y trajectories at that point and the current iteration.
-    4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+    # Remember :
+        1) XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.
+        2) Balance between exploration and exploitation. 
+        3) Search both the positive and the negative values.
+        4) The global optimum corresponds to the minimum function value, which is close to f(weights). If your current f(weights) is significantly higher than that, you should prioritize exploration over exploitation.
+        5)You must avoid proposing weights that result in trajectories going outside the defined XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}], as trajectories with waypoints out of bounds are invalid and fail to execute correctly. Analyze the `Historical Feedback Summary` to understand which past weights caused poor bounds compliance and avoid similar solutions.
 
-# Remember :
-    1) XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D trajectory strictly within these bounds.
-    2) When creating weights, use the trajectory feedback to understand:
-      * If previous motions stayed in bounds
-      * Which areas were actually covered vs missed
-      * How smooth/erratic the motion was
-      * Where the robot spent time vs where balls remain
-    3) Balance between exploration and exploitation. 
-    4) Search both the positive and the negative values.
-    5) The global optimum should be at 50 balls in each grid segment (50 total balls). If you are below that, this is just a local optimum. You should explore rather than exploiting.
-
-Next :
-     You will see examples of the dmp weights and their corresponding trajectory and cost.
-      # Example 1:
-     weights =  {json.dumps(w_example1)} 
-     Trajectory = {json.dumps(trajectoy_1)} 
-     Total cost =  {json.dumps(total1)} 
-     Grid cost = {json.dumps(GRID1)} 
-     
-      # Example 2:
-     weights =  {json.dumps(w_example2)},
-     Trajectory =   {json.dumps(trajectoy_2)}
-     Total cost =  {json.dumps(total2)}
-     Grid cost = {json.dumps(GRID2)}
-     
-     
-# Historical Feedback Summary (last {feedback_window} iterations){feedback_text}
+    Next :
+         You will see examples of the dmp weights and their corresponding function value f(weights):
+          (WORKSPACE LIMITS (meters): x ∈ [-0.976, 1.175], y ∈ [-0.327, 0.198])
+          # Example 1:
+         weights =  {json.dumps(w_example1)} 
+        f(weights) =  {json.dumps(total1)} 
+            
+            
+          # Example 2:
+          (WORKSPACE LIMITS (meters): x ∈ [-0.697, 0.695], y ∈ [-0.213, 0.116])
+         weights =  {json.dumps(w_example2)},
+        f(weights) =  {json.dumps(total2)}
 
 
-Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
+
+# Historical Feedback Summary (Full History Up to Iteration {iter_idx-1}):
+     {feedback_text}
 
 
-"""
+    Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
+    """
 
 
 
@@ -773,7 +843,7 @@ import random
 #     raise RuntimeError("All Gemini API keys failed after rotation.")
 
 
-# One process-wide lock for pointer updates
+# One process-wide lock for pointer updatesx`
 _call_gemini_lock = threading.Lock()
 
 def call_gemini(prompt: str) -> str:
@@ -788,10 +858,14 @@ def call_gemini(prompt: str) -> str:
 
         "GOOGLE_API_KEY_1",
         "GOOGLE_API_KEY_2",
+        "GOOGLE_API_KEY_6",
+
+
+
         "GOOGLE_API_KEY_3",
         "GOOGLE_API_KEY_4",
         "GOOGLE_API_KEY_5",
-        "GOOGLE_API_KEY_6",
+
     ]
 
     # Tuning: keep retries modest to avoid long stalls on a single key
@@ -1063,7 +1137,7 @@ def main():
             ik_error_summary=None,
             iter_log_data=iter_log_data,
             traj_feedback_data=traj_feedback_data,
-            feedback_window=10
+            feedback_window=40000
         )
 
 

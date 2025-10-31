@@ -1,0 +1,56 @@
+
+    You are a good global optimizer, helping me find the global minimum of a mathematical function
+    f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your
+    goal is to propose input values that efficiently lead us to the global minimum within a limited number
+    of iterations (400).
+
+    # Here's how we will interact :
+        1) I will provide you max steps (400) along with a couple of training examples which includes weights for the policy, and its corresponding function value f(weights) for each example. 
+        2) You will provide the response in exact following format: 
+            Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
+            {"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly 50 floats]}
+        3) I will then provide the function evaluation f(weights) at that point and the current iteration.
+        4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+        
+
+    # Remember :
+        1) XY WORKSPACE LIMITS (meters): x ∈ [-1.050, 1.050], y ∈ [-0.650, 0.650]. Any path implied by your weights must keep the 2D path strictly within these bounds.
+        2) Balance between exploration and exploitation. 
+        3) Search both the positive and the negative values.
+        4) The global optimum corresponds to the minimum function value, which is close to f(weights). If your current f(weights) is significantly higher than that, you should prioritize exploration over exploitation.
+        5)You must avoid proposing weights that result in trajectories going outside the defined XY WORKSPACE LIMITS (meters): x ∈ [-1.050, 1.050], y ∈ [-0.650, 0.650], as trajectories with waypoints out of bounds are invalid and fail to execute correctly. Analyze the `Historical Feedback Summary` to understand which past weights caused poor bounds compliance and avoid similar solutions.
+
+    Next :
+         You will see examples of the dmp weights and their corresponding function value f(weights):
+          (WORKSPACE LIMITS (meters): x ∈ [-0.976, 1.175], y ∈ [-0.327, 0.198])
+          # Example 1:
+         weights =  [84.993855, 69.885069, 55.206646, 42.306527, 32.309473, 24.273628, 12.420855, -7.368554, -24.351259, -28.730552, -34.305447, -50.96178, -73.563352, -95.873989, -116.474452, -135.129149, -149.577451, -159.238397, -166.375785, -171.873775, -173.325799, -168.103406, -154.11261, -132.871615, -110.755176, -90.821882, -71.419665, -52.33974, -35.634237, -21.18727, -7.303905, 6.098977, 19.240626, 33.455577, 50.216669, 69.857061, 91.259438, 111.596813, 129.704331, 145.486411, 157.232589, 165.402812, 170.847044, 172.445849, 169.429601, 162.092667, 149.79719, 133.344939, 116.11635, 100.117687, 34.254739, 29.930115, 24.678004, 18.37642, 11.170079, 2.594627, -11.680548, -38.735428, -61.330785, -54.551031, -39.820681, -36.935136, -39.02968, -40.045511, -39.303201, -36.18576, -29.635765, -20.488875, -9.569289, 2.788452, 14.835595, 24.992636, 31.936633, 35.02832, 35.098438, 32.884945, 28.724358, 23.129088, 16.82561, 10.515734, 4.220914, -2.627085, -10.225675, -18.073946, -25.517172, -31.15169, -34.177154, -35.122555, -33.961812, -30.347473, -23.521878, -13.65379, -2.620972, 8.878889, 20.748335, 31.418109, 38.337951, 40.379633, 39.578511, 37.560793] 
+        f(weights) =  [150.0] 
+            
+            
+          # Example 2:
+          (WORKSPACE LIMITS (meters): x ∈ [-0.697, 0.695], y ∈ [-0.213, 0.116])
+         weights =  [65.370776, 52.45726, 40.6369, 29.605392, 18.033523, 5.931341, -6.326353, -17.461541, -26.223187, -34.197609, -43.399004, -54.797347, -68.689981, -82.694078, -94.078938, -103.69877, -112.681819, -119.626482, -123.539309, -125.587927, -126.502001, -125.569174, -121.310892, -113.123039, -102.857885, -92.476709, -81.730354, -69.824577, -57.163148, -43.903959, -30.130638, -16.832759, -5.461248, 3.898699, 13.039037, 24.292207, 38.638945, 54.356717, 69.000578, 81.899959, 95.212694, 109.469252, 120.0602, 125.02996, 125.826018, 121.888043, 112.735371, 100.636731, 88.93199, 77.724505, 19.196539, 20.155751, 20.191332, 19.36449, 17.515903, 13.783372, 4.013372, -16.789299, -35.348693, -32.588751, -23.101339, -21.806064, -24.332201, -25.823497, -25.295929, -22.72066, -17.556588, -10.202657, -2.521874, 4.979672, 12.367861, 18.321992, 22.457555, 25.042474, 26.014404, 25.853485, 24.864491, 23.192582, 21.340527, 19.428395, 17.001096, 13.072102, 7.107368, -0.352414, -8.055547, -14.14084, -18.052256, -20.831035, -22.672769, -23.392738, -23.288176, -22.075108, -18.524282, -12.418171, -5.340101, 1.58115, 8.114919, 13.18374, 15.986256, 17.655942],
+        f(weights) =  [148.0]
+
+
+
+# Historical Feedback Summary (Full History Up to Iteration 1):
+     
+# Iteration Performance Summary (last 1 iterations):
+  1st iteration: f(weights)=135 (FAILURE: Out of Bounds ❌)
+
+# Executed Weights History (last 2 executed iterations):
+  0th iteration: weights=[84.9939, 54.6691, 31.6398, 9.9472, -25.0811, -37.7755, -79.141, -121.9154, -152.7978, -168.4375, -171.1498, -144.3772, -100.7885, -61.0847, -27.2068, 1.0729, 28.7173, 64.1286, 106.5125, 142.1985, 164.0411, 172.246, 162.7041, 134.0304, 100.1177, 34.2547, 24.4154, 10.4555, -15.0624, -60.2008, -39.2195, -39.2836, -38.3939, -26.5868, -4.9351, 19.0677, 33.3537, 33.9917, 25.6936, 13.1448, -0.0591, -15.4579, -29.5083, -34.8862, -31.1005, -15.2985, 7.4414, 30.529, 40.2946, 37.5608]
+
+ f(weights) : N/A  1st iteration: weights=[84.9939, 54.6691, 31.6398, 9.9472, -25.0811, -37.7755, -79.141, -121.9154, -152.7978, -168.4375, -171.1498, -144.3772, -100.7885, -61.0847, -27.2068, 1.0729, 28.7173, 64.1286, 106.5125, 142.1985, 164.0411, 172.246, 162.7041, 134.0304, 100.1177, 34.2547, 24.4154, 10.4555, -15.0624, -60.2008, -39.2195, -39.2836, -38.3939, -26.5868, -4.9351, 19.0677, 33.3537, 33.9917, 25.6936, 13.1448, -0.0591, -15.4579, -29.5083, -34.8862, -31.1005, -15.2985, 7.4414, 30.529, 40.2946, 37.5608]
+, **OUT-OF-BOUNDS FAILURE**: x_range=[-0.9489, 1.1545], y_range=[-0.314, 0.1922]
+ f(weights) : 135
+# Historical Weight Performance Feedback:
+# Weight Range Insight:
+  Weight range = [-170,170]  (Δ = 340.000) → Suggested MAX_STEP = 28.333
+
+
+
+    Now you are at iteration 2 out of 400.  Please provide the results in the indicated format. Do not provide any additional texts.
+    
