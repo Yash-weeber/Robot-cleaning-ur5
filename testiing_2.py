@@ -47,6 +47,7 @@ MOP_Z_HEIGHT = 0.49  # Constant Z coordinate for mop
 #     -0.503  # wrist_3
 # ])
 HOME_JOINT_POSITIONS = np.array([0.188, -2.18, -0.87, 0.0, np.pi/2, np.pi/2])
+N_BFs = 100  # Number of basis functions for DMPs
 
 # Enhanced IK Parameters
 INIT_LAMBDA = 0.15
@@ -531,7 +532,7 @@ class DrawingInterface:
         instructions.pack()
 
         # Coordinate transformation parameters (robot workspace)
-        self.x_min, self.x_max = -1.05, 1.05  # Robot workspace in meters
+        self.x_min, self.x_max = -1.0, 1.0  # Robot workspace in meters
         self.y_min, self.y_max = -0.6, 0.6
 
     def canvas_to_robot_coords(self, canvas_x, canvas_y):
@@ -746,9 +747,9 @@ class EnhancedDMPController:
 
         # Initialize robot position
         self.reset_robot_to_home()
-        self.x_min, self.x_max = -1.35, 1.35
-        self.y_min, self.y_max = -0.65, 0.65
-        self.num_balls = 200 # Number of balls in the environment
+        self.x_min, self.x_max = -1.0, 1.0
+        self.y_min, self.y_max = -0.6, 0.6
+        self.num_balls = 150 # Number of balls in the environment
         self.num_x_segments = 3 
         self.num_y_segments = 2
         self.grid_count_log = []
@@ -990,10 +991,10 @@ class EnhancedDMPController:
         """Generate joint trajectory from discrete DMP waypoints (does not execute)"""
         if pattern == "discrete":
             print("\n🎯 === DISCRETE DMP MODE (3D) ===")
-            self.dmp = DMPs_discrete(n_dmps=2, n_bfs=50, dt=self.dt)
+            self.dmp = DMPs_discrete(n_dmps=2, n_bfs=N_BFs, dt=self.dt)
         elif pattern == "rhythmic":
             print("\n🎯 === RHYTHMIC DMP MODE (3D) ===")
-            self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=50, dt=self.dt)
+            self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=N_BFs, dt=self.dt)
         else:
             print("\n🎯 === UNKNOWN DMP MODE (3D) ===")
 
