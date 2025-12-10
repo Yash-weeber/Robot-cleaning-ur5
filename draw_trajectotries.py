@@ -99,7 +99,7 @@ def infinity_trajectory(center, size=1.0, num_points=200, plot=True, color='oran
     """
     Generate and optionally plot an infinity (figure-eight) trajectory.
     Returns: x, y arrays of trajectory points (shape: [num_points])
-    The parametric equation used is: 
+    The parametric equation used is:
         x = a * sin(t)
         y = a * sin(t) * cos(t)
     """
@@ -136,8 +136,11 @@ plt.show()
 x_traj, y_traj = circle_trajectory(center=(0, 0), radius=1.0, num_points=200, plot=False)
 dmp_traj = []
 traj = np.vstack((x_traj, y_traj))
-dmp = DMPs_discrete(n_dmps=2, n_bfs=50, dt=0.001)
+# dmp = DMPs_discrete(n_dmps=2, n_bfs=50, dt=0.001)
+dmp = DMPs_rhythmic(n_dmps=2, n_bfs=10, dt=0.001)
+
 dmp.imitate_path(traj, plot=True)
+
 for step in range(dmp.timesteps):
     dmp_point, _, _ = dmp.step()
     # print(dmp_point)
@@ -160,4 +163,223 @@ plt.plot(np.linspace(0, 1, len(y_traj)), y_traj, color='m', linestyle='-', label
 plt.grid(True)
 plt.legend()
 plt.show()
+
+
+import mujoco
+import mujoco.viewer
+
+XML_PATH = "ballmove.xml"
+SITE_NAME = "ee_site"
+UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
+MOP_Z_HEIGHT = 0.49
+HOME_JOINT_POSITIONS = np.array([0.188, -2.18, -0.87, 0.0, np.pi / 2, np.pi / 2])
+
+
+# --- 2. HELPER FUNCTIONS FROM TESTING_2.PY ---
+def _clamp_limits(model, qpos, joint_names):
+
+    for jn in joint_names:
+        jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+        qadr = model.jnt_qposadr[jid]
+        if model.jnt_limited[jid]:
+            lo, hi = model.jnt_range[jid]
+            qpos[qadr] = np.clip(qpos[qadr], lo, hi)
+
+
+def _interpolate_path(p0, p1, max_step=0.03):
+
+    p0 = np.asarray(p0, float)
+    p1 = np.asarray(p1, float)
+    dist = np.linalg.norm(p1 - p0)
+    if dist <= max_step:
+        return [p1]
+    n = int(np.ceil(dist / max_step))
+    alphas = np.linspace(0.0, 1.0, n + 1)[1:]
+    return [p0 * (1 - a) + p1 * a for a in alphas]
+
+
+
+def enhanced_ik_solver(model, data, site_id, goal_pos_3d, joint_names,
+                       step_clip=0.2, max_wp_step=0.03, max_iters_per_wp=50,
+                       lam_init=0.1, lam_inc=2.0, lam_dec=0.85, tol=1e-3):
+
+
+    # Identify degrees of freedom
+    dof_cols = []
+    for jn in joint_names:
+        jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+        dof_cols.append(model.jnt_dofadr[jid])
+    dof_cols = np.asarray(dof_cols, int)
+
+    # Helper to enforce limits
+    def clamp_limits():
+        _clamp_limits(model, data.qpos, joint_names)
+        mujoco.mj_forward(model, data)  # Kinematics update only
+
+    start = np.array(data.site_xpos[site_id])
+    waypoints = _interpolate_path(start, goal_pos_3d, max_step=max_wp_step)
+
+
+    for wp in waypoints:
+        lam = lam_init
+        mujoco.mj_forward(model, data)
+        prev_err = np.linalg.norm(wp - np.array(data.site_xpos[site_id]))
+
+        for it in range(max_iters_per_wp):
+            # 1. Calculate Jacobian (The "Formula" requires this)
+            mujoco.mj_forward(model, data)
+            Jp = np.zeros((3, model.nv))
+            Jr = np.zeros((3, model.nv))
+            mujoco.mj_jacSite(model, data, Jp, Jr, site_id)
+            J = Jp[:, dof_cols]
+            e = wp - np.array(data.site_xpos[site_id])
+
+
+            A = J.T @ J + lam * np.eye(J.shape[1])
+            b = J.T @ e
+
+            try:
+                dq = np.linalg.solve(A, b)
+            except np.linalg.LinAlgError:
+                dq = np.linalg.pinv(A) @ b
+
+            # 3. Apply changes
+            nq = np.linalg.norm(dq)
+            if nq > step_clip:
+                dq *= (step_clip / (nq + 1e-12))
+
+            qpos_before = data.qpos.copy()
+            for k, jn in enumerate(joint_names):
+                jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+                qadr = model.jnt_qposadr[jid]
+                data.qpos[qadr] += dq[k]
+
+            clamp_limits()
+            mujoco.mj_forward(model, data)
+            new_err = np.linalg.norm(wp - np.array(data.site_xpos[site_id]))
+
+            # 4. Adaptive Damping (Trust Region)
+            if new_err < prev_err - 1e-6:
+                prev_err = new_err
+                lam = max(1e-6, lam * lam_dec)
+            else:
+                data.qpos[:] = qpos_before  # Rollback
+                mujoco.mj_forward(model, data)
+                lam *= lam_inc
+
+            if prev_err < tol:
+                break
+
+    final_err = np.linalg.norm(goal_pos_3d - np.array(data.site_xpos[site_id]))
+    return final_err < tol
+
+
+
+def set_joint_positions(model, data, joint_names, positions):
+    """
+    Manually sets the robot's joint positions in the MuJoCo data structure.
+    """
+    for i, jn in enumerate(joint_names):
+        # Find the ID of the joint by name
+        jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+
+        # Get the address in the qpos array
+        qadr = model.jnt_qposadr[jid]
+
+        # Set the value
+        data.qpos[qadr] = positions[i]
+
+
+# --- Main Execution Function ---
+def run_ik_recreation(shape_name, x_traj, y_traj):
+    print(f"--- Recreating {shape_name} using IK Formula ---")
+
+    # 1. Load Model
+    try:
+        model = mujoco.MjModel.from_xml_path(XML_PATH)
+        data = mujoco.MjData(model)
+        site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, SITE_NAME)
+    except Exception as e:
+        print(f"Error: Could not load {XML_PATH}. {e}")
+        return
+
+    # 2. Train DMP
+    traj = np.vstack((x_traj, y_traj))
+    dmp = DMPs_rhythmic(n_dmps=2, n_bfs=10, dt=0.001)
+    dmp.imitate_path(traj, plot=False)
+
+    # 3. CRITICAL STEP: Move Robot to the START of the trajectory first
+    start_x = x_traj[0]
+    start_y = y_traj[0]
+    start_target_3d = np.array([start_x, start_y, MOP_Z_HEIGHT])
+
+    # Reset to home first
+    set_joint_positions(model, data, UR5E_JOINTS, HOME_JOINT_POSITIONS)
+    mujoco.mj_forward(model, data)
+
+    print(f"Moving robot to start position: {start_target_3d}...")
+    # Run IK to get to start position (using the solver you defined earlier)
+    enhanced_ik_solver(model, data, site_id, start_target_3d, UR5E_JOINTS,
+                       max_iters_per_wp=100, tol=1e-4)
+
+    # 4. Execute Full Loop
+    dmp_desired_xy = []
+    ik_actual_xy = []
+    dmp.reset_state()
+
+    print(f"Executing trajectory for {dmp.timesteps} steps...")
+
+    for _ in range(dmp.timesteps):
+        # A. Get DMP Target
+        dmp_pos_2d, _, _ = dmp.step()
+        target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
+
+        # B. Apply IK Formula
+        enhanced_ik_solver(model, data, site_id, target_3d, UR5E_JOINTS,
+                           max_iters_per_wp=20)
+
+        # C. Read ACTUAL Position
+        actual_pos = data.site_xpos[site_id].copy()
+
+        # D. Store Data
+        dmp_desired_xy.append(dmp_pos_2d)
+        ik_actual_xy.append(actual_pos[:2])
+
+
+    dmp_desired_xy = np.array(dmp_desired_xy).T
+    ik_actual_xy = np.array(ik_actual_xy).T
+
+    plt.figure(figsize=(10, 10))
+    plt.plot(dmp_desired_xy[0], dmp_desired_xy[1], 'k--', linewidth=3, label='DMP Target')
+    plt.plot(ik_actual_xy[0], ik_actual_xy[1], 'r-', linewidth=1.5, label='IK Solution')
+
+    plt.title(f"Comparison: DMP Target vs IK Solution ({shape_name})")
+    plt.xlabel("X (m)")
+    plt.ylabel("Y (m)")
+    plt.legend()
+    plt.axis('equal')
+    plt.grid(True)
+    plt.show()
+
+
+
+x, y = circle_trajectory(center=(0.4, 0.0), radius=0.15, num_points=200, plot=False)
+run_ik_recreation("Circle", x, y)
+
+x, y = elipsoid_trajectory(center=(0.4, 0.0), axes_lengths=(0.2, 0.12), angle=0.5, num_points=200, plot=False)
+run_ik_recreation("Ellipsoid", x, y)
+
+
+x, y = square_trajectory(center=(0.4, 0.0), side_length=0.25, num_points=200, plot=False)
+run_ik_recreation("Square", x, y)
+
+x, y = triangle_trajectory(center=(0.4, 0.0), side_length=0.25, num_points=200, plot=False)
+run_ik_recreation("Triangle", x, y)
+
+
+x, y = infinity_trajectory(center=(0.4, 0.0), size=0.3, num_points=400, plot=False)
+run_ik_recreation("Infinity", x, y)
+
+# %%
+
 # %%
