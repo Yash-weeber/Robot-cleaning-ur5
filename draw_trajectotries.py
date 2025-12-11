@@ -163,7 +163,7 @@ plt.plot(np.linspace(0, 1, len(y_traj)), y_traj, color='m', linestyle='-', label
 plt.grid(True)
 plt.legend()
 plt.show()
-
+#%%
 
 import mujoco
 import mujoco.viewer
@@ -342,7 +342,7 @@ def run_ik_recreation(shape_name, x_traj, y_traj):
         actual_pos = data.site_xpos[site_id].copy()
 
         # D. Store Data
-        dmp_desired_xy.append(dmp_pos_2d)
+        dmp_desired_xy.append(dmp_pos_2d.copy())
         ik_actual_xy.append(actual_pos[:2])
 
 
@@ -350,8 +350,8 @@ def run_ik_recreation(shape_name, x_traj, y_traj):
     ik_actual_xy = np.array(ik_actual_xy).T
 
     plt.figure(figsize=(10, 10))
-    plt.plot(dmp_desired_xy[0], dmp_desired_xy[1], 'k--', linewidth=3, label='DMP Target')
-    plt.plot(ik_actual_xy[0], ik_actual_xy[1], 'r-', linewidth=1.5, label='IK Solution')
+    plt.plot(dmp_desired_xy[0], dmp_desired_xy[1], 'k-', linewidth=3, label='DMP Target')
+    plt.plot(ik_actual_xy[0], ik_actual_xy[1], 'r--', linewidth=1.5, label='IK Solution')
 
     plt.title(f"Comparison: DMP Target vs IK Solution ({shape_name})")
     plt.xlabel("X (m)")
@@ -370,14 +370,14 @@ x, y = elipsoid_trajectory(center=(0.4, 0.0), axes_lengths=(0.2, 0.12), angle=0.
 run_ik_recreation("Ellipsoid", x, y)
 
 
-x, y = square_trajectory(center=(0.4, 0.0), side_length=0.25, num_points=200, plot=False)
+x, y = square_trajectory(center=(0.4, 0.0), side_length=1.2, num_points=200, plot=False)
 run_ik_recreation("Square", x, y)
 
-x, y = triangle_trajectory(center=(0.4, 0.0), side_length=0.25, num_points=200, plot=False)
+x, y = triangle_trajectory(center=(0.4, 0.0), side_length=1.2, num_points=200, plot=False)
 run_ik_recreation("Triangle", x, y)
 
 
-x, y = infinity_trajectory(center=(0.4, 0.0), size=0.3, num_points=400, plot=False)
+x, y = infinity_trajectory(center=(0.4, 0.0), size=1.4, num_points=400, plot=False)
 run_ik_recreation("Infinity", x, y)
 
 # %%
