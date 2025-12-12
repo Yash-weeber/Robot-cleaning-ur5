@@ -63,13 +63,13 @@ class DMPs:
         y_des: desired path (n_dmps x timesteps)
         """
         # set initial state and goal
-        print(y_des)
-        print(y_des.ndim)
+        # print(y_des)
+        # print(y_des.ndim)
         if y_des.ndim == 1:
             y_des = y_des.reshape(1, -1)
-        print(y_des)
-        print(f"Shape of the desired path {y_des.shape}")
-        print(f"Desired path start: {y_des[:,0]}, end: {y_des[:,-1]}")
+        # print(y_des)
+        # print(f"Shape of the desired path {y_des.shape}")
+        # print(f"Desired path start: {y_des[:,0]}, end: {y_des[:,-1]}")
         self.y0 = y_des[:, 0].copy()
         self.y_des = y_des.copy()
         self.goal = self.gen_goal(y_des)
