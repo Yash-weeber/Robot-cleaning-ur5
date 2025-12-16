@@ -131,7 +131,7 @@ circle_trajectory(center=(0, 0), radius=0.6, num_points=200, plot=True)
 elipsoid_trajectory(center=(0, 0), axes_lengths=(1.0, 0.6), angle=0, num_points=200, plot=True)
 square_trajectory(center=(0, 0), side_length=1.0, num_points=200, plot=True)
 triangle_trajectory(center=(0, 0), side_length=1.0, num_points=200, plot=True)
-infinity_trajectory(center=(0, 0), size=1.5, num_points=500, plot=True)
+infinity_trajectory(center=(0, 0), size=(2, 2.5), num_points=500, plot=True)
 plt.show()
 # %%
 x_traj, y_traj = circle_trajectory(center=(0, 0), radius=1.0, num_points=200, plot=False)
@@ -542,7 +542,7 @@ if __name__ == "__main__":
 
     for _ in range(dmp.timesteps):
         # A. Get DMP Target
-        dmp_pos_2d, _, _ = dmp.step(tau=2.0)
+        dmp_pos_2d, _, _ = dmp.step(tau=1.0)
         target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
 
         # B. Apply IK Formula
