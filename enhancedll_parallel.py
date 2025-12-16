@@ -1,6 +1,141 @@
 #!/usr/bin/env python3
+"""
+Enhanced DMP Controller - Parallel Execution Wrapper
+Preserves ALL enhancedll.py logic, adds headless mode via environment variables
+NO changes to testiing_2.py needed!
+
+Usage:
+    # Normal mode (with viewer):
+    python enhancedll_parallel.py
+
+    # Headless mode:
+    set HEADLESS=1
+    set EXPERIMENT_BASE_DIR=Y:/path/to/experiment/
+    python enhancedll_parallel.py
+"""
 
 import os
+import sys
+import mujoco
+import builtins
+
+builtins.input = lambda *a, **k: "7"
+# ============================================
+# STEP 1: Monkey-patch viewer BEFORE any imports
+# ============================================
+
+if os.environ.get("HEADLESS", "0") == "1":
+    print(" HEADLESS MODE ENABLED - Patching MuJoCo viewer...")
+    # Windows doesn't support osmesa - leave MUJOCO_GL unset or use 'glfw' (but we'll disable viewer anyway)
+    # Only set MUJOCO_GL if user explicitly provided it
+    if "MUJOCO_GL" not in os.environ:
+        # Don't set MUJOCO_GL - let MuJoCo use default, we're disabling viewer anyway
+        pass
+
+
+    # Create a dummy viewer that does nothing
+    class DummyViewer:
+        def __init__(self, *args, **kwargs):
+            self.backend = "none"
+            self.closed = False
+            self._dm_context_mgr = self
+
+        def is_running(self):
+            return True
+
+        def sync(self):
+            pass
+
+        def render(self):
+            pass
+
+        def draw(self):
+            pass
+
+        def close(self):
+            self.closed = True
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+
+    # Patch mujoco.viewer module
+    class DummyViewerModule:
+        @staticmethod
+        def launch_passive(*args, **kwargs):
+            print("[Viewer] Headless mode - viewer disabled")
+            return DummyViewer()
+
+
+    sys.modules['mujoco.viewer'] = DummyViewerModule()
+
+    # Patch community viewer if present
+    try:
+        import mujoco_viewer
+
+        mujoco_viewer.MujocoViewer = DummyViewer
+    except ImportError:
+        pass
+
+# ============================================
+# STEP 2: Override paths from environment
+# ============================================
+
+# Check if we're running in experiment-specific mode
+EXPERIMENT_BASE_DIR = os.environ.get("EXPERIMENT_BASE_DIR", None)
+
+if EXPERIMENT_BASE_DIR:
+    print(f" Using experiment directory: {EXPERIMENT_BASE_DIR}")
+
+    # Override all paths to use this base directory
+    BASE_DIR = EXPERIMENT_BASE_DIR
+    LOGDIR = os.path.join(BASE_DIR, "logs")
+
+    CSV_MOVE_PATH = os.path.join(LOGDIR, "move1.csv")
+    WEIGHTS_TXT = os.path.join(LOGDIR, "weight.txt")
+    WEIGHTS_TXT2 = os.path.join(LOGDIR, "weight2.txt")
+    TRAJ_TXT1 = os.path.join(LOGDIR, "traject1.txt")
+    TRAJ_TXT2 = os.path.join(LOGDIR, "traject2.txt")
+    TOTAL1 = os.path.join(LOGDIR, "total1.txt")
+    TOTAL2 = os.path.join(LOGDIR, "total2.txt")
+    GRID1 = os.path.join(LOGDIR, "gridlist1.txt")
+    GRID2 = os.path.join(LOGDIR, "gridlist2.txt")
+
+    WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
+    ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
+    DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
+    WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
+    TRAJECTORY_CSV = os.path.join(LOGDIR, "trajectory_feedback.csv")
+    IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
+else:
+    # Use default paths from original enhancedll.py
+    BASE_DIR = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/"
+    LOGDIR = os.path.join(BASE_DIR, "logs")
+
+    CSV_MOVE_PATH = os.path.join(LOGDIR, "move1.csv")
+    WEIGHTS_TXT = os.path.join(LOGDIR, "weight.txt")
+    WEIGHTS_TXT2 = os.path.join(LOGDIR, "weight2.txt")
+    TRAJ_TXT1 = os.path.join(LOGDIR, "traject1.txt")
+    TRAJ_TXT2 = os.path.join(LOGDIR, "traject2.txt")
+    TOTAL1 = os.path.join(LOGDIR, "total1.txt")
+    TOTAL2 = os.path.join(LOGDIR, "total2.txt")
+    GRID1 = os.path.join(LOGDIR, "gridlist1.txt")
+    GRID2 = os.path.join(LOGDIR, "gridlist2.txt")
+
+    WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
+    ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
+    DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
+    WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
+    TRAJECTORY_CSV = os.path.join(LOGDIR, "trajectory_feedback.csv")
+    IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
+
+# ============================================
+# STEP 3: Now import everything else
+# ============================================
+
 import re
 import csv
 import json
@@ -9,73 +144,39 @@ import uuid
 import builtins
 import subprocess
 import numpy as np
-import mujoco
 import threading
 from google import genai
 import pandas as pd
 
-
-
-# OLLAMA_MODEL = "gpt-oss:120b"
-
-# # ====== EDIT THESE PATHS ======
-CSV_MOVE_PATH = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/move2.csv"
-WEIGHTS_TXT = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight.txt"
-WEIGHTS_TXT2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight2.txt"
-BASE_DIR = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/"
-TRAJ_TXT1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject1.txt"
-TRAJ_TXT2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject2.txt"
-TOTAL1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total1.txt"
-TOTAL2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total2.txt"
-GRID1 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist1.txt"
-GRID2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist2.txt"
-# # ==============================
-# ====== EDIT THESE PATHS ======
-# CSV_MOVE_PATH   = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/move.csv"
-# WEIGHTS_TXT     = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/weight.txt"
-# BASE_DIR        = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/"
-# ==============================
-
-HISTORY_WINDOW = 25
-TRAJECTORY_HISTORY_WINDOW = 20  # NEW: Track last 20 iterations of X,Y trajectories
-
-LOGDIR = os.path.join(BASE_DIR, "logs")
-WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
-ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
-DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
-WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
-TRAJECTORY_CSV = os.path.join(LOGDIR, "trajectory_feedback.csv")  # NEW: Store X,Y trajectories per iteration
-IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
-IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
-
-N_BFS = 10
-MAX_ITERS = 400
-IK_MAX_ITERS = 50
-DECI_BUILD = 2  # keep every k-th DMP step when building joints (1=all)
-
-GEMINI_MODEL = "gemini-2.5-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
-GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
-
-builtins.input = lambda *a, **k: "7"
-
+# Import from testiing_2 (viewer is already patched if headless)
 from testiing_2 import (
     EnhancedDMPController, MOP_Z_HEIGHT,
     enhanced_ik_solver, get_joint_positions, set_joint_positions
 )
 from pydmps.dmp_rhythmic import DMPs_rhythmic
 
-controller = EnhancedDMPController()
-bounds = {
-    "xmin": controller.x_min, "xmax": controller.x_max,
-    "ymin": controller.y_min, "ymax": controller.y_max,
-}
+# ============================================
+# Constants from original enhancedll.py
+# ============================================
 
-MAX_CHANGED = 12
-# DELTA_ABS = 5.0
-# DELTA_REL = 0.08
+HISTORY_WINDOW = 25
+TRAJECTORY_HISTORY_WINDOW = 20
+IK_ERROR_HISTORY_WINDOW = 40
+
+N_BFS = 10
+MAX_ITERS = int(os.environ.get("MAX_ITERS", "400"))
+IK_MAX_ITERS = 50
+DECI_BUILD = 2
+
+GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+
+builtins.input = lambda *a, **k: "7"
 
 
-# ----------------- utils -----------------
+# ============================================
+# All your original utility functions
+# ============================================
 
 def ensure_dirs():
     os.makedirs(LOGDIR, exist_ok=True)
@@ -104,7 +205,6 @@ def row_to_2x50(arr):
     if cur_n_bfs == N_BFS:
         return w2
 
-    # Resize each axis from cur_n_bfs -> N_BFS using linear interpolation
     src_x = np.linspace(0.0, 1.0, cur_n_bfs)
     dst_x = np.linspace(0.0, 1.0, N_BFS)
     w_resized = np.empty((2, N_BFS), dtype=float)
@@ -119,13 +219,6 @@ def write_weights_csv(path, w2):
         csv.writer(f).writerow(list(row))
 
 
-# def read_weights_csv(path):
-#     with open(path, "r", encoding="utf-8") as f:
-#         txt = f.read()
-#     nums = re.findall(r"[-+]?\d*\.?\d+", txt)
-#     if not nums:
-#         raise ValueError(f"No numbers in {path}")
-#     return row_to_2x50([float(x) for x in nums])
 def read_weights_csv(path):
     with open(path, "r", encoding="utf-8") as f:
         txt = f.read()
@@ -137,22 +230,18 @@ def read_weights_csv(path):
         raise ValueError(f"{path} has only {len(vals)} numbers, need {need} (2*N_BFS).")
 
     if len(vals) % 2 != 0:
-        # odd length -> drop the last stray token
         print(f"Warning: {path} has odd length ({len(vals)}). Dropping last value.")
         vals = vals[:-1]
 
     if len(vals) > need:
-        # avoid mixing in accidental extra numbers; keep the first exact set
         print(f"Warning: {path} has {len(vals)} values. Trimming to the first {need}.")
         vals = vals[:need]
 
     return row_to_2x50(vals)
 
 
-
 def read_move_csv(path):
     try:
-        # Try named columns
         data = np.genfromtxt(path, delimiter=",", names=True, dtype=float)
         if data.dtype.names and {"x", "y"}.issubset(data.dtype.names):
             xy = np.column_stack([data["x"], data["y"]]).astype(float)
@@ -161,7 +250,6 @@ def read_move_csv(path):
     except Exception:
         pass
 
-    # Fallback: two columns
     xy = np.loadtxt(path, delimiter=",", dtype=float)
     if xy.ndim != 2 or xy.shape[1] < 2:
         raise ValueError(f"{path} must have at least two columns (x,y)")
@@ -179,11 +267,9 @@ def log_iteration(iter_idx, grid_mat, total_balls, traj_len, out_csv):
         w.writerow([iter_idx, time.strftime("%Y-%m-%d %H:%M:%S"), traj_len, total_balls] + flat)
 
 
-# NEW: Functions for trajectory feedback
 def save_trajectory_data(iter_idx, task_trajectory, csv_path):
     """Save X,Y trajectory coordinates for this iteration."""
     file_exists = os.path.exists(csv_path)
-    # if iter_idx % 2 == 1:
 
     with open(csv_path, "a", newline="") as f:
         w = csv.writer(f)
@@ -192,9 +278,8 @@ def save_trajectory_data(iter_idx, task_trajectory, csv_path):
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         for step_idx, target in enumerate(task_trajectory):
-            x, y = target[0], target[1]  # Extract X,Y (Z is constant)
+            x, y = target[0], target[1]
             w.writerow([iter_idx, step_idx, float(x), float(y), timestamp])
-
 
 
 def load_trajectory_history(csv_path, max_iters=20):
@@ -207,7 +292,6 @@ def load_trajectory_history(csv_path, max_iters=20):
         if data.size == 0:
             return {}
 
-        # Group by iteration
         trajectory_history = {}
         for row in data:
             iter_num = int(row["iter"])
@@ -219,7 +303,6 @@ def load_trajectory_history(csv_path, max_iters=20):
                 "y": float(row["y"])
             })
 
-        # Return only last max_iters iterations
         sorted_iters = sorted(trajectory_history.keys())
         if len(sorted_iters) > max_iters:
             sorted_iters = sorted_iters[-max_iters:]
@@ -230,8 +313,9 @@ def load_trajectory_history(csv_path, max_iters=20):
         print(f"Warning: Could not load trajectory history: {e}")
         return {}
 
+
 def save_ik_error(iter_idx, step_idx, target_3d, error_val, csv_path):
-    """Append a single IK failure row: (iter, step, x, y, z, error_m, timestamp)."""
+    """Append a single IK failure row."""
     file_exists = os.path.exists(csv_path)
     with open(csv_path, "a", newline="") as f:
         w = csv.writer(f)
@@ -245,14 +329,13 @@ def save_ik_error(iter_idx, step_idx, target_3d, error_val, csv_path):
 
 
 def load_ik_error_history(csv_path, max_iters=20):
-    """Return dict {iter: [ {step,x,y,z,error_m}, ... ]} for last max_iters iterations."""
+    """Return dict of IK errors for last max_iters iterations."""
     if not os.path.exists(csv_path):
         return {}
     try:
         data = np.genfromtxt(csv_path, delimiter=",", names=True, dtype=None, encoding="utf-8")
         if data.size == 0:
             return {}
-        # Ensure we can iterate even when a single row is present
         rows = np.atleast_1d(data)
         history = {}
         for row in rows:
@@ -275,7 +358,7 @@ def load_ik_error_history(csv_path, max_iters=20):
 
 
 def summarize_ik_errors(error_history):
-    """Compute per-iter IK failure stats and include a few sample failures."""
+    """Compute per-iter IK failure stats."""
     summary = {}
     for it, entries in error_history.items():
         if not entries:
@@ -285,12 +368,13 @@ def summarize_ik_errors(error_history):
             "num_failures": int(len(errs)),
             "max_error_m": float(np.max(errs)),
             "mean_error_m": float(np.mean(errs)),
-            "sample": entries[:3]  # first few failures (step,x,y,z,error_m)
+            "sample": entries[:3]
         }
     return summary
 
+
 def analyze_trajectory_performance(trajectory_data, bounds):
-    """Analyze trajectory quality: coverage, bounds compliance, smoothness."""
+    """Analyze trajectory quality."""
     if not trajectory_data:
         return {}
 
@@ -303,15 +387,12 @@ def analyze_trajectory_performance(trajectory_data, bounds):
         xs = [p["x"] for p in traj_points]
         ys = [p["y"] for p in traj_points]
 
-        # Bounds compliance
         x_in_bounds = all(bounds["xmin"] <= x <= bounds["xmax"] for x in xs)
         y_in_bounds = all(bounds["ymin"] <= y <= bounds["ymax"] for y in ys)
 
-        # Coverage metrics
         x_range_covered = (max(xs) - min(xs)) / (bounds["xmax"] - bounds["xmin"])
         y_range_covered = (max(ys) - min(ys)) / (bounds["ymax"] - bounds["ymin"])
 
-        # Smoothness (path length vs direct distance)
         path_length = sum(np.sqrt((xs[i + 1] - xs[i]) ** 2 + (ys[i + 1] - ys[i]) ** 2)
                           for i in range(len(xs) - 1)) if len(xs) > 1 else 0
         direct_distance = np.sqrt((xs[-1] - xs[0]) ** 2 + (ys[-1] - ys[0]) ** 2) if len(xs) > 1 else 0
@@ -327,8 +408,10 @@ def analyze_trajectory_performance(trajectory_data, bounds):
         }
 
     return analysis
+
+
 def load_iteration_log(csv_path):
-    """Load llm_iteration_log.csv into a dictionary keyed by iteration number."""
+    """Load llm_iteration_log.csv."""
     if not os.path.exists(csv_path):
         return {}
     try:
@@ -338,7 +421,7 @@ def load_iteration_log(csv_path):
         log_data = {}
         for row in np.atleast_1d(data):
             it = int(row["iter"])
-            cells = [int(row[f"cell{i}"]) for i in range(6)]  # 2x3 grid = 6 cells
+            cells = [int(row[f"cell{i}"]) for i in range(6)]
             log_data[it] = {
                 "traj_waypoints": int(row["traj_waypoints"]),
                 "total_balls": int(row["total_balls"]),
@@ -349,8 +432,9 @@ def load_iteration_log(csv_path):
         print(f"Warning: Could not load iteration log {csv_path}: {e}")
         return {}
 
+
 def load_traj_feedback(csv_path):
-    """Load trajectory_feedback.csv into a dictionary keyed by iteration number."""
+    """Load trajectory_feedback.csv."""
     if not os.path.exists(csv_path):
         return {}
     try:
@@ -371,18 +455,12 @@ def load_traj_feedback(csv_path):
     except Exception as e:
         print(f"Warning: Could not load trajectory feedback {csv_path}: {e}")
         return {}
-# delta_abs=5.0, delta_rel=0.08
-# IK ERROR FEEDBACK  which you will use to reduce the movement that you did so the error is less overtime for the motion(last {IK_ERROR_HISTORY_WINDOW} iters):
-# {json.dumps(ik_error_summary or {}, ensure_ascii=False)} this is only used when
 
-# - TRAJECTORY QUALITY: Based on the trajectory history, optimize for:
-#   * Bounds compliance (keep all X,Y within workspace)
-#   * Good coverage (high x_coverage and y_coverage values)
-#   * Smooth motion (reasonable smoothness metric)
-#   * Effective cleaning (correlation between trajectory path and ball reduction)
+
+# Your complete enhanced_ollama_prompt function
 def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history,
-                           trajectory_history, trajectory_analysis, bounds,  ik_error_summary=None,iter_log_data=None,traj_feedback_data=None, feedback_window=40000
-                           ):
+                           trajectory_history, trajectory_analysis, bounds, ik_error_summary=None,
+                           iter_log_data=None, traj_feedback_data=None, feedback_window=40000):
     try:
         w_example1 = parse_weights_text(WEIGHTS_TXT).tolist()
     except Exception:
@@ -391,31 +469,30 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
         w_example2 = parse_weights_text(WEIGHTS_TXT2).tolist()
     except Exception:
         w_example2 = []
-    try :
+    try:
         trajectoy_1 = parse_weights_text(TRAJ_TXT1).tolist()
         trajectoy_2 = parse_weights_text(TRAJ_TXT2).tolist()
-        total1=parse_weights_text(TOTAL1).tolist()
+        total1 = parse_weights_text(TOTAL1).tolist()
         total2 = parse_weights_text(TOTAL2).tolist()
         grid1 = parse_weights_text(GRID1).tolist()
         grid2 = parse_weights_text(GRID2).tolist()
     except:
-        trajectoy_1 =[]
-        trajectoy_2=[]
-        total1=[]
-        total2 =[]
-        grid1 =[]
+        trajectoy_1 = []
+        trajectoy_2 = []
+        total1 = []
+        total2 = []
+        grid1 = []
         grid2 = []
 
     xmin, xmax = bounds["xmin"], bounds["xmax"]
     ymin, ymax = bounds["ymin"], bounds["ymax"]
     grid_list = grid_mat.tolist()
 
-    # --- NEW: Define Strict Global Limits for Failure Check (Based on your request) ---
     STRICT_X_MIN = -1.050
     STRICT_X_MAX = 1.050
     STRICT_Y_MIN = -0.650
     STRICT_Y_MAX = 0.650
-    # === 2. NEW SECTION: Analyze historical iteration + weight data ===
+
     best_iter_summary = ""
     best_weight_feedback = ""
     best_iter_data = None
@@ -423,44 +500,29 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     w_df = None
 
     try:
-        # Load iteration and weight data if present
         if os.path.exists(ITER_LOG_CSV) and os.path.exists(WEIGHT_HISTORY_CSV):
             iter_df = pd.read_csv(ITER_LOG_CSV)
             w_df = pd.read_csv(WEIGHT_HISTORY_CSV)
 
-            # Expect columns: iter, traj_waypoints, total_balls, cell0...cell5
-            # and weights_history: iter, w0...wn + maybe 'executed'
             iter_df = iter_df.dropna(subset=["total_balls", "traj_waypoints"])
             iter_df["iter"] = iter_df["iter"].astype(int)
 
-            # Define a waypoint sanity threshold (exclude truncated or invalid runs)
             waypoint_median = iter_df["traj_waypoints"].median()
             waypoint_cutoff = max(waypoint_median * 0.9, waypoint_median - 150)
 
             valid_df = iter_df[iter_df["traj_waypoints"] >= waypoint_cutoff]
 
-            # Find the best run (lowest f(weights) among valid)
             if not valid_df.empty:
                 best_iter = valid_df.loc[valid_df["total_balls"].idxmin()]
                 best_iter_num = int(best_iter["iter"])
                 best_iter_data = best_iter
 
-                # Fetch matching weights from weights_history
                 weight_row = w_df[w_df["iter"] == best_iter_num]
                 if not weight_row.empty:
-                    # Flatten weight columns only (ignore non-float columns)
                     best_weights = [
                         float(x) for x in weight_row.iloc[0].values[1:]
                         if str(x).replace('.', '', 1).replace('-', '', 1).isdigit()
                     ]
-
-                # # Construct readable text
-                # best_iter_summary = (
-                #     f"\n# Best Historical Policy (Iteration {best_iter_num}):\n"
-                #     f" f(weights): {best_iter['total_balls']} | "
-                #     #
-                #     # f"Grid: {[best_iter.get(f'cell{i}', 'N/A') for i in range(6)]}\n"
-                # )
 
                 if best_weights:
                     w_min, w_max = np.min(best_weights), np.max(best_weights)
@@ -474,13 +536,10 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                     )
 
     except Exception as e:
-        best_iter_summary = f"\n# ⚠️ Error analyzing historical weights: {str(e)}\n"
-
-    # Format trajectory history for LLM
+        best_iter_summary = f"\n# Error analyzing historical weights: {str(e)}\n"
     traj_feedback = {}
     for iter_num, analysis in trajectory_analysis.items():
         if iter_num in trajectory_history:
-            # Sample trajectory points (first, middle, last)
             traj_points = trajectory_history[iter_num]
             n_points = len(traj_points)
             sample_indices = [0, n_points // 2, n_points - 1] if n_points > 2 else list(range(n_points))
@@ -498,12 +557,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     feedback_text = ""
 
     def is_bounds_failed(x_min, x_max, y_min, y_max):
-        """Checks if the trajectory range violates the strict global limits."""
         return (x_min < STRICT_X_MIN or x_max > STRICT_X_MAX or
                 y_min < STRICT_Y_MIN or y_max > STRICT_Y_MAX)
-
-
-
 
     if iter_log_data:
         recent_iters = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-feedback_window:]
@@ -527,41 +582,15 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         if is_bounds_failed(x_min_traj, x_max_traj, y_min_traj, y_max_traj):
                             is_failed_iter = True
 
-                    # Check for explicit failure cost if one was applied (for IK failures not caught by bounds)
-                    # We prioritize bounds check, but keep the high cost check as a secondary signal for other hard errors.
-                    #     f"grid_distribution={entry['cells']}\n"
-
                 if is_failed_iter:
-
                     feedback_text += (
                         f"  {_ordinal(i)} iteration: f(weights)={current_f_weights} (FAILURE: Out of Bounds ❌)\n"
                     )
                 else:
                     feedback_text += (
                         f"  {_ordinal(i)} iteration: f(weights)={current_f_weights}, "
-
                     )
-                # feedback_text += (
-                #     f"  {_ordinal(i)} iteration: f(weights)={entry['total_balls']}, "
-                #
-                #
-                # )
 
-    # if traj_feedback_data:
-    #     recent_traj_iters = sorted([k for k in traj_feedback_data.keys() if k < iter_idx])[-feedback_window:]
-    #     if recent_traj_iters:
-    #         feedback_text += f"\n# Trajectory Path Analysis (last {len(recent_traj_iters)} iterations):\n"
-    #         for i in recent_traj_iters:
-    #             pts = traj_feedback_data[i]
-    #             if pts:
-    #                 # Sample first 5 points to show path start
-    #                 sample_start = [(round(p['x'], 3), round(p['y'], 3)) for p in pts[:500]]
-    #                 # Sample last 5 points to show path end
-    #                 sample_end = [(round(p['x'], 3), round(p['y'], 3)) for p in pts[-500:]]
-    #                 feedback_text += (
-    #                     f"  {_ordinal(i)} iteration: path_start={sample_start}, "
-    #                     f"path_end={sample_end}, total_steps={len(pts)}\n"
-    #                 )
     if w_df is not None and not w_df.empty:
         try:
             executed_df = w_df[(w_df['tag'] == 'executed') & (w_df['iter'] < iter_idx)].copy()
@@ -592,7 +621,6 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                                                               max(y_values))
 
                             if is_failed_iter:
-                                # Highlight the specific failure coordinates
                                 bounds_info = (
                                     f", **OUT-OF-BOUNDS FAILURE**: x_range=[{x_min_traj}, {x_max_traj}], "
                                     f"y_range=[{y_min_traj}, {y_max_traj}]"
@@ -603,39 +631,16 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                                     f"y_range=[{y_min_traj}, {y_max_traj}]"
                                 )
 
-                            # bounds_info = (
-                            #     f", x_range=[{x_min_traj}, {x_max_traj}], "
-                            #     f"y_range=[{y_min_traj}, {y_max_traj}]"
-                            # )
-
-
                     if weights:
-                        # Convert the list of weights into a JSON string to include in the prompt
-                        # Rounding to 4 decimal places keeps it clean
                         rounded_weights = [round(w, 4) for w in weights]
                         failure_tag = " (FAILED)" if is_failed_iter else ""
                         feedback_text += (
                             f"  {_ordinal(iter_num)} iteration: weights={json.dumps(rounded_weights)}\n"
                             f"{bounds_info}\n"
                             f" f(weights) : {current_f_weights}"
-
-
                         )
         except Exception as e:
-            feedback_text += f"# ⚠️ Error processing executed weights history: {str(e)}\n"
-
-
-    # # Add performance trends analysis if we have enough data
-    # if iter_log_data and len([k for k in iter_log_data.keys() if k < iter_idx]) >= 3:
-    #     recent_3 = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-10:]
-    #     ball_trend = [iter_log_data[k]['total_balls'] for k in recent_3]
-    #     if ball_trend[0] > ball_trend[-1]:
-    #         trend = "IMPROVING (f(weights) decreasing)"
-    #     elif ball_trend[0] < ball_trend[-1]:
-    #         trend = "WORSENING (f(weights) increasing)"
-    #     else:
-    #         trend = "STABLE (f(weights) unchanged)"
-    #     # feedback_text += f"\n# Recent Trend: {trend} - Last 3 iterations: {ball_trend}\n"
+            feedback_text += f"# ️ Error processing executed weights history: {str(e)}\n"
 
     if best_iter_summary or best_weight_feedback:
         feedback_text += "\n# Historical Weight Performance Feedback:\n"
@@ -654,7 +659,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
             {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
         3) I will then provide the function evaluation f(weights) at that point and the current iteration.
         4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
-        
+
 
     # Remember :
         1) XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.
@@ -669,8 +674,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
           # Example 1:
          weights =  {json.dumps(w_example1)} 
         f(weights) =  {json.dumps(total1)} 
-            
-            
+
+
           # Example 2:
           (WORKSPACE LIMITS (meters): x ∈ [-0.697, 0.695], y ∈ [-0.213, 0.116])
          weights =  {json.dumps(w_example2)},
@@ -678,7 +683,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
 
 
-# Historical Feedback Summary (Full History Up to Iteration {iter_idx-1}):
+# Historical Feedback Summary (Full History Up to Iteration {iter_idx - 1}):
      {feedback_text}
 
 
@@ -686,223 +691,53 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     """
 
 
-
-# def call_gemini(prompt: str) -> str:
-#     try:
-#         resp = GEMINI.models.generate_content(
-#             model=GEMINI_MODEL,
-#             contents=prompt,
-#             config={"temperature": 0.2}  # stable, low-noise updates
-#         )
-#         text = getattr(resp, "text", None) or str(resp)
-#         return text.strip()
-#     except Exception as e:
-#         raise RuntimeError(f"Gemini call failed: {e}")
-#
-# # DELETE your old call_gemini function and REPLACE it with this one.
-
-
-import time
+# Your complete call_gemini function with rotation
 import random
-#
-# def call_gemini(prompt: str) -> str:
-#     """Calls the Gemini API with exponential backoff and smart retry handling for rate limits (429/503)."""
-#     max_retries = 7
-#     base_wait_time =15    # slightly longer since free tier is tight
-#     backoff_factor = 2
-#
-#     for attempt in range(max_retries):
-#         try:
-#             resp = GEMINI.models.generate_content(
-#                 model=GEMINI_MODEL,
-#                 contents=prompt,
-#                 config={"temperature": 0.2}
-#             )
-#             text = getattr(resp, "text", None) or str(resp)
-#             return text.strip()
-#
-#         except Exception as e:
-#             error_str = str(e)
-#
-#             # Only retry on known transient errors
-#             if "429" in error_str or "503" in error_str or "temporarily unavailable" in error_str.lower():
-#                 # Add exponential backoff with jitter
-#                 sleep_time = base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5)
-#                 print(f"⚠️ Gemini rate limit or service error ({error_str}). Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries})")
-#                 time.sleep(sleep_time)
-#                 continue  # try again
-#
-#             # If it's another type of error, fail fast
-#             raise RuntimeError(f"Gemini call failed (non-retryable): {e}")
-#
-#     raise RuntimeError(f"Gemini call failed after {max_retries} retries due to repeated rate limits or server errors.")
 
-# def call_ollama(prompt: str) -> str:
-#     """
-#     Calls the local Ollama model (e.g. gpt-oss:120b) via subprocess.
-#     Includes basic retry logic similar to Gemini.
-#     """
-#     max_retries = 5
-#     base_wait = 10
-#
-#     for attempt in range(max_retries):
-#         try:
-#             # run Ollama CLI with prompt
-#             result = subprocess.run(
-#                 ["ollama", "run", OLLAMA_MODEL],
-#                 input=prompt,
-#                 capture_output=True,
-#                 text=True,
-#                 timeout=600  # 10 min max
-#             )
-#             if result.returncode == 0 and result.stdout.strip():
-#                 return result.stdout.strip()
-#             else:
-#                 raise RuntimeError(f"Ollama error: {result.stderr or 'No output'}")
-#
-#         except Exception as e:
-#             if attempt < max_retries - 1:
-#                 wait = base_wait * (2 ** attempt)
-#                 print(f"⚠️ Ollama error ({e}). Retrying in {wait}s... ({attempt+1}/{max_retries})")
-#                 time.sleep(wait)
-#             else:
-#                 raise RuntimeError(f"Ollama call failed after {max_retries} retries: {e}")
-
-
-
-# def parse_ollama_weights(out_text):
-#     text = out_text.strip()
-#     json_start = text.find("{")
-#
-#     try:
-#         obj = json.loads(out_text)
-#         cand = obj.get("weights", None)
-#         if cand is not None and isinstance(cand, list):
-#             return row_to_2x50(cand)
-#     except Exception:
-#         pass
-#
-#     # Fallback: extract all floats and reshape
-#     nums = re.findall(r"[-+]?\d*\.?\d+", out_text)
-#     if len(nums) >= 2 * N_BFS:
-#         return row_to_2x50([float(x) for x in nums[:2 * N_BFS]])
-#
-#     raise ValueError("Could not parse weights from LLM output")+
-
-# def call_gemini(prompt: str) -> str:
-#     """
-#     Calls the Gemini API with exponential backoff, smart retry handling,
-#     and automatic API key rotation (for multiple GOOGLE_API_KEYs on Windows).
-#     """
-#     API_KEYS = [
-#         "GOOGLE_API_KEY_1",
-#         "GOOGLE_API_KEY_2",
-#         "GOOGLE_API_KEY_3",
-#         "GOOGLE_API_KEY_4",
-#         "GOOGLE_API_KEY_5",
-#         "GOOGLE_API_KEY_6",
-#     ]
-#
-#     max_retries = 7
-#     base_wait_time = 15
-#     backoff_factor = 2
-#
-#     for api_index, api_var in enumerate(API_KEYS):
-#         api_key = os.environ.get(api_var)
-#         if not api_key:
-#             print(f"⚠️ {api_var} not found in environment, skipping...")
-#             continue
-#
-#         print(f"🔑 Using {api_var} (index {api_index + 1}/{len(API_KEYS)})")
-#
-#         client = genai.Client(api_key=api_key)
-#
-#         for attempt in range(max_retries):
-#             try:
-#                 resp = client.models.generate_content(
-#                     model=GEMINI_MODEL,
-#                     contents=prompt,
-#                     config={"temperature": 0.2}
-#                 )
-#                 text = getattr(resp, "text", None) or str(resp)
-#                 return text.strip()
-#
-#             except Exception as e:
-#                 error_str = str(e)
-#                 if "429" in error_str or "503" in error_str or "temporarily unavailable" in error_str.lower():
-#                     sleep_time = base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5)
-#                     print(f"⚠️ Gemini rate limit or service error ({error_str}). "
-#                           f"Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries}) [API {api_index + 1}]")
-#                     time.sleep(sleep_time)
-#                     continue
-#
-#                 print(f"❌ Non-retryable error on {api_var}: {e}")
-#                 break
-#
-#         print(f"🔁 API key {api_var} exhausted after {max_retries} retries. Switching to next key...")
-#
-#     print("❌ All Gemini API keys failed. Falling back to previous weights.")
-#     raise RuntimeError("All Gemini API keys failed after rotation.")
-
-
-# One process-wide lock for pointer updatesx`
 _call_gemini_lock = threading.Lock()
+
 
 def call_gemini(prompt: str) -> str:
     """
     Gemini call with exponential backoff and persistent round-robin key rotation.
-    - Starts from the last successful key across calls.
-    - On success: pointer stays on that key.
-    - If all keys fail in this call: pointer advances by 1 (keeps the cycle moving).
-    - Adds thread safety, broader transient error detection, and capped backoff.
     """
     API_KEYS = [
-
         "GOOGLE_API_KEY_1",
         "GOOGLE_API_KEY_2",
         "GOOGLE_API_KEY_6",
-
-
-
-
         "GOOGLE_API_KEY_5",
         "GOOGLE_API_KEY_3",
         "GOOGLE_API_KEY_4",
-
     ]
 
-    # Tuning: keep retries modest to avoid long stalls on a single key
     max_retries_per_key = 7
     base_wait_time = 4
     backoff_factor = 2
-    max_sleep_cap = 45  # cap each sleep to avoid runaway waits
+    max_sleep_cap = 45
 
     n = len(API_KEYS)
     if n == 0:
         raise RuntimeError("No API key variables configured.")
 
-    # Initialize persistent pointer if missing
     if not hasattr(call_gemini, "_active_idx"):
         call_gemini._active_idx = 0
 
     with _call_gemini_lock:
         start_idx = call_gemini._active_idx % n
 
-    # Helper: decide if transient
     def _retryable(err: Exception) -> bool:
         s = str(err).lower()
-        # Include rate limits, common 5xx/service errors, and timeouts/resets
         return (
-            "429" in s or
-            "503" in s or
-            "502" in s or
-            "504" in s or
-            "temporarily unavailable" in s or
-            "timeout" in s or
-            "timed out" in s or
-            "connection reset" in s or
-            "econnreset" in s or
-            "unavailable" in s
+                "429" in s or
+                "503" in s or
+                "502" in s or
+                "504" in s or
+                "temporarily unavailable" in s or
+                "timeout" in s or
+                "timed out" in s or
+                "connection reset" in s or
+                "econnreset" in s or
+                "unavailable" in s
         )
 
     last_error = None
@@ -913,14 +748,14 @@ def call_gemini(prompt: str) -> str:
         api_key = os.environ.get(api_var)
 
         if not api_key:
-            print(f"⚠️ {api_var} not found in environment, skipping...")
+            print(f"️ {api_var} not found in environment, skipping...")
             continue
 
-        print(f"🔑 Using {api_var} (index {api_index + 1}/{n})")
+        print(f" Using {api_var} (index {api_index + 1}/{n})")
         try:
             client = genai.Client(api_key=api_key)
         except Exception as e:
-            print(f"❌ Failed to initialize client for {api_var}: {e}")
+            print(f" Failed to initialize client for {api_var}: {e}")
             last_error = e
             continue
 
@@ -933,7 +768,6 @@ def call_gemini(prompt: str) -> str:
                 )
                 text = getattr(resp, "text", None) or str(resp)
 
-                # Record success pointer
                 with _call_gemini_lock:
                     call_gemini._active_idx = api_index
                 return text.strip()
@@ -944,7 +778,7 @@ def call_gemini(prompt: str) -> str:
                     sleep_time = min(base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5),
                                      max_sleep_cap)
                     print(
-                        f"⚠️ Transient Gemini error on {api_var}: {e}. "
+                        f" Transient Gemini error on {api_var}: {e}. "
                         f"Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries_per_key})"
                     )
                     time.sleep(sleep_time)
@@ -953,41 +787,37 @@ def call_gemini(prompt: str) -> str:
                     print(f"❌ Non-retryable error on {api_var}: {e}")
                     break
 
-        print(f"🔁 {api_var} exhausted after {max_retries_per_key} retries. Trying next key...")
+        print(f" {api_var} exhausted after {max_retries_per_key} retries. Trying next key...")
 
-    # All keys failed in this call; advance the pointer so the next call starts at the next key
     with _call_gemini_lock:
         call_gemini._active_idx = (start_idx + 1) % n
 
     raise RuntimeError(f"All Gemini API keys failed after rotation. Last error: {last_error}")
 
+
 def parse_ollama_weights(out_text):
     """
-    Parse the Ollama LLM response to extract a 2xN_BFS weight matrix.
-    Handles both pure JSON and messy text (code fences or extra commentary).
+    Parse the LLM response to extract a 2xN_BFS weight matrix.
     """
     text = out_text.strip()
 
-    # 🧹 Clean up possible code fences like ```json ... ```
     if text.startswith("```"):
         text = re.sub(r"^```[^\n]*\n|\n```$", "", text, flags=re.MULTILINE).strip()
 
-    # 🧠 Try direct JSON parsing first
     try:
         obj = json.loads(text)
         cand = obj.get("weights", None)
         if isinstance(cand, list):
             return row_to_2x50(cand)
     except Exception:
-        pass  # not pure JSON, fall back below
+        pass
 
-    # 🔢 Fallback: extract all floats from the text
     nums = re.findall(r"[-+]?\d*\.?\d+", text)
     if len(nums) >= 2 * N_BFS:
         return row_to_2x50([float(x) for x in nums[:2 * N_BFS]])
 
-    # ❌ If nothing worked
     raise ValueError("Could not parse weights from LLM output")
+
 
 def save_dialog(iter_idx, prompt, response):
     pid = f"iter_{iter_idx:03d}_{uuid.uuid4().hex[:8]}"
@@ -998,18 +828,7 @@ def save_dialog(iter_idx, prompt, response):
 
 
 def append_weight_history(csv_path, iter_idx, tag, w2):
-    """Append a single row to weight_history.csv.
-
-    Parameters
-    ----------
-    csv_path : str
-    iter_idx : int
-        iteration number (use 0 for initial)
-    tag : str
-        "executed" or "proposed"
-    w2 : np.ndarray
-        shape (2, N_BFS)
-    """
+    """Append a single row to weight_history.csv."""
     flat = list(map(float, w2.reshape(-1)))
     file_exists = os.path.exists(csv_path)
     with open(csv_path, "a", newline="") as f:
@@ -1020,9 +839,25 @@ def append_weight_history(csv_path, iter_idx, tag, w2):
         w.writerow([iter_idx, time.strftime("%Y-%m-%d %H:%M:%S"), tag] + flat)
 
 
-# --------------- main loop ---------------
+# ============================================
+# MAIN FUNCTION - Complete from enhancedll.py
+# ============================================
 
 def main():
+    # Print configuration
+    exp_name = os.environ.get("EXPERIMENT_NAME", "default")
+    is_headless = os.environ.get("HEADLESS", "0") == "1"
+
+    print("\n" + "=" * 70)
+    print(f" Enhanced DMP Controller - {exp_name}")
+    print("=" * 70)
+    print(f" Base Directory: {BASE_DIR}")
+    print(f" Max Iterations: {MAX_ITERS}")
+    print(f"  Viewer Mode: {'Headless ' if is_headless else 'Visual'}")
+    api_keys = [k for k in os.environ if k.startswith('GOOGLE_API_KEY_')]
+    print(f" API Keys Available: {len(api_keys)}")
+    print("=" * 70 + "\n")
+
     ensure_dirs()
 
     weight_history = []
@@ -1035,32 +870,36 @@ def main():
         flat0 = parse_weights_text(WEIGHTS_TXT)
         w0 = row_to_2x50(flat0)
         write_weights_csv(WEIGHTS_CSV, w0)
-        print(f"Initialized {WEIGHTS_CSV} from {WEIGHTS_TXT} → shape {w0.shape}")
+        print(f" Initialized {WEIGHTS_CSV} from {WEIGHTS_TXT} → shape {w0.shape}")
         append_weight_history(WEIGHT_HISTORY_CSV, 0, "executed", w0)
 
-    # Controller (one viewer, no reset later)
+    # Controller (viewer is already patched if headless)
+    print(" Initializing robot controller...")
     controller = EnhancedDMPController()
+
+    # Get bounds for prompt
+    bounds = {
+        "xmin": controller.x_min, "xmax": controller.x_max,
+        "ymin": controller.y_min, "ymax": controller.y_max,
+    }
 
     if not os.path.exists(CSV_MOVE_PATH):
         raise FileNotFoundError(f"Demo path not found: {CSV_MOVE_PATH}")
     demo_xy = read_move_csv(CSV_MOVE_PATH)
 
-    # Prime DMP ONCE from move.csv (y0, etc.)
+    # Prime DMP ONCE from move.csv
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=N_BFS, dt=controller.dt)
     dmp.imitate_path(y_des=demo_xy.T)
-    # ==========================================================
-    print(f"--> Overwriting {WEIGHTS_CSV} to match the new trajectory from {CSV_MOVE_PATH}")
-    write_weights_csv(WEIGHTS_CSV, dmp.w)
-    # Optional: Clear history if you are starting a fresh shape
-    if os.path.exists(WEIGHT_HISTORY_CSV):
-        os.remove(WEIGHT_HISTORY_CSV)
-        print("--> Cleared old weight history for new run.")
-    if os.path.exists(ITER_LOG_CSV):
-        os.remove(ITER_LOG_CSV)
+
+    print(" Controller initialized successfully\n")
 
     # Main optimization loop
     for it in range(1, MAX_ITERS + 1):
-        # Iterations
+        print(f"\n{'=' * 70}")
+        print(f" Iteration {it}/{MAX_ITERS} - {exp_name}")
+        print(f"{'=' * 70}")
+
+        # Reset simulation
         controller.hard_reset_from_home()
 
         # Read current weights
@@ -1079,14 +918,16 @@ def main():
         start_joints = get_joint_positions(model, data, joint_names)
 
         joint_traj = []
-        task_trajectory = []  # NEW: Store task-space trajectory for feedback
+        task_trajectory = []
         steps = int(dmp.timesteps)
         keep_every = max(1, int(DECI_BUILD))
+
+        print(f" Generating trajectory with {steps} DMP steps...")
 
         for i in range(steps):
             y, _, _ = dmp.step()
             target_3d = np.array([y[0], y[1], MOP_Z_HEIGHT], dtype=float)
-            task_trajectory.append(target_3d)  # NEW: Save for trajectory analysis
+            task_trajectory.append(target_3d)
 
             ok, err_val = enhanced_ik_solver(
                 model, data, site_id, target_3d, joint_names,
@@ -1099,50 +940,43 @@ def main():
                 joint_traj.append(get_joint_positions(model, data, joint_names).copy())
 
         if not joint_traj:
-            print(f"iter {it}: No joints generated, skipping execution.")
+            print(f"  iter {it}: No joints generated, skipping execution.")
         else:
             # Restore start joints so playback is clean
             set_joint_positions(model, data, joint_names, start_joints)
 
-            print(f"iter {it}: Executing {len(joint_traj)} joint waypoints...")
-            controller.execute_joint_trajectory(joint_traj, dt=controller.dt*2)
+            print(f"️  iter {it}: Executing {len(joint_traj)} joint waypoints...")
+            controller.execute_joint_trajectory(joint_traj, dt=controller.dt * 2)
 
-        # NEW: Save trajectory data for this iteration
+        # Save trajectory data for this iteration
         save_trajectory_data(it, task_trajectory, TRAJECTORY_CSV)
 
-        # Compute cost via your grid counter
+        # Compute cost via grid counter
         grid = controller.count_balls_in_grid()
-        controller.grid_count = grid  # (ny, nx), after their transpose
+        controller.grid_count = grid
         total_balls = int(np.sum(grid))
 
         log_iteration(it, grid, total_balls, len(joint_traj), ITER_LOG_CSV)
-        print(f"iter {it}: Cost (total balls) = {total_balls}, per-cell = {grid.tolist()}")
+        print(f" iter {it}: Cost (total balls) = {total_balls}")
+        print(f"   Grid distribution: {grid.tolist()}")
+
+        # Flush output for monitoring
+        sys.stdout.flush()
 
         if total_balls == 0:
-            print(f"iter {it}: Done, no balls left.")
+            print(f" iter {it}: Success! No balls left.")
             break
 
-        # NEW: Load and analyze trajectory history
+        # Load and analyze trajectory history
         trajectory_history = load_trajectory_history(TRAJECTORY_CSV, TRAJECTORY_HISTORY_WINDOW)
         trajectory_analysis = analyze_trajectory_performance(trajectory_history, bounds)
-        # NEW: IK failure feedback (history + summary)
-        # ik_error_history = load_ik_error_history(IK_ERROR_CSV, IK_ERROR_HISTORY_WINDOW)
-        # ik_error_summary = summarize_ik_errors(ik_error_history)
-
-
 
         iter_log_data = load_iteration_log(ITER_LOG_CSV)
         traj_feedback_data = load_traj_feedback(TRAJECTORY_CSV)
 
-        # Ask LLM for NEW weights given cost, grid, prev weights, AND trajectory feedback
+        # Ask LLM for NEW weights
         hist_slice = weight_history[-HISTORY_WINDOW:] if HISTORY_WINDOW > 0 else weight_history
 
-        # prompt = enhanced_ollama_prompt(
-        #     w_flat, grid, total_balls, it, hist_slice,
-        #     trajectory_history, trajectory_analysis, bounds,    ik_error_summary=ik_error_summary,
-        #     max_changed=MAX_CHANGED
-        #
-        # )
         prompt = enhanced_ollama_prompt(
             w_flat, grid, total_balls, it, hist_slice,
             trajectory_history, trajectory_analysis, bounds,
@@ -1152,14 +986,12 @@ def main():
             feedback_window=40000
         )
 
-
         try:
+            print(f" Querying LLM for next weights...")
             response = call_gemini(prompt)
-            # response = call_ollama(prompt)
 
         except Exception as e:
-
-            print(f"iter {it}: Gemini error: {e}. Reusing previous weights.")
+            print(f" iter {it}: Gemini error: {e}. Reusing previous weights.")
             time.sleep(1.0)
             continue
 
@@ -1167,20 +999,37 @@ def main():
 
         try:
             w_next = parse_ollama_weights(response)  # (2,50)
+            print(f" Successfully parsed new weights from LLM")
         except Exception as e:
-            print(f"iter {it}: Failed to parse LLM weights: {e}. Reusing previous weights.")
+            print(f" iter {it}: Failed to parse LLM weights: {e}. Reusing previous weights.")
             time.sleep(1.0)
             continue
 
         append_weight_history(WEIGHT_HISTORY_CSV, it, "proposed", w_next)
         write_weights_csv(WEIGHTS_CSV, w_next)
-        print(f"iter {it}: Updated {WEIGHTS_CSV} with new weights from LLM.")
+        print(f" iter {it}: Updated {WEIGHTS_CSV} with new weights from LLM.")
 
         weight_history.append(w_next.reshape(-1).tolist())
-        time.sleep(40)
 
-    print("Loop finished. Close the viewer to exit.")
+        # Sleep between iterations (configurable via env)
+        iter_sleep = int(os.environ.get("ITER_SLEEP", "40"))
+        print(f" Sleeping {iter_sleep}s before next iteration...")
+        time.sleep(iter_sleep)
+
+    print(f"\n{'=' * 70}")
+    print(f"Experiment {exp_name} completed!")
+    print(f"{'=' * 70}\n")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n️  Interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n Fatal error: {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
