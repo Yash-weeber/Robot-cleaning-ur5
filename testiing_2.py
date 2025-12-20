@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
 import queue
+from utils.draw_shapes import circle_trajectory, elipsoid_trajectory, square_trajectory, infinity_trajectory
 # from waypoint_generator import generate_initial_pattern
 # Movement Primitives Installation:
 # pip install movement_primitives
@@ -37,7 +38,7 @@ SITE_NAME = "ee_site"
 UR5E_JOINTS = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
 
 # 🎯 MOP CONFIGURATION
-MOP_Z_HEIGHT = 0.49  # Constant Z coordinate for mop
+MOP_Z_HEIGHT = 0.51  # Constant Z coordinate for mop
 # HOME_JOINT_POSITIONS = np.array([
 #     -2.89,  # shoulder_pan
 #     -1.07,  # shoulder_lift
@@ -46,8 +47,9 @@ MOP_Z_HEIGHT = 0.49  # Constant Z coordinate for mop
 #     -0.0628,  # wrist_2c
 #     -0.503  # wrist_3
 # ])
-HOME_JOINT_POSITIONS = np.array([0.188, -2.18, -0.87, 0.0, np.pi/2, np.pi/2])
-N_BFs = 100  # Number of basis functions for DMPs
+HOME_JOINT_POSITIONS = np.array([0.16986918, -np.pi/1.5, -1.1,  -np.pi/9,  np.pi/2,  1.64722557])
+# HOME_JOINT_POSITIONS = np.array([0.16986918, -1.99060853, -1.0536693,  -0.38275826,  1.59757099,  1.64722557])
+N_BFs = 10  # Number of basis functions for DMPs
 
 # Enhanced IK Parameters
 INIT_LAMBDA = 0.15
@@ -718,10 +720,14 @@ class RealTimeMouseControl:
 # Main Enhanced DMP Controller Class
 # ---------------------------------------------------------
 class EnhancedDMPController:
-    def __init__(self, xml_path="ballmove.xml"):
+    def __init__(self, xml_path="ballmove.xml", n_bfs=10):
         # Load model
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
+        
+        # number of basis functions per DMP
+        self.n_bfs = n_bfs
+        print(self.n_bfs)
 
         # Robot configuration
         self.joint_names = UR5E_JOINTS
@@ -987,14 +993,15 @@ class EnhancedDMPController:
         root.destroy()
         return np.array(points)
 
-    def apply_dmp(self, pattern="discrete", draw_waypoints=False):
+    def apply_dmp(self, pattern="discrete", draw_waypoints=False, shape="infinity"):
         """Generate joint trajectory from discrete DMP waypoints (does not execute)"""
         if pattern == "discrete":
             print("\n🎯 === DISCRETE DMP MODE (3D) ===")
-            self.dmp = DMPs_discrete(n_dmps=2, n_bfs=N_BFs, dt=self.dt)
+            self.dmp = DMPs_discrete(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)
         elif pattern == "rhythmic":
             print("\n🎯 === RHYTHMIC DMP MODE (3D) ===")
-            self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=N_BFs, dt=self.dt)
+            print(self.n_bfs)
+            self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)
         else:
             print("\n🎯 === UNKNOWN DMP MODE (3D) ===")
 
@@ -1010,7 +1017,22 @@ class EnhancedDMPController:
             current_pos = self.data.site_xpos[self.site_id]
             trajectory = np.vstack(([current_pos[:2]], trajectory))
         else:
-            trajectory = self.get_discrete_waypoints()
+            if shape == "infinity":
+                x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False, color='orange', linestyle='-')
+                trajectory = np.vstack((x_traj, y_traj)).T
+                start_x = x_traj[0]
+                start_y = y_traj[0]
+                start_target_3d = np.array([start_x, start_y, MOP_Z_HEIGHT])
+                enhanced_ik_solver(
+                    self.model, self.data, self.site_id, start_target_3d, self.joint_names,
+                    max_iters_per_wp=50, print_every=1000
+                )
+                # joints = get_joint_positions(self.model, self.data, self.joint_names)
+                # print(f"joint positions for starting point {start_target_3d}: {joints}")
+                # set_joint_positions(self.model, self.data, self.joint_names, joints)
+                # self.viewer.draw()
+            else:
+                trajectory = self.get_discrete_waypoints()
         if trajectory is None:
             print("Cancelled by user")
             return None
@@ -1030,12 +1052,12 @@ class EnhancedDMPController:
         for step in range(self.dmp.timesteps):
             if not self.viewer.is_running():
                 break
-            dmp_pos_2d, _, _ = self.dmp.step()
+            dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
             target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
             task_traj.append(target_3d)
             if hasattr(self.dmp, 'x') and self.dmp.x < 0.01:
                 break
-            print(f"Step {step}: DMP pos: {dmp_pos_2d}, 3D target: {target_3d}" )
+            # print(f"Step {step}: DMP pos: {dmp_pos_2d}, 3D target: {target_3d}" )
 
         print(f"Generated {len(task_traj)} task-space waypoints from DMP.")
 
@@ -1054,6 +1076,33 @@ class EnhancedDMPController:
 
         print(f"Generated {len(joint_traj)} joint-space waypoints.")
         return joint_traj
+    
+    def set_joint_pid_gains(self, joint_names, kp_values, kd_values):
+        """
+        Set kp and kd for each joint actuator in MuJoCo.
+        kp_values and kd_values should be lists/arrays of same length as joint_names.
+        """
+        for i, jn in enumerate(joint_names):
+            # Get joint ID and DOF ID
+            joint_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+            dof_id = self.model.jnt_dofadr[joint_id]
+
+            # Find actuator ID by checking which joint it controls
+            actuator_id = -1
+            for aid in range(self.model.nu):
+                # trnid[aid, 0] stores the joint index for the actuator
+                if self.model.actuator_trnid[aid, 0] == joint_id:
+                    actuator_id = aid
+                    break
+            
+            if actuator_id != -1:
+                # Set kp (proportional gain)
+                self.model.actuator_gainprm[actuator_id, 0] = kp_values[i]
+                # Set bias for position servo (standard MuJoCo position actuator formula)
+                self.model.actuator_biasprm[actuator_id, 1] = -kp_values[i] 
+            else:
+                print(f"Warning: No actuator found for joint '{jn}'")
+            self.model.dof_damping[dof_id] = kd_values[i]
     
     # def apply_rhythmic_mode(self):
     #     """Apply rhythmic DMP mode with 3D movement"""
@@ -1178,13 +1227,13 @@ class EnhancedDMPController:
             print("1. Discrete DMP Mode (waypoint navigation with constant Z)")
             print("2. Discrete DMP Mode (Draw waypoints)")
             print("3. Rhythmic DMP Mode (mouse-drawn patterns with constant Z)")
-            print("4. Real-time Mouse Control (X-Y plane with constant Z)")
-            print("5. Reset Robot to Home Position")
-            print("6. Move to Custom Position (X, Y)")
-            print("7. Quit")
-
+            print("4. Rhythmic DMP Mode (Predefined Patterns)")
+            print("5. Real-time Mouse Control (X-Y plane with constant Z)")
+            print("6. Reset Robot to Home Position")
+            print("7. Move to Custom Position (X, Y)")
+            print("8. Quit")
             try:
-                choice = input("\nSelect mode (1-7): ").strip()
+                choice = input("\nSelect mode (1-8): ").strip()
 
                 if choice == '1':
                     joint_traj = self.apply_dmp(pattern="discrete", draw_waypoints=False)
@@ -1199,15 +1248,19 @@ class EnhancedDMPController:
                     if joint_traj is not None and len(joint_traj) > 0:
                         self.execute_joint_trajectory(joint_traj)
                 elif choice == '4':
-                    self.execute_realtime_mode()
+                    joint_traj = self.apply_dmp(pattern="rhythmic", draw_waypoints=False)
+                    if joint_traj is not None and len(joint_traj) > 0:
+                        self.execute_joint_trajectory(joint_traj)
                 elif choice == '5':
-                    self.reset_robot_to_home()
+                    self.execute_realtime_mode()
                 elif choice == '6':
-                    self.manual_move_prompt()
+                    self.reset_robot_to_home()
                 elif choice == '7':
+                    self.manual_move_prompt()
+                elif choice == '8':
                     self.running = False
                 else:
-                    print("Invalid choice. Please select 1-7.")
+                    print("Invalid choice. Please select 1-8.")
 
                 # Brief pause between operations
                 time.sleep(0.5)
@@ -1298,9 +1351,10 @@ class EnhancedDMPController:
 def main():
     """Main function"""
     xml_path = XML_PATH
+    n_bfs = N_BFs
 
     try:
-        controller = EnhancedDMPController(xml_path)
+        controller = EnhancedDMPController(xml_path=xml_path)
         controller.run()
     except FileNotFoundError:
         print(f"❌ Error: XML file '{xml_path}' not found!")
@@ -1313,15 +1367,17 @@ def main():
 
 xml_path = XML_PATH
 
-try:
-    controller = EnhancedDMPController(xml_path)
-    controller.run()
-except FileNotFoundError:
-    print(f"❌ Error: XML file '{xml_path}' not found!")
-    print("Please ensure the XML file is in the current directory.")
-except Exception as e:
-    print(f"❌ Error initializing controller: {e}")
-    import traceback
-    traceback.print_exc()
+if __name__ == "__main__":
+    main()
+    # try:
+    #     controller = EnhancedDMPController(xml_path)
+    #     controller.run()
+    # except FileNotFoundError:
+    #     print(f"❌ Error: XML file '{xml_path}' not found!")
+    #     print("Please ensure the XML file is in the current directory.")
+    # except Exception as e:
+    #     print(f"❌ Error initializing controller: {e}")
+    #     import traceback
+    #     traceback.print_exc()
 
 #%%

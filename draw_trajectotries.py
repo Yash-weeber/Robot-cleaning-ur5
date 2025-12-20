@@ -516,6 +516,8 @@ if __name__ == "__main__":
     traj = np.vstack((x_traj, y_traj))
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=20, dt=0.001)
     dmp.imitate_path(traj, plot=False)
+    np.random.seed(42)
+    dmp.w += np.random.randn(*dmp.w.shape) * 20  # add noise to weights for testing
 
     # 3. CRITICAL STEP: Move Robot to the START of the trajectory first
     start_x = x_traj[0]
@@ -542,7 +544,7 @@ if __name__ == "__main__":
 
     for _ in range(dmp.timesteps):
         # A. Get DMP Target
-        dmp_pos_2d, _, _ = dmp.step(tau=1.0)
+        dmp_pos_2d, _, _ = dmp.step(tau=2.0)
         target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
 
         # B. Apply IK Formula

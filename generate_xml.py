@@ -79,8 +79,8 @@ if __name__ == "__main__":
     x_pos_high = 1.3
     y_pos_low = -0.6
     y_pos_high = 0.6
-    z_pos_low = 0.51
-    z_pos_high = 0.51  # Fixed z position
+    z_pos_low = 0.48
+    z_pos_high = 0.48  # Fixed z position
 
     # Center of exclusion rectangle
     x_pos_center = (x_pos_low + x_pos_high) / 2

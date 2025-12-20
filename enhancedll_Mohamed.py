@@ -9,26 +9,29 @@ import uuid
 import builtins
 import subprocess
 import numpy as np
+import pdb
 import mujoco
 import threading
 from google import genai
 import pandas as pd
+from utils.draw_shapes import infinity_trajectory, square_trajectory, triangle_trajectory
 
-
+d = time.strftime("%Y-%m-%d %H:%M:%S")
+optimum = 0.0
 
 # OLLAMA_MODEL = "gpt-oss:120b"
 
 # # ====== EDIT THESE PATHS ======
-CSV_MOVE_PATH = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/move.csv"
-WEIGHTS_TXT = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight.txt"
-WEIGHTS_TXT2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight2.txt"
-BASE_DIR = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/"
-TRAJ_TXT1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject1.txt"
-TRAJ_TXT2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject2.txt"
-TOTAL1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total1.txt"
-TOTAL2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total2.txt"
-GRID1 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist1.txt"
-GRID2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist2.txt"
+CSV_MOVE_PATH = f"./Results/logs/{d}/move.csv"
+WEIGHTS_TXT = f"./Results/logs/{d}/weight.txt"
+WEIGHTS_TXT2 = f"./Results/logs/{d}/weight2.txt"
+BASE_DIR = f"./Results/"
+TRAJ_TXT1 = f"./Results/logs/{d}/traject1.txt"
+TRAJ_TXT2 = f"./Results/logs/{d}/traject2.txt"
+TOTAL1 = f"./Results/logs/{d}/total1.txt"
+TOTAL2 = f"./Results/logs/{d}/total2.txt"
+GRID1 = f"./Results/logs/{d}/gridlist1.txt"
+GRID2 = f"./Results/logs/{d}/gridlist2.txt"
 # # ==============================
 # ====== EDIT THESE PATHS ======
 # CSV_MOVE_PATH   = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/move.csv"
@@ -38,8 +41,10 @@ GRID2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/lo
 
 HISTORY_WINDOW = 25
 TRAJECTORY_HISTORY_WINDOW = 20  # NEW: Track last 20 iterations of X,Y trajectories
+n_warmup = 2 # number of initial ICL examples
+seed_number = 42
 
-LOGDIR = os.path.join(BASE_DIR, "logs")
+LOGDIR = os.path.join(BASE_DIR, d, "logs")
 WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
 ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
 DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
@@ -48,10 +53,15 @@ TRAJECTORY_CSV = os.path.join(LOGDIR, "trajectory_feedback.csv")  # NEW: Store X
 IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
 IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
 
-N_BFS = 25
+N_BFS = 10
 MAX_ITERS = 400
 IK_MAX_ITERS = 50
 DECI_BUILD = 2  # keep every k-th DMP step when building joints (1=all)
+INIT_LAMBDA = 0.15
+TOL = 1e-3
+PRINT_EVERY = 60
+ANIMATION_DURATION = 4.0
+ANIMATION_FPS = 75
 
 GEMINI_MODEL = "gemini-2.5-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
 GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
@@ -64,11 +74,11 @@ from testiing_2 import (
 )
 from pydmps.dmp_rhythmic import DMPs_rhythmic
 
-controller = EnhancedDMPController()
-bounds = {
-    "xmin": controller.x_min, "xmax": controller.x_max,
-    "ymin": controller.y_min, "ymax": controller.y_max,
-}
+# controller = EnhancedDMPController()
+# bounds = {
+#     "xmin": controller.x_min, "xmax": controller.x_max,
+#     "ymin": controller.y_min, "ymax": controller.y_max,
+# }
 
 MAX_CHANGED = 12
 # DELTA_ABS = 5.0
@@ -420,6 +430,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     best_weight_feedback = ""
     best_iter_data = None
     best_weights = None
+    # The code `w_df` is not doing anything as it is just a variable name without any associated
+    # operation or assignment.
     w_df = None
 
     try:
@@ -440,19 +452,19 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
             valid_df = iter_df[iter_df["traj_waypoints"] >= waypoint_cutoff]
 
             # Find the best run (lowest f(weights) among valid)
-            if not valid_df.empty:
-                best_iter = valid_df.loc[valid_df["total_balls"].idxmin()]
-                best_iter_num = int(best_iter["iter"])
-                best_iter_data = best_iter
+            # if not valid_df.empty:
+            #     best_iter = valid_df.loc[valid_df["total_balls"].idxmin()]
+            #     best_iter_num = int(best_iter["iter"])
+            #     best_iter_data = best_iter
 
-                # Fetch matching weights from weights_history
-                weight_row = w_df[w_df["iter"] == best_iter_num]
-                if not weight_row.empty:
-                    # Flatten weight columns only (ignore non-float columns)
-                    best_weights = [
-                        float(x) for x in weight_row.iloc[0].values[1:]
-                        if str(x).replace('.', '', 1).replace('-', '', 1).isdigit()
-                    ]
+            #     # Fetch matching weights from weights_history
+            #     weight_row = w_df[w_df["iter"] == best_iter_num]
+            #     if not weight_row.empty:
+            #         # Flatten weight columns only (ignore non-float columns)
+            #         best_weights = [
+            #             float(x) for x in weight_row.iloc[0].values[1:]
+            #             if str(x).replace('.', '', 1).replace('-', '', 1).isdigit()
+            #         ]
 
                 # # Construct readable text
                 # best_iter_summary = (
@@ -462,16 +474,16 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                 #     # f"Grid: {[best_iter.get(f'cell{i}', 'N/A') for i in range(6)]}\n"
                 # )
 
-                if best_weights:
-                    w_min, w_max = np.min(best_weights), np.max(best_weights)
-                    w_range = w_max - w_min
-                    wrange = 340
-                    max_step = round(wrange / 12, 3)
-                    best_weight_feedback = (
-                        f"# Weight Range Insight:\n"
-                        f"  Weight range = [-170,170]  "
-                        f"(Δ = {wrange:.3f}) → Suggested MAX_STEP = {max_step}\n"
-                    )
+                # if best_weights:
+                #     w_min, w_max = np.min(best_weights), np.max(best_weights)
+                #     w_range = w_max - w_min
+                #     wrange = 340
+                #     max_step = round(wrange / 12, 3)
+                #     best_weight_feedback = (
+                #         f"# Weight Range Insight:\n"
+                #         f"  Weight range = [-170,170]  "
+                #         f"(Δ = {wrange:.3f}) → Suggested MAX_STEP = {max_step}\n"
+                #     )
 
     except Exception as e:
         best_iter_summary = f"\n# ⚠️ Error analyzing historical weights: {str(e)}\n"
@@ -504,41 +516,41 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
 
 
+    # Construct recent iteration performance summary
+    # if iter_log_data:
+    #     recent_iters = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-feedback_window:]
+    #     if recent_iters:
+    #         feedback_text += f"\n# Iteration Performance Summary (last {len(recent_iters)} iterations):\n"
+    #         for i in recent_iters:
+    #             entry = iter_log_data[i]
+    #             current_f_weights = entry['total_balls']
+    #             is_failed_iter = False
+    #             if i in traj_feedback_data:
+    #                 pts = traj_feedback_data[i]
+    #                 if pts:
+    #                     x_values = [p['x'] for p in pts]
+    #                     y_values = [p['y'] for p in pts]
 
-    if iter_log_data:
-        recent_iters = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-feedback_window:]
-        if recent_iters:
-            feedback_text += f"\n# Iteration Performance Summary (last {len(recent_iters)} iterations):\n"
-            for i in recent_iters:
-                entry = iter_log_data[i]
-                current_f_weights = entry['total_balls']
-                is_failed_iter = False
-                if i in traj_feedback_data:
-                    pts = traj_feedback_data[i]
-                    if pts:
-                        x_values = [p['x'] for p in pts]
-                        y_values = [p['y'] for p in pts]
+    #                     x_min_traj = min(x_values)
+    #                     x_max_traj = max(x_values)
+    #                     y_min_traj = min(y_values)
+    #                     y_max_traj = max(y_values)
 
-                        x_min_traj = min(x_values)
-                        x_max_traj = max(x_values)
-                        y_min_traj = min(y_values)
-                        y_max_traj = max(y_values)
+    #                     if is_bounds_failed(x_min_traj, x_max_traj, y_min_traj, y_max_traj):
+    #                         is_failed_iter = True
 
-                        if is_bounds_failed(x_min_traj, x_max_traj, y_min_traj, y_max_traj):
-                            is_failed_iter = True
+    #                 # Check for explicit failure cost if one was applied (for IK failures not caught by bounds)
+    #                 # We prioritize bounds check, but keep the high cost check as a secondary signal for other hard errors.
 
-                    # Check for explicit failure cost if one was applied (for IK failures not caught by bounds)
-                    # We prioritize bounds check, but keep the high cost check as a secondary signal for other hard errors.
+    #             if is_failed_iter:
 
-                if is_failed_iter:
-
-                    feedback_text += (
-                        f"  {_ordinal(i)} iteration: f(weights)={current_f_weights} (FAILURE: Out of Bounds ❌)\n"
-                    )
-                else:
-                    feedback_text += (
-                        f"  {_ordinal(i)} iteration: f(weights)={current_f_weights}, "
-                    )
+    #                 feedback_text += (
+    #                     f"  {_ordinal(i)} iteration: f(weights)={current_f_weights} (FAILURE: Out of Bounds ❌)\n"
+    #                 )
+    #             else:
+    #                 feedback_text += (
+    #                     f"  {_ordinal(i)} iteration: f(weights)={current_f_weights}, "
+    #                 )
                 # feedback_text += (
                 #     f"  {_ordinal(i)} iteration: f(weights)={entry['total_balls']}, "
                 #
@@ -567,7 +579,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
             recent_executed = executed_df.sort_values(by='iter', ascending=False).head(feedback_window)
 
             if not recent_executed.empty:
-                feedback_text += f"\n# Executed Weights History (last {len(recent_executed)} executed iterations):\n"
+                # feedback_text += f"\n# Executed Weights History (last {len(recent_executed)} executed iterations):\n"
 
                 for _, row in recent_executed.sort_values(by='iter').iterrows():
                     iter_num = int(row['iter'])
@@ -613,9 +625,9 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         rounded_weights = [round(w, 4) for w in weights]
                         failure_tag = " (FAILED)" if is_failed_iter else ""
                         feedback_text += (
-                            f"  {_ordinal(iter_num)} iteration: weights={json.dumps(rounded_weights)}\n"
-                            f"{bounds_info}\n"
-                            f" f(weights) : {current_f_weights}"
+                            f"          weights={json.dumps(rounded_weights)}"
+                            f"{bounds_info}, "
+                            f" f(weights) : {current_f_weights}\n"
 
 
                         )
@@ -635,215 +647,49 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     #         trend = "STABLE (f(weights) unchanged)"
     #     # feedback_text += f"\n# Recent Trend: {trend} - Last 3 iterations: {ball_trend}\n"
 
-    if best_iter_summary or best_weight_feedback:
-        feedback_text += "\n# Historical Weight Performance Feedback:\n"
-        feedback_text += best_iter_summary + best_weight_feedback
+    # if best_iter_summary or best_weight_feedback:
+    #     feedback_text += "\n# Historical Weight Performance Feedback:\n"
+    #     feedback_text += best_iter_summary + best_weight_feedback
 
     return f"""
-    You are a good global optimizer, helping me find the global minimum of a mathematical function
-    f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your
-    goal is to propose input values that efficiently lead us to the global minimum within a limited number
-    of iterations (400).
+You are a good global optimizer, helping me find the global minimum of a mathematical function f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your goal is to propose input values that efficiently lead us to the global minimum within a limited number of iterations ({MAX_ITERS}).
 
-    # Here's how we will interact :
-        1) I will provide you max steps ({MAX_ITERS}) along with a couple of training examples which includes weights for the policy, and its corresponding function value f(weights) for each example. 
-        2) You will provide the response in exact following format: 
-            Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
-            {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
-        3) I will then provide the function evaluation f(weights) at that point and the current iteration.
-        4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
-        
+# Regarding the policy and weights:
+    policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs). 
+    There are {N_BFS} basis functions per dimension, resulting in a total of {2 * N_BFS} weights.
+    Weight values should be floats, and can be both positive and negative.
+    The policy defines the trajectory in the XY workspace.
+    The generated trajectory must strictly stay within the defined XY workspace limits.
+    The function f(weights) evaluates the cost of the policy.
+    
+# Here's how we will interact :
+    1. I will provide you max steps ({MAX_ITERS}) along with training examples which includes weights for the policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example. 
+    2. You will provide the response in exact following format: 
+        Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
+        {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
+    3. I will then provide the function's f(weights) at that point and the current iteration.
+    4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+    
 
-    # Remember :
-        1) XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.
-        2) Balance between exploration and exploitation. 
-        3) Search both the positive and the negative values.
-        4) The global optimum corresponds to the minimum function value, which is close to f(weights). If your current f(weights) is significantly higher than that, you should prioritize exploration over exploitation.
-        5)You must avoid proposing weights that result in trajectories going outside the defined XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}], as trajectories with waypoints out of bounds are invalid and fail to execute correctly. Analyze the `Historical Feedback Summary` to understand which past weights caused poor bounds compliance and avoid similar solutions.
+# Remember :
+    1. **XY workspace limits: x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.**
+    2. **The global optimum should be around {optimum}.** If you are higher than that, this is a local optimum. You should  explore instead of exploiting.
+    3. Balance between exploration and exploitation. 
+    4. Search both the positive and the negative values.
+    
 
-    Next :
-         You will see examples of the dmp weights and their corresponding function value f(weights):
-          (WORKSPACE LIMITS (meters): x ∈ [-0.976, 1.175], y ∈ [-0.327, 0.198])
-          # Example 1:
-         weights =  {json.dumps(w_example1)} 
-        f(weights) =  {json.dumps(total1)} 
-            
-            
-          # Example 2:
-          (WORKSPACE LIMITS (meters): x ∈ [-0.697, 0.695], y ∈ [-0.213, 0.116])
-         weights =  {json.dumps(w_example2)},
-        f(weights) =  {json.dumps(total2)}
+Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
+{feedback_text}
 
 
+Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
+"""
 
-# Historical Feedback Summary (Full History Up to Iteration {iter_idx-1}):
-     {feedback_text}
-
-
-    Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
-    """
-
-
-
-# def call_gemini(prompt: str) -> str:
-#     try:
-#         resp = GEMINI.models.generate_content(
-#             model=GEMINI_MODEL,
-#             contents=prompt,
-#             config={"temperature": 0.2}  # stable, low-noise updates
-#         )
-#         text = getattr(resp, "text", None) or str(resp)
-#         return text.strip()
-#     except Exception as e:
-#         raise RuntimeError(f"Gemini call failed: {e}")
-#
-# # DELETE your old call_gemini function and REPLACE it with this one.
 
 
 import time
 import random
-#
-# def call_gemini(prompt: str) -> str:
-#     """Calls the Gemini API with exponential backoff and smart retry handling for rate limits (429/503)."""
-#     max_retries = 7
-#     base_wait_time =15    # slightly longer since free tier is tight
-#     backoff_factor = 2
-#
-#     for attempt in range(max_retries):
-#         try:
-#             resp = GEMINI.models.generate_content(
-#                 model=GEMINI_MODEL,
-#                 contents=prompt,
-#                 config={"temperature": 0.2}
-#             )
-#             text = getattr(resp, "text", None) or str(resp)
-#             return text.strip()
-#
-#         except Exception as e:
-#             error_str = str(e)
-#
-#             # Only retry on known transient errors
-#             if "429" in error_str or "503" in error_str or "temporarily unavailable" in error_str.lower():
-#                 # Add exponential backoff with jitter
-#                 sleep_time = base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5)
-#                 print(f"⚠️ Gemini rate limit or service error ({error_str}). Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries})")
-#                 time.sleep(sleep_time)
-#                 continue  # try again
-#
-#             # If it's another type of error, fail fast
-#             raise RuntimeError(f"Gemini call failed (non-retryable): {e}")
-#
-#     raise RuntimeError(f"Gemini call failed after {max_retries} retries due to repeated rate limits or server errors.")
 
-# def call_ollama(prompt: str) -> str:
-#     """
-#     Calls the local Ollama model (e.g. gpt-oss:120b) via subprocess.
-#     Includes basic retry logic similar to Gemini.
-#     """
-#     max_retries = 5
-#     base_wait = 10
-#
-#     for attempt in range(max_retries):
-#         try:
-#             # run Ollama CLI with prompt
-#             result = subprocess.run(
-#                 ["ollama", "run", OLLAMA_MODEL],
-#                 input=prompt,
-#                 capture_output=True,
-#                 text=True,
-#                 timeout=600  # 10 min max
-#             )
-#             if result.returncode == 0 and result.stdout.strip():
-#                 return result.stdout.strip()
-#             else:
-#                 raise RuntimeError(f"Ollama error: {result.stderr or 'No output'}")
-#
-#         except Exception as e:
-#             if attempt < max_retries - 1:
-#                 wait = base_wait * (2 ** attempt)
-#                 print(f"⚠️ Ollama error ({e}). Retrying in {wait}s... ({attempt+1}/{max_retries})")
-#                 time.sleep(wait)
-#             else:
-#                 raise RuntimeError(f"Ollama call failed after {max_retries} retries: {e}")
-
-
-
-# def parse_ollama_weights(out_text):
-#     text = out_text.strip()
-#     json_start = text.find("{")
-#
-#     try:
-#         obj = json.loads(out_text)
-#         cand = obj.get("weights", None)
-#         if cand is not None and isinstance(cand, list):
-#             return row_to_2x50(cand)
-#     except Exception:
-#         pass
-#
-#     # Fallback: extract all floats and reshape
-#     nums = re.findall(r"[-+]?\d*\.?\d+", out_text)
-#     if len(nums) >= 2 * N_BFS:
-#         return row_to_2x50([float(x) for x in nums[:2 * N_BFS]])
-#
-#     raise ValueError("Could not parse weights from LLM output")+
-
-# def call_gemini(prompt: str) -> str:
-#     """
-#     Calls the Gemini API with exponential backoff, smart retry handling,
-#     and automatic API key rotation (for multiple GOOGLE_API_KEYs on Windows).
-#     """
-#     API_KEYS = [
-#         "GOOGLE_API_KEY_1",
-#         "GOOGLE_API_KEY_2",
-#         "GOOGLE_API_KEY_3",
-#         "GOOGLE_API_KEY_4",
-#         "GOOGLE_API_KEY_5",
-#         "GOOGLE_API_KEY_6",
-#     ]
-#
-#     max_retries = 7
-#     base_wait_time = 15
-#     backoff_factor = 2
-#
-#     for api_index, api_var in enumerate(API_KEYS):
-#         api_key = os.environ.get(api_var)
-#         if not api_key:
-#             print(f"⚠️ {api_var} not found in environment, skipping...")
-#             continue
-#
-#         print(f"🔑 Using {api_var} (index {api_index + 1}/{len(API_KEYS)})")
-#
-#         client = genai.Client(api_key=api_key)
-#
-#         for attempt in range(max_retries):
-#             try:
-#                 resp = client.models.generate_content(
-#                     model=GEMINI_MODEL,
-#                     contents=prompt,
-#                     config={"temperature": 0.2}
-#                 )
-#                 text = getattr(resp, "text", None) or str(resp)
-#                 return text.strip()
-#
-#             except Exception as e:
-#                 error_str = str(e)
-#                 if "429" in error_str or "503" in error_str or "temporarily unavailable" in error_str.lower():
-#                     sleep_time = base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5)
-#                     print(f"⚠️ Gemini rate limit or service error ({error_str}). "
-#                           f"Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries}) [API {api_index + 1}]")
-#                     time.sleep(sleep_time)
-#                     continue
-#
-#                 print(f"❌ Non-retryable error on {api_var}: {e}")
-#                 break
-#
-#         print(f"🔁 API key {api_var} exhausted after {max_retries} retries. Switching to next key...")
-#
-#     print("❌ All Gemini API keys failed. Falling back to previous weights.")
-#     raise RuntimeError("All Gemini API keys failed after rotation.")
-
-
-# One process-wide lock for pointer updatesx`
 _call_gemini_lock = threading.Lock()
 
 def call_gemini(prompt: str) -> str:
@@ -1023,42 +869,87 @@ def main():
     ensure_dirs()
 
     weight_history = []
-
-    # Bootstrap weights.csv from weights.txt if missing
-    if not os.path.exists(WEIGHTS_CSV):
-        if not os.path.exists(WEIGHTS_TXT):
-            raise FileNotFoundError(f"Missing {WEIGHTS_CSV} and {WEIGHTS_TXT}")
-
-        flat0 = parse_weights_text(WEIGHTS_TXT)
-        w0 = row_to_2x50(flat0)
-        write_weights_csv(WEIGHTS_CSV, w0)
-        print(f"Initialized {WEIGHTS_CSV} from {WEIGHTS_TXT} → shape {w0.shape}")
-        append_weight_history(WEIGHT_HISTORY_CSV, 0, "executed", w0)
-
+    
     # Controller (one viewer, no reset later)
     controller = EnhancedDMPController()
+    bounds = {
+        "xmin": controller.x_min, "xmax": controller.x_max,
+        "ymin": controller.y_min, "ymax": controller.y_max,
+    }
 
-    if not os.path.exists(CSV_MOVE_PATH):
-        raise FileNotFoundError(f"Demo path not found: {CSV_MOVE_PATH}")
-    demo_xy = read_move_csv(CSV_MOVE_PATH)
+    # # Tune PID Gains
+    # kp = [3000, 3000, 1500, 800, 500, 500]
+    # kd = [150, 150, 80, 40, 20, 20]
+    # controller.set_joint_pid_gains(controller.joint_names, kp, kd)
+    # print("Updated PID gains.")
 
-    # Prime DMP ONCE from move.csv (y0, etc.)
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=N_BFS, dt=controller.dt)
-    dmp.imitate_path(y_des=demo_xy.T)
+
+    # Bootstrap weights.csv from weights.txt if missing
+    # if not os.path.exists(WEIGHTS_CSV):
+    #     if not os.path.exists(WEIGHTS_TXT):
+    # raise FileNotFoundError(f"Missing {WEIGHTS_CSV} and {WEIGHTS_TXT}")
+    x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
+    trajectory = np.vstack((x_traj, y_traj)).T
+    dmp.imitate_path(trajectory.T, plot=False)
+    # print(dmp.w)
+    write_weights_csv(WEIGHTS_CSV, dmp.w.copy())
+        
+        # else:
+        #     flat0 = parse_weights_text(WEIGHTS_TXT)
+        #     w0 = row_to_2x50(flat0)
+        #     write_weights_csv(WEIGHTS_CSV, w0)
+        #     print(f"Initialized {WEIGHTS_CSV} from {WEIGHTS_TXT} → shape {w0.shape}")
+        #     append_weight_history(WEIGHT_HISTORY_CSV, 0, "executed", w0)
+
+    # x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
+    # trajectory = np.vstack((x_traj, y_traj)).T
+    # dmp.imitate_path(trajectory.T, plot=False)
+
+    # if not os.path.exists(CSV_MOVE_PATH):
+    #     raise FileNotFoundError(f"Demo path not found: {CSV_MOVE_PATH}")
+    # trajectory = read_move_csv(CSV_MOVE_PATH)
+
+    # # Prime DMP ONCE from move.csv (y0, etc.)
+    # # dmp = DMPs_rhythmic(n_dmps=2, n_bfs=N_BFS, dt=controller.dt)
+    # dmp.imitate_path(y_des=trajectory.T)
+    
+    
 
     # Main optimization loop
-    for it in range(1, MAX_ITERS + 1):
+    for it in range(1, MAX_ITERS + 1 + n_warmup):
         # Iterations
         controller.hard_reset_from_home()
 
         # Read current weights
         w2 = read_weights_csv(WEIGHTS_CSV)
+        
+        # pdb.set_trace()
         w_flat = w2.reshape(-1)
-        append_weight_history(WEIGHT_HISTORY_CSV, it, "executed", w2)
-
+        
         # Apply weights
+        if it > 1 and it <= n_warmup:
+            np.random.seed(seed_number+it)
+            w2 += np.random.randn(2, N_BFS) * 20 #MAX_CHANGED
+            write_weights_csv(WEIGHTS_CSV, w2)
+        print(f"iteration {it}: w2 = {w2}")
         dmp.w = w2.copy()
         dmp.reset_state()
+        append_weight_history(WEIGHT_HISTORY_CSV, it, "executed", w2.copy())
+
+        # # --- NEW: Move to start of trajectory first ---
+        # start_target_3d = np.array([dmp.y0[0], dmp.y0[1], MOP_Z_HEIGHT], dtype=float)
+        # # print(f"iter {it}: Moving to start position {start_target_3d}...")
+        
+        # ok_start, err_start = enhanced_ik_solver(
+        #     controller.model, controller.data, controller.site_id, start_target_3d, controller.joint_names,
+        #     max_iters_per_wp=IK_MAX_ITERS, print_every=1000000
+        # )
+        
+        # if not ok_start:
+        #      print(f"iter {it}: Failed to move to start position (error={err_start}). Skipping.")
+        #      continue
+        # ----------------------------------------------
 
         # Convert one full cycle to joint trajectory
         model, data = controller.model, controller.data
@@ -1072,13 +963,13 @@ def main():
         keep_every = max(1, int(DECI_BUILD))
 
         for i in range(steps):
-            y, _, _ = dmp.step()
+            y, _, _ = dmp.step(tau=2.0)
             target_3d = np.array([y[0], y[1], MOP_Z_HEIGHT], dtype=float)
             task_trajectory.append(target_3d)  # NEW: Save for trajectory analysis
 
             ok, err_val = enhanced_ik_solver(
                 model, data, site_id, target_3d, joint_names,
-                max_iters_per_wp=IK_MAX_ITERS, print_every=1000000
+                max_iters_per_wp=50, print_every=1000
             )
             if not ok:
                 save_ik_error(it, i, target_3d, (err_val if err_val is not None else float("nan")), IK_ERROR_CSV)
@@ -1118,9 +1009,10 @@ def main():
         # ik_error_summary = summarize_ik_errors(ik_error_history)
 
 
-
+        
         iter_log_data = load_iteration_log(ITER_LOG_CSV)
         traj_feedback_data = load_traj_feedback(TRAJECTORY_CSV)
+        pdb.set_trace()
 
         # Ask LLM for NEW weights given cost, grid, prev weights, AND trajectory feedback
         hist_slice = weight_history[-HISTORY_WINDOW:] if HISTORY_WINDOW > 0 else weight_history
@@ -1139,33 +1031,36 @@ def main():
             traj_feedback_data=traj_feedback_data,
             feedback_window=40000
         )
+        
+        save_dialog(it, prompt, '')
 
+        if it > n_warmup:
+            return
+            try:
+                response = call_gemini(prompt)
+                # response = call_ollama(prompt)
 
-        try:
-            response = call_gemini(prompt)
-            # response = call_ollama(prompt)
+            except Exception as e:
 
-        except Exception as e:
+                print(f"iter {it}: Gemini error: {e}. Reusing previous weights.")
+                time.sleep(1.0)
+                continue
 
-            print(f"iter {it}: Gemini error: {e}. Reusing previous weights.")
-            time.sleep(1.0)
-            continue
+            save_dialog(it, prompt, response)
 
-        save_dialog(it, prompt, response)
+            try:
+                w_next = parse_ollama_weights(response)  # (2,50)
+            except Exception as e:
+                print(f"iter {it}: Failed to parse LLM weights: {e}. Reusing previous weights.")
+                time.sleep(1.0)
+                continue
 
-        try:
-            w_next = parse_ollama_weights(response)  # (2,50)
-        except Exception as e:
-            print(f"iter {it}: Failed to parse LLM weights: {e}. Reusing previous weights.")
-            time.sleep(1.0)
-            continue
+            append_weight_history(WEIGHT_HISTORY_CSV, it, "proposed", w_next)
+            write_weights_csv(WEIGHTS_CSV, w_next)
+            print(f"iter {it}: Updated {WEIGHTS_CSV} with new weights from LLM.")
 
-        append_weight_history(WEIGHT_HISTORY_CSV, it, "proposed", w_next)
-        write_weights_csv(WEIGHTS_CSV, w_next)
-        print(f"iter {it}: Updated {WEIGHTS_CSV} with new weights from LLM.")
-
-        weight_history.append(w_next.reshape(-1).tolist())
-        time.sleep(40)
+            weight_history.append(w_next.reshape(-1).tolist())
+            time.sleep(40)
 
     print("Loop finished. Close the viewer to exit.")
 
