@@ -13,13 +13,13 @@ import mujoco
 import threading
 from google import genai
 import pandas as pd
+import ollama
 
 
-
-# OLLAMA_MODEL = "gpt-oss:120b"
+OLLAMA_MODEL = "gpt-oss:120b"
 
 # # ====== EDIT THESE PATHS ======
-CSV_MOVE_PATH = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/move2.csv"
+CSV_MOVE_PATH = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/move1.csv"
 WEIGHTS_TXT = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight.txt"
 WEIGHTS_TXT2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight2.txt"
 BASE_DIR = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/"
@@ -29,6 +29,7 @@ TOTAL1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/l
 TOTAL2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total2.txt"
 GRID1 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist1.txt"
 GRID2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist2.txt"
+EXAMPLES = "./logs/examples.txt"
 # # ==============================
 # ====== EDIT THESE PATHS ======
 # CSV_MOVE_PATH   = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/move.csv"
@@ -53,8 +54,8 @@ MAX_ITERS = 400
 IK_MAX_ITERS = 50
 DECI_BUILD = 2  # keep every k-th DMP step when building joints (1=all)
 
-GEMINI_MODEL = "gemini-2.5-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
-GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+# GEMINI_MODEL = "gemini-robotics-er-1.5-preview"  # use Pro or gemini-2.0-flash if you want faster/cheaper
+# GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 builtins.input = lambda *a, **k: "7"
 
@@ -398,6 +399,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
         total2 = parse_weights_text(TOTAL2).tolist()
         grid1 = parse_weights_text(GRID1).tolist()
         grid2 = parse_weights_text(GRID2).tolist()
+        example = parse_weights_text(EXAMPLES).tolist()
     except:
         trajectoy_1 =[]
         trajectoy_2=[]
@@ -409,6 +411,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     xmin, xmax = bounds["xmin"], bounds["xmax"]
     ymin, ymax = bounds["ymin"], bounds["ymax"]
     grid_list = grid_mat.tolist()
+    with open(EXAMPLES, "r", encoding="utf-8") as f:
+        raw_examples_text = f.read()
 
     # --- NEW: Define Strict Global Limits for Failure Check (Based on your request) ---
     STRICT_X_MIN = -1.050
@@ -508,7 +512,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     if iter_log_data:
         recent_iters = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-feedback_window:]
         if recent_iters:
-            feedback_text += f"\n# Iteration Performance Summary (last {len(recent_iters)} iterations):\n"
+            feedback_text += f"\n"
             for i in recent_iters:
                 entry = iter_log_data[i]
                 current_f_weights = entry['total_balls']
@@ -569,7 +573,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
             recent_executed = executed_df.sort_values(by='iter', ascending=False).head(feedback_window)
 
             if not recent_executed.empty:
-                feedback_text += f"\n# Executed Weights History (last {len(recent_executed)} executed iterations):\n"
+                feedback_text += f"\n"
 
                 for _, row in recent_executed.sort_values(by='iter').iterrows():
                     iter_num = int(row['iter'])
@@ -615,9 +619,9 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         rounded_weights = [round(w, 4) for w in weights]
                         failure_tag = " (FAILED)" if is_failed_iter else ""
                         feedback_text += (
-                            f"  {_ordinal(iter_num)} iteration: weights={json.dumps(rounded_weights)}\n"
+                            f"  {_ordinal(iter_num)}  weights={json.dumps(rounded_weights)}\n"
                             f"{bounds_info}\n"
-                            f" f(weights) : {current_f_weights}"
+                            f" f(weights) : {current_f_weights}\n"
 
 
                         )
@@ -638,7 +642,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     #     # feedback_text += f"\n# Recent Trend: {trend} - Last 3 iterations: {ball_trend}\n"
 
     if best_iter_summary or best_weight_feedback:
-        feedback_text += "\n# Historical Weight Performance Feedback:\n"
+        feedback_text += " \n"
         feedback_text += best_iter_summary + best_weight_feedback
 
     return f"""
@@ -665,21 +669,15 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
     Next :
          You will see examples of the dmp weights and their corresponding function value f(weights):
-          (WORKSPACE LIMITS (meters): x ∈ [-0.976, 1.175], y ∈ [-0.327, 0.198])
-          # Example 1:
-         weights =  {json.dumps(w_example1)} 
-        f(weights) =  {json.dumps(total1)} 
-            
-            
-          # Example 2:
-          (WORKSPACE LIMITS (meters): x ∈ [-0.697, 0.695], y ∈ [-0.213, 0.116])
-         weights =  {json.dumps(w_example2)},
-        f(weights) =  {json.dumps(total2)}
+      
+        {raw_examples_text}
+        
+        
+    {feedback_text}
 
 
 
-# Historical Feedback Summary (Full History Up to Iteration {iter_idx-1}):
-     {feedback_text}
+    
 
 
     Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
@@ -846,120 +844,120 @@ import random
 
 
 # One process-wide lock for pointer updatesx`
-_call_gemini_lock = threading.Lock()
-
-def call_gemini(prompt: str) -> str:
-    """
-    Gemini call with exponential backoff and persistent round-robin key rotation.
-    - Starts from the last successful key across calls.
-    - On success: pointer stays on that key.
-    - If all keys fail in this call: pointer advances by 1 (keeps the cycle moving).
-    - Adds thread safety, broader transient error detection, and capped backoff.
-    """
-    API_KEYS = [
-
-        "GOOGLE_API_KEY_1",
-        "GOOGLE_API_KEY_2",
-        "GOOGLE_API_KEY_6",
-
-
-
-
-        "GOOGLE_API_KEY_5",
-        "GOOGLE_API_KEY_3",
-        "GOOGLE_API_KEY_4",
-
-    ]
-
-    # Tuning: keep retries modest to avoid long stalls on a single key
-    max_retries_per_key = 7
-    base_wait_time = 4
-    backoff_factor = 2
-    max_sleep_cap = 45  # cap each sleep to avoid runaway waits
-
-    n = len(API_KEYS)
-    if n == 0:
-        raise RuntimeError("No API key variables configured.")
-
-    # Initialize persistent pointer if missing
-    if not hasattr(call_gemini, "_active_idx"):
-        call_gemini._active_idx = 0
-
-    with _call_gemini_lock:
-        start_idx = call_gemini._active_idx % n
-
-    # Helper: decide if transient
-    def _retryable(err: Exception) -> bool:
-        s = str(err).lower()
-        # Include rate limits, common 5xx/service errors, and timeouts/resets
-        return (
-            "429" in s or
-            "503" in s or
-            "502" in s or
-            "504" in s or
-            "temporarily unavailable" in s or
-            "timeout" in s or
-            "timed out" in s or
-            "connection reset" in s or
-            "econnreset" in s or
-            "unavailable" in s
-        )
-
-    last_error = None
-
-    for offset in range(n):
-        api_index = (start_idx + offset) % n
-        api_var = API_KEYS[api_index]
-        api_key = os.environ.get(api_var)
-
-        if not api_key:
-            print(f"⚠️ {api_var} not found in environment, skipping...")
-            continue
-
-        print(f"🔑 Using {api_var} (index {api_index + 1}/{n})")
-        try:
-            client = genai.Client(api_key=api_key)
-        except Exception as e:
-            print(f"❌ Failed to initialize client for {api_var}: {e}")
-            last_error = e
-            continue
-
-        for attempt in range(max_retries_per_key):
-            try:
-                resp = client.models.generate_content(
-                    model=GEMINI_MODEL,
-                    contents=prompt,
-                    config={"temperature": 0.2},
-                )
-                text = getattr(resp, "text", None) or str(resp)
-
-                # Record success pointer
-                with _call_gemini_lock:
-                    call_gemini._active_idx = api_index
-                return text.strip()
-
-            except Exception as e:
-                last_error = e
-                if _retryable(e):
-                    sleep_time = min(base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5),
-                                     max_sleep_cap)
-                    print(
-                        f"⚠️ Transient Gemini error on {api_var}: {e}. "
-                        f"Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries_per_key})"
-                    )
-                    time.sleep(sleep_time)
-                    continue
-                else:
-                    print(f"❌ Non-retryable error on {api_var}: {e}")
-                    break
-
-        print(f"🔁 {api_var} exhausted after {max_retries_per_key} retries. Trying next key...")
-
-    # All keys failed in this call; advance the pointer so the next call starts at the next key
-    with _call_gemini_lock:
-        call_gemini._active_idx = (start_idx + 1) % n
-
-    raise RuntimeError(f"All Gemini API keys failed after rotation. Last error: {last_error}")
+# _call_gemini_lock = threading.Lock()
+#
+# def call_gemini(prompt: str) -> str:
+#     """
+#     Gemini call with exponential backoff and persistent round-robin key rotation.
+#     - Starts from the last successful key across calls.
+#     - On success: pointer stays on that key.
+#     - If all keys fail in this call: pointer advances by 1 (keeps the cycle moving).
+#     - Adds thread safety, broader transient error detection, and capped backoff.
+#     """
+#     API_KEYS = [
+#
+#         "GOOGLE_API_KEY_1",
+#         "GOOGLE_API_KEY_2",
+#         "GOOGLE_API_KEY_6",
+#
+#
+#
+#
+#         "GOOGLE_API_KEY_5",
+#         "GOOGLE_API_KEY_3",
+#         "GOOGLE_API_KEY_4",
+#
+#     ]
+#
+#     # Tuning: keep retries modest to avoid long stalls on a single key
+#     max_retries_per_key = 7
+#     base_wait_time = 4
+#     backoff_factor = 2
+#     max_sleep_cap = 45  # cap each sleep to avoid runaway waits
+#
+#     n = len(API_KEYS)
+#     if n == 0:
+#         raise RuntimeError("No API key variables configured.")
+#
+#     # Initialize persistent pointer if missing
+#     if not hasattr(call_gemini, "_active_idx"):
+#         call_gemini._active_idx = 0
+#
+#     with _call_gemini_lock:
+#         start_idx = call_gemini._active_idx % n
+#
+#     # Helper: decide if transient
+#     def _retryable(err: Exception) -> bool:
+#         s = str(err).lower()
+#         # Include rate limits, common 5xx/service errors, and timeouts/resets
+#         return (
+#             "429" in s or
+#             "503" in s or
+#             "502" in s or
+#             "504" in s or
+#             "temporarily unavailable" in s or
+#             "timeout" in s or
+#             "timed out" in s or
+#             "connection reset" in s or
+#             "econnreset" in s or
+#             "unavailable" in s
+#         )
+#
+#     last_error = None
+#
+#     for offset in range(n):
+#         api_index = (start_idx + offset) % n
+#         api_var = API_KEYS[api_index]
+#         api_key = os.environ.get(api_var)
+#
+#         if not api_key:
+#             print(f"⚠️ {api_var} not found in environment, skipping...")
+#             continue
+#
+#         print(f"🔑 Using {api_var} (index {api_index + 1}/{n})")
+#         try:
+#             client = genai.Client(api_key=api_key)
+#         except Exception as e:
+#             print(f"❌ Failed to initialize client for {api_var}: {e}")
+#             last_error = e
+#             continue
+#
+#         for attempt in range(max_retries_per_key):
+#             try:
+#                 resp = client.models.generate_content(
+#                     model=GEMINI_MODEL,
+#                     contents=prompt,
+#                     config={"temperature": 0.2},
+#                 )
+#                 text = getattr(resp, "text", None) or str(resp)
+#
+#                 # Record success pointer
+#                 with _call_gemini_lock:
+#                     call_gemini._active_idx = api_index
+#                 return text.strip()
+#
+#             except Exception as e:
+#                 last_error = e
+#                 if _retryable(e):
+#                     sleep_time = min(base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5),
+#                                      max_sleep_cap)
+#                     print(
+#                         f"⚠️ Transient Gemini error on {api_var}: {e}. "
+#                         f"Retrying in {sleep_time:.1f}s... ({attempt + 1}/{max_retries_per_key})"
+#                     )
+#                     time.sleep(sleep_time)
+#                     continue
+#                 else:
+#                     print(f"❌ Non-retryable error on {api_var}: {e}")
+#                     break
+#
+#         print(f"🔁 {api_var} exhausted after {max_retries_per_key} retries. Trying next key...")
+#
+#     # All keys failed in this call; advance the pointer so the next call starts at the next key
+#     with _call_gemini_lock:
+#         call_gemini._active_idx = (start_idx + 1) % n
+#
+#     raise RuntimeError(f"All Gemini API keys failed after rotation. Last error: {last_error}")
 
 def parse_ollama_weights(out_text):
     """
@@ -1084,7 +1082,7 @@ def main():
         keep_every = max(1, int(DECI_BUILD))
 
         for i in range(steps):
-            y, _, _ = dmp.step()
+            y, _, _ = dmp.step(tau=2)
             target_3d = np.array([y[0], y[1], MOP_Z_HEIGHT], dtype=float)
             task_trajectory.append(target_3d)  # NEW: Save for trajectory analysis
 
@@ -1153,14 +1151,47 @@ def main():
         )
 
 
+        # try:
+        #     # response = call_gemini(prompt)
+        #     response = call_ollama(prompt)
+        #
+        # except Exception as e:
+        #
+        #     print(f"iter {it}: Gemini error: {e}. Reusing previous weights.")
+        #     time.sleep(1.0)
+        # #     continue
+        # try:
+        #     # This calls the ollama CLI directly on your Windows machine
+        #     result = subprocess.run(
+        #         ["ollama", "run", OLLAMA_MODEL],
+        #         input=prompt,
+        #         capture_output=True,
+        #         text=True,
+        #         encoding='utf-8',
+        #         check=True
+        #     )
+        #     response = result.stdout.strip()
+        # except Exception as e:
+        #     print(f"iter {it}: Ollama error: {e}. Reusing previous weights.")
+        #     time.sleep(1.0)
+        #     continue
         try:
-            response = call_gemini(prompt)
-            # response = call_ollama(prompt)
+
+
+            # We use ollama.generate to keep the connection persistent
+            response_data = ollama.generate(
+                model=OLLAMA_MODEL,
+                prompt=prompt,
+                options={
+                    "num_ctx": 8192,
+                    "temperature": 0.2,
+                    "num_gpu": 20
+                }
+            )
+            response = response_data['response'].strip()
 
         except Exception as e:
-
-            print(f"iter {it}: Gemini error: {e}. Reusing previous weights.")
-            time.sleep(1.0)
+            print(f"iter {it}: local LLM failed: {e}. Reusing weights.")
             continue
 
         save_dialog(it, prompt, response)
