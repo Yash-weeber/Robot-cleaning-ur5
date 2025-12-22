@@ -1,0 +1,1 @@
+{"reason": "Explores a smooth, symmetric trajectory with balanced positive and negative weights, keeping magnitudes within a reasonable range to adhere to bounds.", "weights": [100.0, 70.0, 40.0, 10.0, -20.0, -20.0, 10.0, 40.0, 70.0, 100.0, -50.0, -35.0, -20.0, -5.0, 10.0, 10.0, -5.0, -20.0, -35.0, -50.0]}

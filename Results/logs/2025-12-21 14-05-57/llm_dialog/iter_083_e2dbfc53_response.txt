@@ -1,0 +1,1 @@
+{"reason": "Exploring a broad range of the workspace with oscillating positive and negative weights, ensuring the trajectory remains strictly within the defined XY bounds.", "weights": [120.0, 80.0, 40.0, 0.0, -40.0, -80.0, -120.0, -80.0, -40.0, 0.0, 0.0, 40.0, 80.0, 100.0, 80.0, 40.0, 0.0, -40.0, -80.0, -100.0]}

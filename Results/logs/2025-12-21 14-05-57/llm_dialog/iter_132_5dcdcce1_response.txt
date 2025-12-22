@@ -1,0 +1,1 @@
+{"reason": "Exploring a scaled version of the best performing weights to push trajectory closer to workspace limits for potentially lower cost.", "weights": [-123.06, -71.81, 51.28, 143.57, 164.08, 123.06, 30.77, -71.81, -143.57, -164.08, -112.78, -56.40, 84.61, 98.66, -28.19, -112.78, -56.40, 84.61, 98.66, -28.19]}

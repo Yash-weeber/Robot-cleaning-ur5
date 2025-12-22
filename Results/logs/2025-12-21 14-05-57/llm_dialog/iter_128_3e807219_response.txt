@@ -1,0 +1,1 @@
+{"reason": "These weights combine high x-axis coverage from a previous low-cost solution with high y-axis coverage from another, aiming for maximal workspace use within strict bounds.", "weights": [-120.0, -70.0, 50.0, 140.0, 160.0, 120.0, 30.0, -70.0, -140.0, -160.0, -106.48, -53.24, 79.86, 93.17, -26.62, -106.48, -53.24, 79.86, 93.17, -26.62]}

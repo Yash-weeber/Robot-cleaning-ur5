@@ -1,0 +1,1 @@
+{"reason": "Exploring a slight reduction in magnitude from the best observed weights to ensure strict boundary adherence and refine the search.", "weights": [-111.72, -65.17, 46.55, 130.34, 148.96, 111.72, 27.93, -65.17, -130.34, -148.96, -94.864, -47.432, 71.148, 82.906, -23.716, -94.864, -47.432, 71.148, 82.906, -23.716]}

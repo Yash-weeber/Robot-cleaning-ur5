@@ -1,0 +1,1 @@
+{"reason": "Exploring new regions with varied magnitudes and alternating signs to cover a wide workspace range while aiming to adhere to the specified XY bounds, based on patterns from lower-cost examples.", "weights": [-130.0, 110.0, -90.0, 70.0, -50.0, 30.0, -10.0, 20.0, -40.0, 60.0, 140.0, -120.0, 100.0, -80.0, 60.0, -40.0, 20.0, -10.0, 30.0, -50.0]}

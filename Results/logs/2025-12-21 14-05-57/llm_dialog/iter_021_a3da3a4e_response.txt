@@ -1,0 +1,1 @@
+{"reason": "Exploring a smooth, moderate-amplitude trajectory with Gaussian-like weight distributions for both dimensions, aiming to stay strictly within workspace limits while testing a well-behaved path shape.", "weights": [6.76, 16.03, 30.33, 44.13, 50.0, 44.13, 30.33, 16.03, 6.76, 2.11, -2.11, -6.76, -16.03, -30.33, -44.13, -50.0, -44.13, -30.33, -16.03, -6.76]}

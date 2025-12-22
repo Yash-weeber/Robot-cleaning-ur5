@@ -1,0 +1,1 @@
+{"reason": "Exploring a smooth, bell-curve-like pattern with phased X and Y weights to cover a significant and diverse portion of the workspace while maintaining strict adherence to the XY limits.", "weights": [-100.0, -70.0, -30.0, 0.0, 30.0, 70.0, 100.0, 70.0, 30.0, 0.0, 0.0, 30.0, 70.0, 100.0, 70.0, 30.0, 0.0, -30.0, -70.0, -100.0]}

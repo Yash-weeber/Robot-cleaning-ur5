@@ -1,0 +1,1 @@
+{"reason": "Exploring a slight increase in magnitude from a previously good set of weights to push the trajectory closer to the workspace limits without exceeding them, aiming for lower cost.", "weights": [-121.2, -70.7, 50.5, 141.4, 161.6, 121.2, 30.3, -70.7, -141.4, -161.6, -92.4, -46.2, 69.3, 80.85, -23.1, -92.4, -46.2, 69.3, 80.85, -23.1]}

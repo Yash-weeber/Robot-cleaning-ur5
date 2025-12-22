@@ -1,0 +1,1 @@
+{"reason": "Exploring with smooth, bell-shaped weight distributions for both dimensions, scaled to keep the trajectory within the tight y-axis bounds and cover a reasonable portion of the x-axis for broad exploration.", "weights": [19.79, 37.52, 60.65, 83.53, 98.02, 98.02, 83.53, 60.65, 37.52, 19.79, -11.87, -22.51, -36.39, -50.12, -58.81, -58.81, -50.12, -36.39, -22.51, -11.87]}

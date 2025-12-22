@@ -1,0 +1,1 @@
+{"reason": "Exploring a new oscillatory pattern with balanced positive and negative weights, maintaining magnitudes up to 90 to encourage complex trajectories within the strict workspace limits based on analysis of prior low-cost examples.", "weights": [90.0, 45.0, 0.0, -45.0, -90.0, -45.0, 0.0, 45.0, 90.0, 0.0, 0.0, 90.0, 45.0, 0.0, -45.0, -90.0, -45.0, 0.0, 45.0, 90.0]}

@@ -1,0 +1,1 @@
+{"reason": "Exploring a smooth, symmetric trajectory pattern with moderate weight magnitudes (max 50) to ensure strict adherence to workspace bounds while covering a new region of the search space for potential low-cost solutions.", "weights": [10.0, 20.0, 30.0, 40.0, 50.0, 50.0, 40.0, 30.0, 20.0, 10.0, -10.0, -20.0, -30.0, -40.0, -50.0, -50.0, -40.0, -30.0, -20.0, -10.0]}

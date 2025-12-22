@@ -1,0 +1,1 @@
+{"reason": "Exploring a new region with moderately large, smoothly varying weights to generate a broad trajectory that is likely to stay within the XY workspace limits while searching for lower costs.", "weights": [-70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0, 50.0, 30.0, -30.0, -50.0, -70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0]}

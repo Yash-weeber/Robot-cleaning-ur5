@@ -1,0 +1,1 @@
+{"reason": "Exploring a broader range of the workspace with higher magnitude, symmetrically distributed weights for both dimensions to achieve comprehensive coverage while aiming to strictly adhere to the defined XY workspace limits.", "weights": [-120.0, -80.0, -40.0, 0.0, 40.0, 80.0, 120.0, 80.0, 40.0, 0.0, 80.0, 40.0, 0.0, -40.0, -80.0, -80.0, -40.0, 0.0, 40.0, 80.0]}

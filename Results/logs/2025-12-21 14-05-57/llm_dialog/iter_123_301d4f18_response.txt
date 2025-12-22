@@ -1,0 +1,1 @@
+{"reason": "Scaling up magnitudes from a previous low-cost solution and applying a symmetric bell-like shape for y-weights to explore closer to the workspace boundaries while maintaining bounds adherence.", "weights": [-116.28, -67.83, 48.45, 135.66, 155.04, 116.28, 29.07, -67.83, -135.66, -155.04, -90.0, -50.0, 30.0, 80.0, 110.0, 110.0, 80.0, 30.0, -50.0, -90.0]}

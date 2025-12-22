@@ -1,0 +1,1 @@
+{"reason": "Exploring a symmetric, alternating weight pattern with substantial magnitudes to encourage centered trajectory and low cost within strict bounds.", "weights": [20.0, 40.0, 60.0, 80.0, 100.0, -100.0, -80.0, -60.0, -40.0, -20.0, -20.0, -40.0, -60.0, -80.0, -100.0, 100.0, 80.0, 60.0, 40.0, 20.0]}

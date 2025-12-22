@@ -1,0 +1,1 @@
+{"reason": "These weights are moderately scaled, covering both positive and negative values in a non-symmetric pattern for exploration while aiming to keep the trajectory within the specified XY bounds.", "weights": [50.0, 70.0, 80.0, 70.0, 50.0, 20.0, -10.0, -40.0, -60.0, -50.0, -40.0, -60.0, -70.0, -60.0, -40.0, -10.0, 20.0, 50.0, 70.0, 60.0]}

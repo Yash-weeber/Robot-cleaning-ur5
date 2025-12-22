@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-
+# !/usr/bin/env python3
+#%%
 import os
 import re
 import csv
@@ -15,12 +15,17 @@ import threading
 from google import genai
 import pandas as pd
 from utils.draw_shapes import infinity_trajectory, square_trajectory, triangle_trajectory
+import dotenv
+keys_file_path = "./keys.env"
+API_KEYS = dotenv.dotenv_values(keys_file_path)
+dotenv.load_dotenv(keys_file_path)
+print("Loaded API keys:", API_KEYS)
 
-d = time.strftime("%Y-%m-%d %H:%M:%S")
+d = time.strftime("%Y-%m-%d %H-%M-%S")
 optimum = 0.0
 
 # OLLAMA_MODEL = "gpt-oss:120b"
-
+#%%
 # # ====== EDIT THESE PATHS ======
 CSV_MOVE_PATH = f"./Results/logs/{d}/move.csv"
 WEIGHTS_TXT = f"./Results/logs/{d}/weight.txt"
@@ -41,10 +46,10 @@ GRID2 = f"./Results/logs/{d}/gridlist2.txt"
 
 HISTORY_WINDOW = 25
 TRAJECTORY_HISTORY_WINDOW = 20  # NEW: Track last 20 iterations of X,Y trajectories
-n_warmup = 2 # number of initial ICL examples
+n_warmup = 5 # number of initial ICL examples
 seed_number = 42
 
-LOGDIR = os.path.join(BASE_DIR, d, "logs")
+LOGDIR = os.path.join(BASE_DIR, "logs", d)
 WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
 ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
 DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
@@ -64,7 +69,7 @@ ANIMATION_DURATION = 4.0
 ANIMATION_FPS = 75
 
 GEMINI_MODEL = "gemini-2.5-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
-GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY_1"))
 
 builtins.input = lambda *a, **k: "7"
 
@@ -80,7 +85,7 @@ from pydmps.dmp_rhythmic import DMPs_rhythmic
 #     "ymin": controller.y_min, "ymax": controller.y_max,
 # }
 
-MAX_CHANGED = 12
+step_size = 20
 # DELTA_ABS = 5.0
 # DELTA_REL = 0.08
 
@@ -604,7 +609,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                             if is_failed_iter:
                                 # Highlight the specific failure coordinates
                                 bounds_info = (
-                                    f", **OUT-OF-BOUNDS FAILURE**: x_range=[{x_min_traj}, {x_max_traj}], "
+                                    # f", **OUT-OF-BOUNDS FAILURE**: x_range=[{x_min_traj}, {x_max_traj}], "
+                                    f", x_range=[{x_min_traj}, {x_max_traj}], "
                                     f"y_range=[{y_min_traj}, {y_max_traj}]"
                                 )
                             else:
@@ -772,7 +778,7 @@ def call_gemini(prompt: str) -> str:
                 resp = client.models.generate_content(
                     model=GEMINI_MODEL,
                     contents=prompt,
-                    config={"temperature": 0.2},
+                    # config={"temperature": 0.2},
                 )
                 text = getattr(resp, "text", None) or str(resp)
 
@@ -917,7 +923,7 @@ def main():
     
 
     # Main optimization loop
-    for it in range(1, MAX_ITERS + 1 + n_warmup):
+    for it in range(1 - n_warmup, MAX_ITERS + 1):
         # Iterations
         controller.hard_reset_from_home()
 
@@ -928,10 +934,6 @@ def main():
         w_flat = w2.reshape(-1)
         
         # Apply weights
-        if it > 1 and it <= n_warmup:
-            np.random.seed(seed_number+it)
-            w2 += np.random.randn(2, N_BFS) * 20 #MAX_CHANGED
-            write_weights_csv(WEIGHTS_CSV, w2)
         print(f"iteration {it}: w2 = {w2}")
         dmp.w = w2.copy()
         dmp.reset_state()
@@ -1012,7 +1014,7 @@ def main():
         
         iter_log_data = load_iteration_log(ITER_LOG_CSV)
         traj_feedback_data = load_traj_feedback(TRAJECTORY_CSV)
-        pdb.set_trace()
+        # pdb.set_trace()
 
         # Ask LLM for NEW weights given cost, grid, prev weights, AND trajectory feedback
         hist_slice = weight_history[-HISTORY_WINDOW:] if HISTORY_WINDOW > 0 else weight_history
@@ -1023,19 +1025,24 @@ def main():
         #     max_changed=MAX_CHANGED
         #
         # )
-        prompt = enhanced_ollama_prompt(
-            w_flat, grid, total_balls, it, hist_slice,
-            trajectory_history, trajectory_analysis, bounds,
-            ik_error_summary=None,
-            iter_log_data=iter_log_data,
-            traj_feedback_data=traj_feedback_data,
-            feedback_window=40000
-        )
         
-        save_dialog(it, prompt, '')
 
-        if it > n_warmup:
-            return
+        if it < 0:
+            np.random.seed(seed_number+it)
+            w_next = w2 + np.random.randn(2, N_BFS) * step_size
+            write_weights_csv(WEIGHTS_CSV, w_next)
+        elif it >= 0:
+            prompt = enhanced_ollama_prompt(
+                w_flat, grid, total_balls, it+1, hist_slice,
+                trajectory_history, trajectory_analysis, bounds,
+                ik_error_summary=None,
+                iter_log_data=iter_log_data,
+                traj_feedback_data=traj_feedback_data,
+                feedback_window=40000
+            )
+            
+            # save_dialog(it, prompt, '')
+            # return
             try:
                 response = call_gemini(prompt)
                 # response = call_ollama(prompt)
@@ -1046,7 +1053,7 @@ def main():
                 time.sleep(1.0)
                 continue
 
-            save_dialog(it, prompt, response)
+            save_dialog(it+1, prompt, response)
 
             try:
                 w_next = parse_ollama_weights(response)  # (2,50)
@@ -1054,13 +1061,15 @@ def main():
                 print(f"iter {it}: Failed to parse LLM weights: {e}. Reusing previous weights.")
                 time.sleep(1.0)
                 continue
+        # if it > 0:
+        #     return
 
-            append_weight_history(WEIGHT_HISTORY_CSV, it, "proposed", w_next)
-            write_weights_csv(WEIGHTS_CSV, w_next)
-            print(f"iter {it}: Updated {WEIGHTS_CSV} with new weights from LLM.")
+        append_weight_history(WEIGHT_HISTORY_CSV, it+1, "proposed", w_next)
+        write_weights_csv(WEIGHTS_CSV, w_next)
+        print(f"iter {it}: Updated {WEIGHTS_CSV} with new weights from LLM.")
 
-            weight_history.append(w_next.reshape(-1).tolist())
-            time.sleep(40)
+        weight_history.append(w_next.reshape(-1).tolist())
+            # time.sleep(40)
 
     print("Loop finished. Close the viewer to exit.")
 

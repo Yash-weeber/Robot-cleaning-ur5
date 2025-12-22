@@ -1,0 +1,1 @@
+{"reason": "This set of oscillating weights aims to cover a significant portion of the workspace while attempting to remain strictly within the defined XY bounds through its varied positive and negative contributions.", "weights": [-90.0, 80.0, -70.0, 60.0, -50.0, 40.0, -30.0, 20.0, -10.0, 5.0, 95.0, -85.0, 75.0, -65.0, 55.0, -45.0, 35.0, -25.0, 15.0, -10.0]}

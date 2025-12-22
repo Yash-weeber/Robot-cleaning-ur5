@@ -1,0 +1,1 @@
+{"reason": "This set of weights explores a trajectory with moderate oscillations in both X and Y dimensions, using varied magnitudes to encourage adherence to workspace limits while searching a new region.", "weights": [100.0, 70.0, 30.0, -10.0, -50.0, -80.0, -50.0, -10.0, 30.0, 70.0, -80.0, -40.0, 0.0, 40.0, 80.0, 40.0, 0.0, -40.0, -80.0, -40.0]}

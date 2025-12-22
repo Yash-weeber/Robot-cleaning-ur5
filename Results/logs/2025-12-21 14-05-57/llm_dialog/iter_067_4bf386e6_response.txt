@@ -1,0 +1,1 @@
+{"reason": "Exploring a new pattern with alternating signs and varying magnitudes within a safe range to ensure strict adherence to workspace bounds and promote efficient search for the global minimum.", "weights": [90.0, -70.0, 50.0, -30.0, 10.0, -10.0, 30.0, -50.0, 70.0, -90.0, -80.0, 60.0, -40.0, 20.0, -5.0, 5.0, -20.0, 40.0, -60.0, 80.0]}

@@ -1,0 +1,1 @@
+{"reason": "Exploring a smooth, symmetric trajectory pattern with moderate weight magnitudes to ensure bounds adherence and cover a significant portion of the workspace.", "weights": [-100.0, -50.0, 0.0, 50.0, 100.0, 100.0, 50.0, 0.0, -50.0, -100.0, 0.0, 25.0, 50.0, 25.0, 0.0, -25.0, -50.0, -25.0, 0.0, 25.0]}

@@ -1,0 +1,1 @@
+{"reason": "Exploring a slight scaling of a previous low-cost solution to increase workspace coverage while strictly adhering to the defined XY bounds.", "weights": [-119.7, -69.825, 49.875, 139.65, 159.6, 119.7, 29.925, -69.825, -139.65, -159.6, -101.64, -50.82, 76.23, 88.935, -25.41, -101.64, -50.82, 76.23, 88.935, -25.41]}

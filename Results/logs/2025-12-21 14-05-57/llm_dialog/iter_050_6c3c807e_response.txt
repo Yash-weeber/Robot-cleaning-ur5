@@ -1,0 +1,1 @@
+{"reason": "Exploring a diverse set of moderate to high magnitude weights with structured patterns to generate a complex trajectory, aiming to stay within the XY workspace limits while searching for lower cost regions.", "weights": [120.0, 90.0, 60.0, 30.0, 0.0, -30.0, -60.0, -90.0, -120.0, -90.0, 100.0, 70.0, 40.0, 10.0, -20.0, -50.0, -80.0, -110.0, -80.0, -50.0]}

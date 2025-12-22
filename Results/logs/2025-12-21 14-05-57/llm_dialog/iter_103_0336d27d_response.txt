@@ -1,0 +1,1 @@
+{"reason": "These weights form a smooth, oscillating trajectory with high magnitudes, aiming for broad coverage within the XY workspace limits to explore for lower costs.", "weights": [150.0, 140.95, 114.90, 75.0, 26.04, -26.04, -75.0, -114.90, -140.95, -150.0, 0.0, 34.20, 64.28, 86.60, 98.48, 98.48, 86.60, 64.28, 34.20, 0.0]}

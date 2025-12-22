@@ -1,0 +1,1 @@
+{"reason": "Exploring a new pattern of weights with moderate magnitudes and smooth transitions to encourage full workspace coverage while aiming to stay strictly within XY bounds based on previous examples.", "weights": [100.0, 80.0, 40.0, 0.0, -40.0, -80.0, -100.0, -80.0, -40.0, 0.0, 0.0, 40.0, 80.0, 100.0, 80.0, 40.0, 0.0, -40.0, -80.0, -100.0]}

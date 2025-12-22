@@ -1,0 +1,1 @@
+{"reason": "Exploring a range of moderate, diverse weights to generate a varied trajectory while aiming to keep the path strictly within the XY workspace limits of [-1.0, 1.0] and [-0.6, 0.6].", "weights": [120.0, 80.0, 40.0, 0.0, -40.0, -80.0, -120.0, -80.0, -40.0, 0.0, 10.0, -20.0, 30.0, -40.0, 50.0, -60.0, 70.0, -80.0, 90.0, -100.0]}

@@ -1,0 +1,1 @@
+{"reason": "Exploring a new pattern with moderate-to-large weight magnitudes to cover a significant portion of the workspace within strict bounds, aiming for better cost than previous high-cost examples.", "weights": [-120.0, -90.0, -60.0, -30.0, 0.0, 0.0, 30.0, 60.0, 90.0, 120.0, -100.0, -70.0, -40.0, -10.0, 20.0, 20.0, -10.0, -40.0, -70.0, -100.0]}

@@ -1,0 +1,1 @@
+{"reason": "Exploring a structured weight distribution with varied magnitudes, ensuring the trajectory remains within the XY workspace bounds, inspired by patterns that previously yielded lower costs.", "weights": [-100.0, -50.0, 20.0, 80.0, 120.0, 80.0, 20.0, -50.0, -100.0, -120.0, -70.0, -30.0, 10.0, 60.0, 90.0, 60.0, 10.0, -30.0, -70.0, -90.0]}

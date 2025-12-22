@@ -1,0 +1,1 @@
+{"reason": "Exploring a new combination of large, sweeping weights for broad X and Y workspace coverage while maintaining strict adherence to bounds.", "weights": [-150.0, -100.0, -50.0, 0.0, 50.0, 100.0, 150.0, 100.0, 50.0, 0.0, -100.0, -80.0, -60.0, -40.0, -20.0, 20.0, 40.0, 60.0, 80.0, 100.0]}

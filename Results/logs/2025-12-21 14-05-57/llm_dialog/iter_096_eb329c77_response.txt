@@ -1,0 +1,1 @@
+{"reason": "Exploring a smooth, sinusoidal-like pattern for weights with moderate magnitudes to generate a trajectory expected to remain within the workspace limits and potentially achieve a lower cost.", "weights": [100.0, 93.97, 76.60, 50.0, 17.36, -17.36, -50.0, -76.60, -93.97, -100.0, 0.0, 34.20, 64.28, 86.60, 98.48, 98.48, 86.60, 64.28, 34.20, 0.0]}

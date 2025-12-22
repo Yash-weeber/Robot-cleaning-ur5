@@ -1,0 +1,1 @@
+{"reason": "Exploring a new region of moderate weight magnitudes with varied positive and negative values to encourage path coverage while strictly adhering to the XY workspace limits.", "weights": [-75.0, 60.0, -45.0, 30.0, -15.0, 15.0, -30.0, 45.0, -60.0, 75.0, 65.0, -50.0, 35.0, -20.0, 5.0, -5.0, 20.0, -35.0, 50.0, -65.0]}

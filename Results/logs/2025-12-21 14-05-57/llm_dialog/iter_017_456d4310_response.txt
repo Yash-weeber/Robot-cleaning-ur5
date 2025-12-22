@@ -1,0 +1,1 @@
+{"reason": "Exploring a symmetric, linearly changing set of moderate weights to generate a smooth, central trajectory within the workspace bounds.", "weights": [-70.0, -60.0, -40.0, -20.0, 0.0, 0.0, 20.0, 40.0, 60.0, 70.0, 70.0, 60.0, 40.0, 20.0, 0.0, 0.0, -20.0, -40.0, -60.0, -70.0]}

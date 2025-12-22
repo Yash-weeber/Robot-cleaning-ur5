@@ -1,0 +1,1 @@
+{"reason": "These weights explore a broader range of both positive and negative values to generate diverse trajectory shapes, aiming to maintain a significant path within the XY workspace limits for effective global search.", "weights": [-100.0, 80.0, -60.0, 40.0, -20.0, 20.0, -40.0, 60.0, -80.0, 100.0, -90.0, 70.0, -50.0, 30.0, -10.0, 10.0, -30.0, 50.0, -70.0, 90.0]}

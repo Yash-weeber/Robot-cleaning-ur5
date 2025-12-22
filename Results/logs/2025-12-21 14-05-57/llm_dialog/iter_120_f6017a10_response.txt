@@ -1,0 +1,1 @@
+{"reason": "Exploring increased weight magnitudes with a structure similar to previously lower-cost, bound-adhering trajectories to continue searching for the global minimum.", "weights": [-125.0, -75.0, 55.0, 145.0, 165.0, 125.0, 35.0, -75.0, -145.0, -165.0, -90.0, -45.0, 68.0, 80.0, -23.0, -90.0, -45.0, 68.0, 80.0, -23.0]}

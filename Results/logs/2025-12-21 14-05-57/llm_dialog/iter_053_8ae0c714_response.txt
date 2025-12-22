@@ -1,0 +1,1 @@
+{"reason": "Exploring a symmetric, smooth trajectory with moderate weight magnitudes to stay within bounds and investigate potentially lower cost paths in the central workspace.", "weights": [-60.0, -30.0, 0.0, 30.0, 60.0, 60.0, 30.0, 0.0, -30.0, -60.0, 60.0, 30.0, 0.0, -30.0, -60.0, -60.0, -30.0, 0.0, 30.0, 60.0]}

@@ -1,0 +1,1 @@
+{"reason": "Proposing weights with a smooth, large-magnitude S-curve like pattern for both dimensions to broadly explore the workspace while aiming to adhere strictly to the given XY bounds.", "weights": [10.0, 60.0, 100.0, 120.0, 80.0, -80.0, -120.0, -100.0, -60.0, -10.0, 5.0, 40.0, 70.0, 90.0, 60.0, -60.0, -90.0, -70.0, -40.0, -5.0]}
