@@ -47,8 +47,8 @@ def plot_trajectories(trajectory_csv):
         plt.show()
 
 if __name__ == "__main__":
-    file_name = "./Results/logs/2025-12-21 14-05-57/llm_iteration_log.csv"
-    traj_file = "./Results/logs/2025-12-21 14-05-57/trajectory_feedback.csv"
+    file_name = "./Results/logs/2025-12-22 13-06-25/llm_iteration_log.csv"
+    traj_file = "./Results/logs/2025-12-22 13-06-25/trajectory_feedback.csv"
     plot_cost_history(file_name)
     plot_trajectories(traj_file)
 # %%

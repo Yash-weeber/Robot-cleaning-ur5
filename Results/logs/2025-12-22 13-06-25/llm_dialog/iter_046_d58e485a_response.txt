@@ -1,0 +1,1 @@
+{"reason": "Scaling down the weights from iteration 42, which had a low f(weights) but violated x-bounds, to bring the trajectory within the x-workspace limits while preserving the y-range.", "weights": [-152.0, -47.5, 95.0, 161.5, 171.0, 123.5, 47.5, -85.5, -142.5, -161.5, -107.8, -58.8, 78.4, 98.0, -39.2, -107.8, -49.0, 83.3, 88.2, -34.3]}

@@ -1,0 +1,1 @@
+{"reason": "Exploring a region with slightly higher weight magnitudes than the best bounded result from Iteration 12 to find a lower cost, aiming to generate a trajectory that remains strictly within the XY workspace limits.", "weights": [-135.0, -30.0, 95.0, 155.0, 130.0, 75.0, -25.0, -80.0, -140.0, -120.0, -85.0, -20.0, 50.0, 105.0, -40.0, -70.0, -30.0, 60.0, 110.0, -15.0]}

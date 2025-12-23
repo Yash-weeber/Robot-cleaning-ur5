@@ -1,0 +1,1 @@
+{"reason": "Exploring the neighborhood of the best performing weights (f=37) by slightly increasing their magnitudes, hoping to find a lower cost while adhering to workspace limits.", "weights": [-142.794, -45.311, 89.621, 151.656, 160.519, 116.208, 45.311, -80.759, -133.932, -151.656, -110.379, -60.661, 80.548, 100.435, -40.774, -110.379, -50.707, 85.519, 90.492, -35.792]}

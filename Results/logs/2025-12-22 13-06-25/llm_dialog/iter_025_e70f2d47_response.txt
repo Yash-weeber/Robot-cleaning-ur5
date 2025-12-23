@@ -1,0 +1,1 @@
+{"reason": "Exploring a new combination of slightly higher magnitude weights to search for a lower minimum while maintaining a balanced distribution to stay within XY workspace limits.", "weights": [-150.0, -50.0, 80.0, 160.0, 120.0, 90.0, 40.0, -80.0, -140.0, -160.0, -100.0, -60.0, 70.0, 90.0, -30.0, -100.0, -40.0, 80.0, 85.0, -25.0]}

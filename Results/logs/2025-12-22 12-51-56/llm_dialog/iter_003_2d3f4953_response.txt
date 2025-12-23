@@ -1,0 +1,1 @@
+{"reason": "The weights are chosen with alternating signs and moderate magnitudes (up to 50) to promote exploration within the defined workspace, aiming to generate a varied trajectory while adhering to the strict XY bounds.", "weights": [10.0, -20.0, 30.0, -40.0, 50.0, -40.0, 30.0, -20.0, 10.0, -5.0, -10.0, 20.0, -30.0, 40.0, -50.0, 40.0, -30.0, 20.0, -10.0, 5.0]}

@@ -1,0 +1,1 @@
+{"reason": "Scaling down the weights from the previous best cost (43) to bring the trajectory back within the strict XY workspace limits, hoping to maintain a low cost while adhering to bounds.", "weights": [-136.0, -42.5, 85.0, 144.5, 153.0, 110.5, 42.5, -76.5, -127.5, -144.5, -93.5, -51.0, 68.0, 85.0, -34.0, -93.5, -42.5, 72.25, 76.5, -29.75]}

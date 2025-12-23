@@ -1,0 +1,1 @@
+{"reason": "Exploring a refinement of the best performing weights from iteration 32 by making small adjustments to potentially lower the cost while maintaining trajectory within bounds.", "weights": [-120.0, -35.0, 80.0, 140.0, 150.0, 105.0, 35.0, -70.0, -135.0, -148.0, -90.0, -45.0, 70.0, 82.0, -25.0, -90.0, -40.0, 70.0, 75.0, -18.0]}

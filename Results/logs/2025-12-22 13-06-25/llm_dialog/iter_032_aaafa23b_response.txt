@@ -1,0 +1,1 @@
+{"reason": "This set of weights slightly perturbs parameters from a previous good-performing iteration (f=70) to explore for lower costs while aiming to keep the trajectory strictly within the defined XY workspace limits.", "weights": [-118.0, -33.0, 82.0, 142.0, 148.0, 107.0, 33.0, -72.0, -133.0, -146.0, -88.0, -43.0, 72.0, 80.0, -23.0, -88.0, -38.0, 72.0, 77.0, -16.0]}

@@ -1,0 +1,1 @@
+{"reason": "Perturbing the best performing weights (f=37 at Iteration 86) with small random noise to explore the local vicinity while adhering to the specified XY workspace limits.", "weights": [-144.372, -43.197, 88.077, 150.849, 159.297, 114.305, 42.128, -78.106, -132.333, -151.724, -108.835, -57.487, 80.606, 96.908, -42.748, -112.274, -51.353, 85.492, 90.725, -37.285]}

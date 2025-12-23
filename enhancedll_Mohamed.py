@@ -630,12 +630,11 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         # Rounding to 4 decimal places keeps it clean
                         rounded_weights = [round(w, 4) for w in weights]
                         failure_tag = " (FAILED)" if is_failed_iter else ""
+                        iter_string = f"Examples: {iter_num + n_warmup}" if iter_num < 1 else f"Iteration {iter_num}:"
                         feedback_text += (
-                            f"          weights={json.dumps(rounded_weights)}"
+                            f"{iter_string} weights={json.dumps(rounded_weights)}"
                             f"{bounds_info}, "
-                            f" f(weights) : {current_f_weights}\n"
-
-
+                            f" f(weights)={current_f_weights}\n"
                         )
         except Exception as e:
             feedback_text += f"# ⚠️ Error processing executed weights history: {str(e)}\n"

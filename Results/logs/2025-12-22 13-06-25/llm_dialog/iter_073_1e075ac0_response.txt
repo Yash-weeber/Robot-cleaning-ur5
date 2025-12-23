@@ -1,0 +1,1 @@
+{"reason": "Exploiting the best known solution from Iteration 57 by slightly increasing the magnitude of several weights to explore a potentially lower cost region while adhering to workspace limits.", "weights": [-143.0, -44.5332, 89.0664, 152.0, 161.0, 115.7866, 44.5332, -80.16, -134.0, -152.0, -109.0, -60.0, 79.1523, 99.0, -40.0, -109.0, -50.0, 85.0, 90.0, -34.6189]}
