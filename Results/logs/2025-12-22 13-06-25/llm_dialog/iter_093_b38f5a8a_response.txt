@@ -1,1 +1,0 @@
-{"reason": "Exploring a slightly expanded trajectory around the best-performing weights from iteration 86 to find a lower cost while attempting to stay within workspace limits.", "weights": [-142.294, -44.811, 89.121, 151.156, 160.019, 115.708, 44.811, -80.259, -133.432, -151.156, -109.879, -60.161, 80.048, 99.935, -40.274, -109.879, -50.207, 85.019, 89.992, -35.292]}

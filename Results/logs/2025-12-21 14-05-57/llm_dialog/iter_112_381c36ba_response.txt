@@ -1,1 +1,0 @@
-{"reason": "Exploring the neighborhood of the best performing weights (f=65) by applying small random perturbations to each weight, aiming for a lower cost while maintaining adherence to workspace limits.", "weights": [-112.18, -69.21, 50.15, 130.34, 154.59, 111.87, 30.72, -64.11, -135.63, -150.38, -94.55, -51.12, 74.88, 82.01, -26.93, -93.89, -45.97, 75.31, 81.65, -21.84]}

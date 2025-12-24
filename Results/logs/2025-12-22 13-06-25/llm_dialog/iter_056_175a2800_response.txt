@@ -1,1 +1,0 @@
-{"reason": "Exploring a region near the best observed cost (from iteration 42) by scaling down its weights to ensure strict adherence to the XY workspace limits.", "weights": [-140.8, -44.0, 88.0, 149.6, 158.4, 114.4, 44.0, -79.2, -132.0, -149.6, -104.5, -57.0, 76.0, 95.0, -38.0, -104.5, -47.5, 80.75, 85.5, -33.25]}

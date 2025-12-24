@@ -1,1 +1,0 @@
-{"reason": "Exploring a symmetric, oscillatory weight pattern with moderate magnitudes to encourage broader trajectory coverage within workspace limits, similar to examples that achieved reasonable cost while adhering to bounds.", "weights": [70.0, 30.0, -10.0, -50.0, -90.0, -90.0, -50.0, -10.0, 30.0, 70.0, 80.0, 40.0, 0.0, -40.0, -80.0, -80.0, -40.0, 0.0, 40.0, 80.0]}

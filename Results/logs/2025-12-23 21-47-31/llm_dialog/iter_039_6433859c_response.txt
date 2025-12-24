@@ -1,0 +1,1 @@
+{"reason":"exploring moderate weights around known good region while varying signs to seek lower cost","weights":[-78.0,-28.0,55.0,126.0,144.0,108.0,16.0,-70.0,-112.0,-126.0,-68.0,-30.0,54.0,68.0,-7.0,-60.0,-22.0,56.0,100.0,-10.0]}

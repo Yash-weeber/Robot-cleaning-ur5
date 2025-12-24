@@ -1,1 +1,0 @@
-{"reason": "Exploring a symmetric, broad trajectory within bounds by using bell-curve like weight distributions for both dimensions.", "weights": [0.0, 20.0, 50.0, 80.0, 100.0, 100.0, 80.0, 50.0, 20.0, 0.0, 0.0, -20.0, -50.0, -80.0, -100.0, -100.0, -80.0, -50.0, -20.0, 0.0]}

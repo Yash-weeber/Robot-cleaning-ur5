@@ -1,0 +1,1 @@
+{"reason":"slightly scaling up the best-known low-cost weights to explore nearby region while staying within workspace bounds","weights":[144.43,-32.32,74.74,136.35,167.66,118.17,42.42,-79.79,-145.44,-156.55,-92.92,-32.32,69.69,82.82,-5.05,-91.91,-33.33,67.67,81.81,-5.05]}

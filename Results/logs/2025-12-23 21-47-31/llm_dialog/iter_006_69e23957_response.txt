@@ -1,0 +1,1 @@
+{"reason": "exploring reduced magnitudes around best known while keeping sign diversity", "weights": [-60.0, -20.0, 50.0, 100.0, 120.0, 90.0, 10.0, -60.0, -90.0, -110.0, -60.0, -30.0, 40.0, 60.0, 5.0, -50.0, -10.0, 40.0, 80.0, -10.0]}

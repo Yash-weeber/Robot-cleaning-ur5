@@ -1,1 +1,0 @@
-{"reason": "Exploring a symmetric, moderate-magnitude weight pattern, similar to configurations that previously yielded lower costs while respecting XY workspace limits.", "weights": [60.0, 80.0, 100.0, 70.0, 30.0, -30.0, -70.0, -100.0, -80.0, -60.0, 50.0, 70.0, 90.0, 60.0, 20.0, -20.0, -60.0, -90.0, -70.0, -50.0]}

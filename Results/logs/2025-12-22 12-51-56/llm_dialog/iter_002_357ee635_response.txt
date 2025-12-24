@@ -1,1 +1,0 @@
-{"reason": "Initial exploration with moderately scaled random weights to cover a diverse trajectory space, anticipating adherence to workspace bounds.", "weights": [-51.3571, 3.4862, 59.9882, -31.4284, 46.1245, -23.4988, -26.5028, 17.5683, -29.0768, -4.6853, 58.7479, -15.9084, 21.3653, -22.3996, 54.0202, -50.1587, 26.6586, -56.5413, -56.3353, 44.2084]}

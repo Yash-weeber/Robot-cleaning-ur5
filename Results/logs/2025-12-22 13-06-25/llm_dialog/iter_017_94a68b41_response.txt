@@ -1,1 +1,0 @@
-{"reason": "Exploring a slight perturbation of the best performing weights from Iteration 15 to try and find a lower cost, while maintaining large magnitudes to encourage a wide trajectory within the defined XY workspace limits.", "weights": [-120.0, -35.0, 75.0, 140.0, 155.0, 105.0, 30.0, -70.0, -135.0, -150.0, -90.0, -45.0, 65.0, 80.0, -25.0, -90.0, -35.0, 70.0, 75.0, -20.0]}

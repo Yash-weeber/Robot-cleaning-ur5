@@ -1,0 +1,1 @@
+{"reason":"exploring moderate amplitudes and balanced start/end scaling while staying within workspace bounds","weights":[-80.0,20.0,-50.0,-70.0,-90.0,-60.0,-30.0,50.0,80.0,90.0,60.0,20.0,-50.0,-55.0,0.4,70.0,20.0,-50.0,-70.0,0.4]}

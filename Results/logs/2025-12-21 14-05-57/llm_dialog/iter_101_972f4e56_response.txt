@@ -1,1 +1,0 @@
-{"reason": "Exploring a new pattern with large, sweeping weights to achieve wide coverage across the workspace within the specified bounds, aiming for better cost reduction.", "weights": [-160.0, -120.0, -80.0, -40.0, 0.0, 40.0, 80.0, 120.0, 160.0, 120.0, 100.0, 60.0, 20.0, -20.0, -60.0, -100.0, -60.0, -20.0, 20.0, 60.0]}

@@ -1,1 +1,0 @@
-{"reason": "Exploring a broad S-curve trajectory with high magnitude weights to cover a significant portion of the workspace while aiming to stay within the x: [-1,1] and y: [-0.6,0.6] bounds, hoping to find a lower cost region.", "weights": [-140.0, -100.0, -60.0, -20.0, 20.0, 60.0, 100.0, 140.0, 100.0, 60.0, 100.0, 70.0, 40.0, 10.0, -20.0, -50.0, -80.0, -110.0, -80.0, -50.0]}

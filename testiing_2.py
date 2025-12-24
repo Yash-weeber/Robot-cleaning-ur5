@@ -14,6 +14,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
 import queue
 from utils.draw_shapes import circle_trajectory, elipsoid_trajectory, square_trajectory, infinity_trajectory
+import os
+os.environ["MUJOCO_GL"] = "egl"
 # from waypoint_generator import generate_initial_pattern
 # Movement Primitives Installation:
 # pip install movement_primitives
@@ -1337,13 +1339,13 @@ class EnhancedDMPController:
         if len(joint_traj) > 0:
             set_joint_positions(self.model, self.data, self.joint_names, joint_traj[0])
             mujoco.mj_forward(self.model, self.data)
-            self.viewer.draw()
+            # self.viewer.draw()
             time.sleep(self.dt)
 
         for joints in joint_traj:
             self.data.ctrl[:] = joints
             mujoco.mj_step(self.model, self.data)
-            self.viewer.draw()
+            # self.viewer.draw()
             time.sleep(self.dt)
         print("Discrete trajectory execution complete.")
 

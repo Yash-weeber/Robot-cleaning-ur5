@@ -1,1 +1,0 @@
-{"reason": "Exploring a similar sinusoidal weight pattern that previously yielded low costs while keeping the trajectory within bounds, but with slightly increased magnitudes to cover more workspace and search for a lower minimum.", "weights": [110.0, 55.0, 0.0, -55.0, -110.0, -55.0, 0.0, 55.0, 110.0, 55.0, 0.0, 66.0, 110.0, 66.0, 0.0, -66.0, -110.0, -66.0, 0.0, 66.0]}

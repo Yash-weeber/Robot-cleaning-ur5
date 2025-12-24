@@ -1,0 +1,1 @@
+{"weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,80.0,149.0,158.0,93.0,33.0,-84.0,-89.0,1.0,94.0,33.0,-84.0,-94.0,1.0],"reasoning":"exploring slight positive offset in later dimensions"}

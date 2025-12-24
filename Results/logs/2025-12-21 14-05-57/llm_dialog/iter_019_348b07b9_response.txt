@@ -1,1 +1,0 @@
-{"reason": "Exploring a region with moderate to large, alternating weights to cover a diverse range of trajectory shapes while aiming for adherence to XY workspace limits.", "weights": [10.0, -30.0, 70.0, -110.0, 140.0, -120.0, 90.0, -50.0, 20.0, -10.0, -15.0, 35.0, -75.0, 115.0, -145.0, 125.0, -95.0, 55.0, -25.0, 5.0]}

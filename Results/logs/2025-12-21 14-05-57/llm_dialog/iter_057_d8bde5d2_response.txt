@@ -1,1 +1,0 @@
-{"reason": "Exploring a smooth, balanced trajectory with moderate sinusoidal weights to cover the workspace efficiently while staying within bounds.", "weights": [0.0, 17.1, 32.15, 43.3, 49.25, 49.25, 43.3, 32.15, 17.1, 0.0, 50.0, 47.0, 38.3, 25.0, 8.7, -8.7, -25.0, -38.3, -47.0, -50.0]}

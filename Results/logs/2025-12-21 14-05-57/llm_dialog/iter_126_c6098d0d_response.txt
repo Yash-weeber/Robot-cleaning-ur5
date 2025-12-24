@@ -1,1 +1,0 @@
-{"reason": "Exploring a scaled version of the best performing Y weights to achieve wider range coverage while keeping X weights from a good performing example to ensure adherence to bounds.", "weights": [-114.0, -66.5, 47.5, 133.0, 152.0, 114.0, 28.5, -66.5, -133.0, -152.0, -109.0, -54.5, 81.7, 95.4, -27.2, -109.0, -54.5, 81.7, 95.4, -27.2]}

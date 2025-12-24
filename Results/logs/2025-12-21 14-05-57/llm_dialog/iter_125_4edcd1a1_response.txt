@@ -1,1 +1,0 @@
-{"reason": "Exploring a strong symmetrical S-curve pattern with large oscillating weights to cover a broad range of the workspace while adhering to strict XY limits.", "weights": [0.0, 40.0, 80.0, 120.0, 80.0, 40.0, 0.0, -40.0, -80.0, -120.0, 0.0, -40.0, -80.0, -120.0, -80.0, -40.0, 0.0, 40.0, 80.0, 120.0]}

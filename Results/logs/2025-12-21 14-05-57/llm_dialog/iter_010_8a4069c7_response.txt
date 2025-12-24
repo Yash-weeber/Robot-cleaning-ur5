@@ -1,1 +1,0 @@
-{"reason": "Continuing exploration with a diverse set of moderate-magnitude weights to cover a broad region of the parameter space, aiming for a trajectory within the defined XY workspace limits.", "weights": [-50.0, -80.0, -100.0, -70.0, -30.0, 30.0, 70.0, 100.0, 80.0, 50.0, -30.0, -60.0, -90.0, -100.0, -80.0, -40.0, 20.0, 60.0, 90.0, 70.0]}

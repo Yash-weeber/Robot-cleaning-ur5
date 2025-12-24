@@ -1,1 +1,0 @@
-{"reason": "Scaling down the weights from iteration 42, which yielded a very low cost but violated bounds, to ensure the trajectory remains strictly within the defined XY workspace limits.", "weights": [-143.52, -44.85, 89.7, 152.49, 161.46, 116.61, 44.85, -80.73, -134.55, -152.49, -98.67, -53.82, 71.76, 89.7, -35.88, -98.67, -44.85, 76.245, 80.73, -31.395]}

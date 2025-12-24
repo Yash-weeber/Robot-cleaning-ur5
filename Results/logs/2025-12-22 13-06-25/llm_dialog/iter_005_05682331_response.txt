@@ -1,1 +1,0 @@
-{"reason": "Exploring a new set of moderately sized positive and negative weights to encourage staying within workspace limits while searching for a lower cost region.", "weights": [-60.5, 30.2, -15.8, 75.1, -80.3, 45.9, -25.7, 68.4, -70.0, 52.6, -85.1, 20.3, -35.9, 79.7, -90.2, 58.5, -40.6, 82.8, -65.4, 18.0]}

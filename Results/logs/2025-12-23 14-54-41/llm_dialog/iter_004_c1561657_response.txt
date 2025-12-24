@@ -1,0 +1,1 @@
+{"reason":"exploring diverse sign and magnitude to sample new region while respecting workspace limits","weights":[-95.2,42.1,67.8,130.5,-140.3,85.6,-30.4,-110.7,120.9,-125.3,80.2,-55.1,70.3,95.4,-20.6,-70.8,40.5,60.2,-85.9,10.3]}

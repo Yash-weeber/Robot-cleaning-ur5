@@ -1,1 +1,0 @@
-{"reason": "Exploring a new set of weights with bell-shaped patterns for both dimensions, using moderate to high magnitudes for x and conservative magnitudes for y to ensure trajectory adherence within the workspace limits.", "weights": [10.0, 50.0, 100.0, 140.0, 150.0, 140.0, 100.0, 50.0, 10.0, -20.0, 5.0, 20.0, 40.0, 50.0, 50.0, 40.0, 20.0, 5.0, -10.0, -20.0]}

@@ -1,0 +1,1 @@
+{"reason":"exploring refined region near best known solution with reduced amplitude to stay within workspace bounds","weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,80.0,149.0,158.0,93.0,33.0,-84.0,-89.0,0.5,92.0,33.0,-84.0,-92.0,0.5]}

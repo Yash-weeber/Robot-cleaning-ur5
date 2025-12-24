@@ -1,1 +1,0 @@
-{"reason": "Exploring a broader range of weight magnitudes and signs to find the global optimum, while being mindful of the XY workspace limits.", "weights": [-70.5, 45.1, -10.2, 88.7, -95.3, 30.8, -22.9, 75.4, -80.1, 55.6, -105.7, 25.2, -40.3, 90.9, -110.8, 60.0, -35.5, 100.4, -70.6, 15.9]}

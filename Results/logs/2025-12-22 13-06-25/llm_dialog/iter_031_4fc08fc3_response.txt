@@ -1,1 +1,0 @@
-{"reason": "Exploring the neighborhood of a promising previous result (f=70 in Iteration 29) by slightly increasing the absolute values of the weights, aiming for a wider trajectory within bounds to find a lower cost.", "weights": [-122.0, -37.0, 82.0, 142.0, 152.0, 107.0, 37.0, -72.0, -137.0, -150.0, -92.0, -47.0, 72.0, 80.0, -27.0, -92.0, -42.0, 72.0, 77.0, -20.0]}

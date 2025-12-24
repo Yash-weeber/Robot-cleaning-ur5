@@ -1,1 +1,0 @@
-{"reason": "Exploring a smooth, symmetric weight pattern with moderate magnitudes to ensure the trajectory stays within the defined XY workspace limits for exploration.", "weights": [40.0, 20.0, 0.0, -20.0, -40.0, -40.0, -20.0, 0.0, 20.0, 40.0, -30.0, -15.0, 0.0, 15.0, 30.0, 30.0, 15.0, 0.0, -15.0, -30.0]}

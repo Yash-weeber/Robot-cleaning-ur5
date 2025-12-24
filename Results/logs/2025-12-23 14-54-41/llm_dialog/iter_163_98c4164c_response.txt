@@ -1,0 +1,1 @@
+{"reason":"exploring around best low-cost pattern with adjusted scaling","weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,80.0,149.0,158.0,94.0,34.0,-84.5,-89.5,0.3,94.0,34.0,-84.5,-94.0,0.3]}

@@ -1,1 +1,0 @@
-{"reason": "Slightly perturbing weights from the best-performing iteration (f=69) to explore a tighter local minimum while aiming to maintain strict adherence to workspace bounds.", "weights": [-119.0, -34.0, 76.0, 139.0, 154.0, 106.0, 31.0, -69.0, -134.0, -149.0, -91.0, -44.0, 66.0, 81.0, -24.0, -91.0, -34.0, 71.0, 76.0, -19.0]}

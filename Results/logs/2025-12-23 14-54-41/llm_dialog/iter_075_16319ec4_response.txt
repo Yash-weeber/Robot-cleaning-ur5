@@ -1,0 +1,1 @@
+{"reason":"scaled down best-known weights to explore nearby region while staying within bounds", "weights":[-144.0,31.5,-81.0,-135.0,-162.0,-108.0,-45.0,76.5,144.0,153.0,90.0,31.5,-81.0,-85.5,0.0,90.0,31.5,-81.0,-90.0,0.0]}

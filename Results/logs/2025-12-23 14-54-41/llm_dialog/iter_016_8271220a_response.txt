@@ -1,0 +1,1 @@
+{"reason": "exploring scaled-down version of good low-cost pattern", "weights": [-55.0, -15.0, 30.0, 65.0, 75.0, 55.0, 15.0, -30.0, -65.0, -75.0, -40.0, -17.5, 30.0, 35.0, -7.5, -40.0, -17.5, 30.0, 35.0, -7.5]}

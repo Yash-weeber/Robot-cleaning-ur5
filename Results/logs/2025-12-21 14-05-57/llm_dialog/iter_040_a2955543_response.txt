@@ -1,1 +1,0 @@
-{"reason": "Exploring a new, smooth S-shaped trajectory with moderate, balanced weights to ensure adherence to XY workspace limits and cover a different region of the search space for potential lower costs.", "weights": [-80.0, -40.0, 0.0, 40.0, 80.0, 80.0, 40.0, 0.0, -40.0, -80.0, 60.0, 30.0, 0.0, -30.0, -60.0, -60.0, -30.0, 0.0, 30.0, 60.0]}

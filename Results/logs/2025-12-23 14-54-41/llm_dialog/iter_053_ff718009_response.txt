@@ -1,0 +1,1 @@
+{"reason":"exploring around best low‑cost region with slightly reduced magnitude to stay inside bounds", "weights":[-148.0,34.0,-82.0,-142.0,-172.0,-122.0,-46.0,87.0,148.0,158.0,93.0,32.0,-82.0,-88.0,1.0,92.0,33.0,-82.0,-90.0,1.0]}

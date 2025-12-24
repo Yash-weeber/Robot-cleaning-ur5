@@ -1,1 +1,0 @@
-{"reason": "Exploring a new region with moderate, smoothly varying weights to promote bound adherence and identify potentially lower cost areas by creating a gentle, oscillatory trajectory.", "weights": [0.0, 20.0, 40.0, 50.0, 40.0, 20.0, 0.0, -20.0, -40.0, -50.0, -50.0, -40.0, -20.0, 0.0, 20.0, 40.0, 50.0, 40.0, 20.0, 0.0]}

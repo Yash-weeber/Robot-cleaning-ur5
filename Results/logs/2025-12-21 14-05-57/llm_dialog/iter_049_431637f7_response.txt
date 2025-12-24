@@ -1,1 +1,0 @@
-{"reason": "Exploring a very simple trajectory by setting all weights to zero to ensure strict bounds adherence and to test for a minimal cost, as all previous costs were high.", "weights": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}

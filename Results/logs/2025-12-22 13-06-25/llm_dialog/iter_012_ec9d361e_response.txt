@@ -1,1 +1,0 @@
-{"reason": "These weights aim to explore a diverse and wide range of trajectory shapes with significant positive and negative values, encouraging broad workspace coverage while attempting to stay within the defined XY bounds.", "weights": [-120.0, -20.0, 80.0, 140.0, 120.0, 60.0, -10.0, -70.0, -130.0, -110.0, -70.0, -15.0, 40.0, 90.0, -30.0, -60.0, -20.0, 50.0, 100.0, -10.0]}

@@ -1,1 +1,0 @@
-{"reason": "Exploring a broad trajectory by using a structured sweep of positive and negative weights, with slightly reduced magnitude for Y-dimension to respect tighter bounds.", "weights": [80.0, 100.0, 60.0, 20.0, -20.0, -60.0, -100.0, -80.0, -40.0, 0.0, 50.0, 70.0, 40.0, 10.0, -10.0, -40.0, -70.0, -50.0, -20.0, 0.0]}

@@ -1,1 +1,0 @@
-{"reason": "Exploring a new region with varied positive and negative weights of moderate magnitude to encourage a diverse trajectory while attempting to adhere strictly to the XY workspace limits.", "weights": [80.0, -60.0, 70.0, -50.0, 90.0, -70.0, 60.0, -40.0, 100.0, -80.0, -70.0, 50.0, -60.0, 40.0, -80.0, 60.0, -50.0, 30.0, -90.0, 70.0]}

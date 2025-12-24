@@ -1,1 +1,0 @@
-{"reason": "Exploring a broader range of the workspace with moderate weight magnitudes to encourage diverse trajectories while aiming for strict adherence to the specified XY bounds.", "weights": [70.0, 80.0, 50.0, 10.0, -30.0, -70.0, -50.0, -10.0, 30.0, 70.0, 70.0, 50.0, 10.0, -30.0, -70.0, -80.0, -50.0, -10.0, 30.0, 60.0]}

@@ -1,0 +1,1 @@
+{"reason":"exploring mixed sign variations around known good region while respecting workspace bounds","weights":[-80.0,-10.0,40.0,150.0,130.0,100.0,30.0,-60.0,-100.0,-160.0,-70.0,-20.0,70.0,60.0,-20.0,-50.0,-40.0,80.0,90.0,-30.0]}

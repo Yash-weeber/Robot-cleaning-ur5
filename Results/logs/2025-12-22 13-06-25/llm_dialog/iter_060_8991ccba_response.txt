@@ -1,1 +1,0 @@
-{"reason": "Exploring a slight shrinkage of the best performing weights from Iteration 57 to maintain strict bounds adherence and potentially find a lower cost.", "weights": [-142.007, -44.0332, 88.5664, 150.9134, 159.8204, 115.2866, 44.0332, -79.66, -133.1, -150.9134, -108.3344, -58.8642, 78.6523, 98.4404, -39.0762, -108.3344, -48.96, 83.5989, 88.5466, -34.1189]}

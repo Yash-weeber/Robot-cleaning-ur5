@@ -1,1 +1,0 @@
-{"reason": "Exploring a new oscillating weight pattern with moderate magnitudes to ensure adherence to workspace limits and search for lower costs.", "weights": [10.0, -20.0, 30.0, -40.0, 50.0, -50.0, 40.0, -30.0, 20.0, -10.0, 5.0, -15.0, 25.0, -35.0, 45.0, -45.0, 35.0, -25.0, 15.0, -5.0]}

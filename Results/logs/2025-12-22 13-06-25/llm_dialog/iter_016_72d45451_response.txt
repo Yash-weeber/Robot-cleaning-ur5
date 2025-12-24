@@ -1,1 +1,0 @@
-{"reason": "Exploring a diverse set of weight magnitudes and signs, including values up to 150, to find better optima while maintaining trajectory within XY workspace bounds.", "weights": [-100.0, 20.0, -60.0, 130.0, -140.0, 90.0, -30.0, 70.0, -110.0, 150.0, -50.0, 10.0, -80.0, 120.0, -130.0, 80.0, -20.0, 60.0, -100.0, 40.0]}

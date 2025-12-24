@@ -1,1 +1,0 @@
-{"reason": "Exploring a new region with moderately varied positive and negative weights, aiming for a diverse trajectory that remains within the defined workspace limits.", "weights": [-70.0, 30.0, -50.0, 70.0, -20.0, 60.0, -40.0, 80.0, -10.0, 50.0, 60.0, -20.0, 80.0, -10.0, 50.0, -70.0, 30.0, -50.0, 70.0, -40.0]}

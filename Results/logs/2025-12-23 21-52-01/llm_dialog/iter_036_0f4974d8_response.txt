@@ -1,0 +1,1 @@
+{"reason":"exploring smaller-magnitude region around a good solution while staying within bounds","weights":[-54.0,-14.0,29.0,64.0,74.0,54.0,14.0,-29.0,-64.0,-74.0,-39.0,-16.5,29.0,34.0,-6.5,-39.0,-14.0,29.0,34.0,-6.5]}

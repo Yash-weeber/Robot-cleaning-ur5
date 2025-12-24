@@ -1,1 +1,0 @@
-{"reason": "Exploring a combination of successful weight patterns, scaling them to maximize trajectory coverage within the given XY workspace limits.", "weights": [-123.75, -74.25, 54.45, 143.55, 163.35, 123.75, 34.65, -74.25, -143.55, -163.35, -103.3944, -51.6972, 77.5368, 90.4636, -25.8456, -103.3944, -51.6972, 77.5368, 90.4636, -25.8456]}

@@ -1,1 +1,0 @@
-{"reason": "Exploring a diverse set of moderate positive and negative weights to broadly explore the search space and attempt to keep the trajectory within the specified XY bounds.", "weights": [50.0, -40.0, 60.0, -30.0, 70.0, -20.0, 80.0, -10.0, 90.0, -5.0, -45.0, 35.0, -55.0, 25.0, -65.0, 15.0, -75.0, 5.0, -85.0, 10.0]}

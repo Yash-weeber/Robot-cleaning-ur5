@@ -1,0 +1,1 @@
+{"reason":"exploring around best region while reducing extreme magnitudes to stay within workspace", "weights":[-80.0,-30.0,55.0,130.0,148.0,115.0,22.0,-70.0,-115.0,-130.0,-70.0,-35.0,58.0,72.0,-8.0,-60.0,-20.0,62.0,108.0,-10.0]}

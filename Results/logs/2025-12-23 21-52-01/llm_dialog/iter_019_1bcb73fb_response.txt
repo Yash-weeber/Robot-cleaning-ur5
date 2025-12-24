@@ -1,0 +1,1 @@
+{"reason": "exploring moderate alternating signs while staying within workspace bounds", "weights": [-85.0, -25.0, 55.0, 115.0, 135.0, 105.0, 20.0, -55.0, -115.0, -135.0, -75.0, -30.0, 45.0, 95.0, 110.0, 90.0, -10.0, 40.0, -100.0, 120.0]}

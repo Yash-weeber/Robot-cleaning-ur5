@@ -1,0 +1,1 @@
+{"reason":"moderate magnitude, balanced signs to stay within workspace while exploring around best known region","weights":[-65.0,-25.0,55.0,125.0,145.0,115.0,15.0,-70.0,-115.0,-135.0,-75.0,-35.0,50.0,78.0,8.0,-65.0,-18.0,58.0,105.0,-13.0]}

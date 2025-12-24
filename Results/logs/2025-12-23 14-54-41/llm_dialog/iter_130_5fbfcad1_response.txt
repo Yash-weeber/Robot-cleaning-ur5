@@ -1,0 +1,1 @@
+{"reasoning":"exploring near best known configuration with increased y offset to potentially lower cost","weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,80.0,149.0,158.0,93.0,33.0,-84.0,-89.0,0.5,100.0,33.0,-84.0,-95.0,0.5]}

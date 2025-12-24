@@ -1,0 +1,1 @@
+{"reason":"exploring around best low-cost region with reduced magnitude","weights":[-145.0,30.0,-85.0,-140.0,-165.0,-115.0,-48.0,78.0,145.0,155.0,95.0,32.0,-85.0,-88.0,1.0,92.0,32.0,-85.0,-92.0,1.0]}

@@ -1,1 +1,0 @@
-{"reason": "Exploring a slight upward scaling of the best-performing weights to search for lower costs while aiming to remain within the observed safe trajectory bounds.", "weights": [-121.98, -71.155, 50.825, 142.31, 162.64, 121.98, 30.495, -71.155, -142.31, -162.64, -103.576, -51.788, 77.682, 90.629, -25.894, -103.576, -51.788, 77.682, 90.629, -25.894]}

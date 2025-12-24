@@ -1,1 +1,0 @@
-{"reason": "This set of smoothly varying sinusoidal weights aims to generate a trajectory that explores a broad range of the XY workspace while keeping the control magnitudes moderate to stay within defined limits.", "weights": [0.0, 57.85, 88.63, 77.94, 30.78, -30.78, -77.94, -88.63, -57.85, 0.0, 90.0, 68.94, 15.63, -45.0, -84.57, -84.57, -45.0, 15.63, 68.94, 90.0]}

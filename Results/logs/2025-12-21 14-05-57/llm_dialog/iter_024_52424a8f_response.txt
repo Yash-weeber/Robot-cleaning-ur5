@@ -1,1 +1,0 @@
-{"reason": "Exploring a new set of larger magnitude weights with an oscillatory pattern to cover a significant portion of the workspace while aiming to stay within defined X/Y bounds.", "weights": [-140.0, -80.0, 20.0, 100.0, 150.0, 100.0, 20.0, -80.0, -140.0, -100.0, 120.0, 60.0, -30.0, -90.0, -130.0, -90.0, -30.0, 60.0, 120.0, 80.0]}

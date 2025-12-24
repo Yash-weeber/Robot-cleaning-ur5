@@ -1,0 +1,1 @@
+{"reasoning":"exploring scaling of best known weights to stay within bounds and possibly lower cost","weights":[-126.65,28.05,-71.4,-119.0,-142.8,-95.2,-39.95,72.25,126.65,134.3,79.9,28.9,-71.4,-75.65,0.085,81.6,28.9,-71.4,-82.025,0.085]}

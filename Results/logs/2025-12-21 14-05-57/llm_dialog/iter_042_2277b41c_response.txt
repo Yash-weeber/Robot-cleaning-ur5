@@ -1,1 +1,0 @@
-{"reason": "Exploring a smooth, symmetric weight distribution with moderate magnitudes (up to 100) to encourage broader workspace coverage while attempting to strictly adhere to the defined XY bounds.", "weights": [-100.0, -60.0, -20.0, 20.0, 60.0, 100.0, 60.0, 20.0, -20.0, -60.0, 100.0, 60.0, 20.0, -20.0, -60.0, -100.0, -60.0, -20.0, 20.0, 60.0]}

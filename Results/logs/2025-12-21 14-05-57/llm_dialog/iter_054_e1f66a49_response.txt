@@ -1,1 +1,0 @@
-{"reason": "Exploring a new oscillatory pattern with moderate magnitudes to ensure trajectory stays within XY workspace limits while seeking a lower cost.", "weights": [120.0, 90.0, 60.0, 30.0, 0.0, -30.0, -60.0, -90.0, -120.0, -90.0, 90.0, 60.0, 30.0, 0.0, -30.0, -60.0, -90.0, -60.0, -30.0, 0.0]}

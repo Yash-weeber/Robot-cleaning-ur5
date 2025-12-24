@@ -1,0 +1,1 @@
+{"reason":"exploring reduced amplitudes around best known while staying within bounds","weights":[-130.0,30.0,-70.0,-120.0,-150.0,-100.0,-40.0,70.0,130.0,140.0,80.0,30.0,-70.0,-80.0,0.2,80.0,30.0,-70.0,-80.0,0.2]}

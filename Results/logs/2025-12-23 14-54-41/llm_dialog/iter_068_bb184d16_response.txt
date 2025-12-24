@@ -1,0 +1,1 @@
+{"weights":[-155,30,-85,-145,-175,-120,-48,82,155,165,95,30,-85,-88,0,92,30,-85,-92,0],"reason":"exploring balanced large-magnitude pattern while respecting workspace bounds"}

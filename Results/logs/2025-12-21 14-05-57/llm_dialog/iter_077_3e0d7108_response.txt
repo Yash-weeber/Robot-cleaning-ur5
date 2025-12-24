@@ -1,1 +1,0 @@
-{"reason": "Exploring a complex pattern of large and varied weights to achieve wide coverage within strict workspace limits.", "weights": [-100.0, -50.0, 50.0, 120.0, 140.0, 100.0, 30.0, -50.0, -120.0, -140.0, -70.0, -30.0, 50.0, 60.0, -10.0, -70.0, -30.0, 50.0, 60.0, -10.0]}

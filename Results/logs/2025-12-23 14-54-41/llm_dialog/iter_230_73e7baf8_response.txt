@@ -1,0 +1,1 @@
+{"reasoning":"exploit low-cost region by fine-tuning moderate weights around best 25-cost solution","weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,85.0,149.0,158.0,92.0,30.0,-82.0,-86.0,0.05,94.0,30.0,-82.0,-94.0,0.05]}

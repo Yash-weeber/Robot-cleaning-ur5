@@ -1,0 +1,1 @@
+{"reason":"exploring around best known weights with varied signs and magnitudes while staying within workspace bounds","weights":[148.0,-37.0,82.0,131.0,168.0,111.0,45.0,-86.0,-139.0,-160.0,-88.0,-35.0,74.0,78.0,-4.0,-93.0,-31.0,64.0,84.0,-6.0]}

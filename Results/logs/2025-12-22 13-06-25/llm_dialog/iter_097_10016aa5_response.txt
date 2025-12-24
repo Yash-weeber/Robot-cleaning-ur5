@@ -1,1 +1,0 @@
-{"reason": "Perturbing the current best set of weights to explore the local vicinity and potentially find a lower cost while maintaining adherence to workspace limits.", "weights": [-141.064, -44.613, 89.730, 151.682, 156.896, 114.900, 45.579, -77.595, -134.909, -148.835, -108.791, -60.659, 79.970, 97.465, -38.658, -107.232, -49.771, 84.895, 90.134, -33.750]}

@@ -1,1 +1,0 @@
-{"reason": "Exploring a new region of the weight space with generally lower magnitudes to assess if a more compact trajectory yields a better cost, while maintaining a balanced positive/negative distribution to stay within bounds.", "weights": [-50.0, -20.0, 40.0, 60.0, 70.0, 50.0, 20.0, -40.0, -60.0, -70.0, -40.0, -15.0, 30.0, 50.0, -20.0, -45.0, -20.0, 35.0, 40.0, -10.0]}

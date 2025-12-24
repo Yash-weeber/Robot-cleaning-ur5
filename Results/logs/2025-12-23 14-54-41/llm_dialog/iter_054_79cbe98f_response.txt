@@ -1,0 +1,1 @@
+{"reason":"scaled promising low-cost weights to stay within bounds and explore improvement","weights":[-128.7,28.8,-66.6,-121.5,-149.4,-105.3,-37.8,71.1,129.6,139.5,91.08,31.68,-68.31,-81.18,4.95,90.09,32.67,-66.33,-80.19,4.95]}

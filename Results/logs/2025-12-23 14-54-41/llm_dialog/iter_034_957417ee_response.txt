@@ -1,0 +1,1 @@
+{"reason":"scaled down best-known weights to explore neighbourhood while staying within bounds","weights":[135.85,-30.4,70.3,128.25,157.7,111.15,39.9,-75.05,-136.8,-147.25,-87.4,-30.4,65.55,77.9,-4.75,-86.45,-31.35,63.65,76.95,-4.75]}

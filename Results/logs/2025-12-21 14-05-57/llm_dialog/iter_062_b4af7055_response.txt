@@ -1,1 +1,0 @@
-{"reason": "Exploring a broader symmetric trajectory by slightly increasing the magnitude and varying the pattern from a previously effective example, aiming for wide coverage within bounds.", "weights": [0.0, 70.0, 100.0, 90.0, 40.0, -40.0, -90.0, -100.0, -70.0, 0.0, 100.0, 70.0, 20.0, -50.0, -90.0, -90.0, -50.0, 20.0, 70.0, 100.0]}

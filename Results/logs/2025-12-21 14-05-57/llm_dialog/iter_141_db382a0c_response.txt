@@ -1,1 +1,0 @@
-{"reason": "Exploring slightly larger magnitudes around the current best solution (f=64) to search for lower costs while ensuring the trajectory remains within the XY workspace limits.", "weights": [-119.6, -70.72, 49.92, 140.4, 161.2, 140.4, 49.92, -70.72, -119.6, -161.2, -104.0, -52.0, 78.0, 88.4, -26.0, -104.0, -52.0, 78.0, 88.4, -26.0]}

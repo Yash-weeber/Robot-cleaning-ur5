@@ -1,1 +1,0 @@
-{"reason": "Exploring the neighborhood of previously low-cost trajectories by slightly scaling up weights to potentially push closer to the optimal bounds without exceeding them.", "weights": [-120.0, -70.0, 50.0, 140.0, 160.0, 140.0, 50.0, -70.0, -120.0, -160.0, -105.0, -52.5, 78.75, 89.25, -26.25, -105.0, -52.5, 78.75, 89.25, -26.25]}

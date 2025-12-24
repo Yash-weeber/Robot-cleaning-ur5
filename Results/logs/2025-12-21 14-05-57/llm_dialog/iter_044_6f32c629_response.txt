@@ -1,1 +1,0 @@
-{"reason": "Exploring a structured wave-like pattern for weights, with magnitudes inspired by lower-cost examples that adhered to workspace limits, to efficiently search for a global minimum.", "weights": [-150.0, -75.0, 0.0, 75.0, 150.0, 75.0, 0.0, -75.0, -150.0, -75.0, 0.0, 80.0, 40.0, 0.0, -40.0, -80.0, -40.0, 0.0, 40.0, 80.0]}

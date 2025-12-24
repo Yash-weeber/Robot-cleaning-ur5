@@ -1,1 +1,0 @@
-{"reason": "Scaling a previously successful, bound-adhering pattern to explore trajectories that utilize more of the workspace, cautiously increasing magnitudes to approach but not exceed strict XY limits.", "weights": [0.0, 86.775, 132.945, 116.91, 46.17, -46.17, -116.91, -132.945, -86.775, 0.0, 94.5, 72.387, 16.4115, -47.25, -88.7985, -88.7985, -47.25, 16.4115, 72.387, 94.5]}

@@ -1,1 +1,0 @@
-{"reason": "Starting with moderate weights to ensure the trajectory stays within bounds and to explore a new region of the search space, balancing positive and negative values.", "weights": [10.5, -15.2, 20.1, -25.7, 30.3, -20.8, 15.6, -10.9, 5.0, -2.5, -10.5, 15.2, -20.1, 25.7, -30.3, 20.8, -15.6, 10.9, -5.0, 2.5]}

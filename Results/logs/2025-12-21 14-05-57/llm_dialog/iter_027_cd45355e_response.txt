@@ -1,1 +1,0 @@
-{"reason": "Exploring a new set of weights with a mirrored bell-shaped distribution to encourage a smooth trajectory covering a wide range within the strict XY workspace limits, aiming for lower costs by exploring different patterns.", "weights": [-100.0, -70.0, -30.0, 0.0, 30.0, 70.0, 100.0, 70.0, 30.0, 0.0, 100.0, 70.0, 30.0, 0.0, -30.0, -70.0, -100.0, -70.0, -30.0, 0.0]}

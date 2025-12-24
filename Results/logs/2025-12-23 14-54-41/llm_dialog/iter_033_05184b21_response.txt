@@ -1,0 +1,1 @@
+{"reason": "exploring intermediate scaling between known good points to reduce cost", "weights": [130.0, -28.0, 68.0, 130.0, 150.0, 110.0, 38.0, -70.0, -130.0, -150.0, -84.0, -28.0, 64.0, 76.0, -4.0, -84.0, -30.0, 62.0, 76.0, -4.0]}

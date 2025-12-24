@@ -1,0 +1,1 @@
+{"reason":"exploring scaled-down version of best known weights to stay within bounds and potentially lower cost","weights":[-119.2,26.4,-67.2,-112.0,-134.4,-89.6,-37.6,68.0,119.2,126.4,75.2,27.2,-67.2,-71.2,0.08,76.8,27.2,-67.2,-77.2,0.08]}

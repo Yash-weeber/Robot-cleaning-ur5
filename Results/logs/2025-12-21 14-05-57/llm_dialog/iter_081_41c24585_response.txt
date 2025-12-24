@@ -1,1 +1,0 @@
-{"reason": "Exploring new regions with a balanced set of weights, aiming for significant workspace coverage while maintaining strict adherence to the defined XY workspace limits based on successful in-bound examples.", "weights": [100.0, 80.0, 40.0, 0.0, -40.0, -80.0, -100.0, -80.0, -40.0, 0.0, 0.0, 25.0, 40.0, 50.0, 40.0, 25.0, 0.0, -25.0, -40.0, -50.0]}

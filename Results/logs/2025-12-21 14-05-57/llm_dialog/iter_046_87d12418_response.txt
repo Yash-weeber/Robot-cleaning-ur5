@@ -1,1 +1,0 @@
-{"reason": "Exploring a smooth, symmetric trajectory with moderate weights to ensure adherence to workspace bounds (x: [-1,1], y: [-0.6,0.6]) and explore the central region for lower costs.", "weights": [10.0, 30.0, 50.0, 70.0, 80.0, 80.0, 70.0, 50.0, 30.0, 10.0, -10.0, -30.0, -50.0, -70.0, -80.0, -80.0, -70.0, -50.0, -30.0, -10.0]}

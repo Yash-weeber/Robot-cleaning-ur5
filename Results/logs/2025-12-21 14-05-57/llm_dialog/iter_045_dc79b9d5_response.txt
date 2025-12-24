@@ -1,1 +1,0 @@
-{"reason": "Exploring a moderate-magnitude, oscillating weight pattern with a range from -100 to 100 to search for smooth, bounded trajectories within the workspace.", "weights": [100.0, 50.0, 0.0, -50.0, -100.0, -50.0, 0.0, 50.0, 100.0, 50.0, 0.0, -50.0, -100.0, -50.0, 0.0, 50.0, 100.0, 50.0, 0.0, -50.0]}

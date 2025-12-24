@@ -1,1 +1,0 @@
-{"reason": "Exploring a new set of varied positive and negative weights within a magnitude range observed to generate trajectories that stay within the workspace limits.", "weights": [92.35, -45.12, 110.78, -75.05, 135.91, -20.67, 88.43, -125.14, 55.29, -100.83, -67.19, 105.33, -30.98, 118.01, -95.64, 42.50, -112.76, 70.32, -130.00, 25.87]}

@@ -1,0 +1,1 @@
+{"reason":"exploring sign flip in Y dimension while keeping X pattern that gave low cost", "weights":[-108.0,-28.0,58.0,128.0,148.0,108.0,28.0,58.0,128.0,148.0,-78.0,-33.0,-58.0,-68.0,13.0,78.0,-28.0,-58.0,-68.0,13.0]}

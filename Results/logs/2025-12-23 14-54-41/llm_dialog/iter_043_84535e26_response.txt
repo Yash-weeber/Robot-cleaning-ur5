@@ -1,0 +1,1 @@
+{"reason": "exploring near best region with slight magnitude adjustments for symmetry", "weights": [-145.0, 30.0, -78.0, -135.0, -165.0, -115.0, -43.0, 82.0, 145.0, 155.0, 92.0, 28.0, -78.0, -82.0, 2.0, 88.0, 28.0, -78.0, -88.0, 2.0]}

@@ -1,0 +1,1 @@
+{"reason":"exploring reduced magnitude while staying within workspace bounds","weights":[-145.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,70.0,145.0,150.0,93.0,33.0,-84.0,-89.0,0.3,92.0,33.0,-84.0,-92.0,0.3]}

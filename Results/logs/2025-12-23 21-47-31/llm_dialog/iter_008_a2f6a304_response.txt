@@ -1,0 +1,1 @@
+{"reason":"exploring moderate mixed signs to stay within bounds while seeking lower cost","weights":[-30.0,-20.0,40.0,80.0,100.0,70.0,10.0,-50.0,-90.0,-110.0,-40.0,-15.0,30.0,55.0,5.0,-25.0,-5.0,45.0,70.0,-8.0]}

@@ -1,1 +1,0 @@
-{"reason": "Scaled down the best performing but out-of-bounds weights from Iteration 42 to strictly adhere to XY workspace limits, aiming to find a lower cost within bounds.", "weights": [-143.575, -44.867, 89.734, 152.548, 161.522, 116.655, 44.867, -80.761, -134.602, -152.548, -98.708, -53.841, 71.788, 89.734, -35.894, -98.708, -44.867, 76.274, 80.761, -31.407]}

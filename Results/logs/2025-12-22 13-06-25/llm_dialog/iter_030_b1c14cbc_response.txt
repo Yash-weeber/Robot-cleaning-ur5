@@ -1,1 +1,0 @@
-{"reason": "Exploring the vicinity of the best performing weights from iteration 17 by applying small perturbations to potentially find a lower cost, while ensuring bounds adherence.", "weights": [-118.0, -30.0, 78.0, 143.0, 152.0, 108.0, 33.0, -73.0, -132.0, -147.0, -93.0, -42.0, 68.0, 77.0, -28.0, -87.0, -32.0, 73.0, 78.0, -23.0]}

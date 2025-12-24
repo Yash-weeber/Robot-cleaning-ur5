@@ -1,1 +1,0 @@
-{"reason": "Exploring a structured weight pattern with moderate magnitudes to maintain strict adherence to XY workspace limits while seeking lower costs.", "weights": [-120.0, -80.0, -40.0, 0.0, 40.0, 80.0, 120.0, 80.0, 40.0, 0.0, -100.0, -60.0, -20.0, 20.0, 60.0, 100.0, 60.0, 20.0, -20.0, -60.0]}

@@ -1,0 +1,1 @@
+{"reason":"exploring moderate magnitude weights to stay within bounds while probing lower cost region","weights":[-100.0,20.0,-60.0,-100.0,-130.0,-90.0,-35.0,55.0,100.0,110.0,70.0,20.0,-60.0,-70.0,0.0,70.0,20.0,-70.0,-80.0,0.0]}

@@ -1,0 +1,1 @@
+{"reason":"exploring around low-cost region with varied amplitudes while staying within workspace bounds","weights":[-95.0,-20.0,55.0,120.0,140.0,100.0,25.0,-55.0,-120.0,-140.0,-70.0,-30.0,55.0,65.0,-12.0,-70.0,-25.0,55.0,65.0,-12.0]}

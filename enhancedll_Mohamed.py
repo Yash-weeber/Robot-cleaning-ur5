@@ -16,15 +16,20 @@ from google import genai
 import pandas as pd
 from utils.draw_shapes import infinity_trajectory, square_trajectory, triangle_trajectory
 import dotenv
+import ollama
+
 keys_file_path = "./keys.env"
 API_KEYS = dotenv.dotenv_values(keys_file_path)
 dotenv.load_dotenv(keys_file_path)
-print("Loaded API keys:", API_KEYS)
+# print("Loaded API keys:", API_KEYS)
+
+os.environ["MUJOCO_GL"] = "egl"
+
 
 d = time.strftime("%Y-%m-%d %H-%M-%S")
 optimum = 0.0
 
-# OLLAMA_MODEL = "gpt-oss:120b"
+OLLAMA_MODEL = "gpt-oss:120b"
 #%%
 # # ====== EDIT THESE PATHS ======
 CSV_MOVE_PATH = f"./Results/logs/{d}/move.csv"
@@ -48,6 +53,7 @@ HISTORY_WINDOW = 25
 TRAJECTORY_HISTORY_WINDOW = 20  # NEW: Track last 20 iterations of X,Y trajectories
 n_warmup = 5 # number of initial ICL examples
 seed_number = 42
+feedback_window = 50  # number of recent iterations to summarize for feedback
 
 LOGDIR = os.path.join(BASE_DIR, "logs", d)
 WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
@@ -71,7 +77,7 @@ ANIMATION_FPS = 75
 GEMINI_MODEL = "gemini-2.5-flash"  # use Pro or gemini-2.0-flash if you want faster/cheaper
 GEMINI = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY_1"))
 
-builtins.input = lambda *a, **k: "7"
+# builtins.input = lambda *a, **k: "7"
 
 from testiing_2 import (
     EnhancedDMPController, MOP_Z_HEIGHT,
@@ -396,7 +402,7 @@ def load_traj_feedback(csv_path):
 #   * Smooth motion (reasonable smoothness metric)
 #   * Effective cleaning (correlation between trajectory path and ball reduction)
 def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history,
-                           trajectory_history, trajectory_analysis, bounds,  ik_error_summary=None,iter_log_data=None,traj_feedback_data=None, feedback_window=40000
+                           trajectory_history, trajectory_analysis, bounds,  ik_error_summary=None,iter_log_data=None,traj_feedback_data=None, feedback_window=50
                            ):
     try:
         w_example1 = parse_weights_text(WEIGHTS_TXT).tolist()
@@ -630,7 +636,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                         # Rounding to 4 decimal places keeps it clean
                         rounded_weights = [round(w, 4) for w in weights]
                         failure_tag = " (FAILED)" if is_failed_iter else ""
-                        iter_string = f"Examples: {iter_num + n_warmup}" if iter_num < 1 else f"Iteration {iter_num}:"
+                        iter_string = f"Examples {iter_num + n_warmup}:" if iter_num < 1 else f"Iteration {iter_num}:"
                         feedback_text += (
                             f"{iter_string} weights={json.dumps(rounded_weights)}"
                             f"{bounds_info}, "
@@ -662,6 +668,7 @@ You are a good global optimizer, helping me find the global minimum of a mathema
 # Regarding the policy and weights:
     policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs). 
     There are {N_BFS} basis functions per dimension, resulting in a total of {2 * N_BFS} weights.
+    The first {N_BFS} weights correspond to the X dimension, and the next {N_BFS} weights correspond to the Y dimension.
     Weight values should be floats, and can be both positive and negative.
     The policy defines the trajectory in the XY workspace.
     The generated trajectory must strictly stay within the defined XY workspace limits.
@@ -679,8 +686,9 @@ You are a good global optimizer, helping me find the global minimum of a mathema
 # Remember :
     1. **XY workspace limits: x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.**
     2. **The global optimum should be around {optimum}.** If you are higher than that, this is a local optimum. You should  explore instead of exploiting.
-    3. Balance between exploration and exploitation. 
-    4. Search both the positive and the negative values.
+    3. Do not repeat the same exact weights from previous iterations.
+    4. Balance between exploration and exploitation. 
+    5. Search both the positive and the negative values.
     
 
 Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
@@ -809,6 +817,25 @@ def call_gemini(prompt: str) -> str:
 
     raise RuntimeError(f"All Gemini API keys failed after rotation. Last error: {last_error}")
 
+def call_ollama(prompt: str, model:str = OLLAMA_MODEL, **kwargs) -> str:
+    """
+    Call Ollama LLM with the given prompt and return the text response.
+    """
+    try:
+        # pdb.set_trace()
+        # breakpoint()
+        response = ollama.chat(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            **kwargs
+            )
+        # Ollama returns a dict with a 'message' key containing another dict with 'content'
+        # breakpoint()
+        return response["message"]["content"].strip()
+    except Exception as e:
+        raise RuntimeError(f"Ollama API call failed: {e}")
+
+
 def parse_ollama_weights(out_text):
     """
     Parse the Ollama LLM response to extract a 2xN_BFS weight matrix.
@@ -924,7 +951,7 @@ def main():
     # Main optimization loop
     for it in range(1 - n_warmup, MAX_ITERS + 1):
         # Iterations
-        controller.hard_reset_from_home()
+        controller.hard_reset_from_home(redraw=False)
 
         # Read current weights
         w2 = read_weights_csv(WEIGHTS_CSV)
@@ -1037,18 +1064,18 @@ def main():
                 ik_error_summary=None,
                 iter_log_data=iter_log_data,
                 traj_feedback_data=traj_feedback_data,
-                feedback_window=40000
+                feedback_window=feedback_window
             )
             
             # save_dialog(it, prompt, '')
             # return
             try:
-                response = call_gemini(prompt)
-                # response = call_ollama(prompt)
+                # response = call_gemini(prompt)
+                response = call_ollama(prompt)
 
             except Exception as e:
 
-                print(f"iter {it}: Gemini error: {e}. Reusing previous weights.")
+                print(f"iter {it}: API error: {e}. Reusing previous weights.")
                 time.sleep(1.0)
                 continue
 

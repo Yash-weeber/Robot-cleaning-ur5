@@ -1,1 +1,0 @@
-{"reason": "Exploring a slightly wider trajectory by moderately increasing magnitudes of weights compared to previous best results, particularly for the y-dimension, while aiming to stay within the strict workspace limits.", "weights": [-125.0, -40.0, 80.0, 145.0, 160.0, 110.0, 35.0, -75.0, -140.0, -155.0, -100.0, -50.0, 70.0, 90.0, -30.0, -100.0, -40.0, 75.0, 80.0, -25.0]}

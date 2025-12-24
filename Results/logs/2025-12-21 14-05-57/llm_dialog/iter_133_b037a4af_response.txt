@@ -1,1 +1,0 @@
-{"reason": "Exploring a new combination of large-magnitude weights with a similar x-trajectory pattern to good previous scores and a distinct, yet bounded, y-trajectory pattern.", "weights": [-120.0, -70.0, 50.0, 140.0, 160.0, 120.0, 30.0, -70.0, -140.0, -160.0, 110.0, 80.0, 50.0, 20.0, -10.0, -40.0, -70.0, -100.0, -70.0, -40.0]}

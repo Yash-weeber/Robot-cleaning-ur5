@@ -1,1 +1,0 @@
-{"reason": "These weights employ a symmetric, wave-like pattern with moderate magnitudes to encourage broad exploration of the workspace while attempting to keep the trajectory strictly within the x and y bounds.", "weights": [80.0, 40.0, 0.0, -40.0, -80.0, -80.0, -40.0, 0.0, 40.0, 80.0, 90.0, 45.0, 0.0, -45.0, -90.0, -90.0, -45.0, 0.0, 45.0, 90.0]}

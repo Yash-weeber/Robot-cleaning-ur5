@@ -1,1 +1,0 @@
-{"reason": "Perturbing the best performing weights by a small factor to further exploit the promising region and expand trajectory range while adhering to workspace limits.", "weights": [-117.3, -69.36, 48.96, 137.7, 158.1, 137.7, 48.96, -69.36, -117.3, -158.1, -105.0, -52.5, 78.75, 89.25, -26.25, -105.0, -52.5, 78.75, 89.25, -26.25]}

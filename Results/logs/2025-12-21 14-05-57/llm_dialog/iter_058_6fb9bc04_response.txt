@@ -1,1 +1,0 @@
-{"reason": "Exploring a broad range of the workspace with weights designed to create a sweeping trajectory while maintaining magnitudes proportional to the strict XY workspace limits for potential bounds adherence.", "weights": [100.0, 80.0, 50.0, 20.0, 0.0, -0.0, -20.0, -50.0, -80.0, -100.0, 60.0, 40.0, 20.0, 0.0, -20.0, -0.0, 20.0, 40.0, 60.0, 80.0]}

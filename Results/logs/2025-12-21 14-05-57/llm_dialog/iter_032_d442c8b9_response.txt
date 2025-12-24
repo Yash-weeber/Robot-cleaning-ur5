@@ -1,1 +1,0 @@
-{"reason": "Exploring a new pattern of high-magnitude weights to achieve broad coverage of the workspace within strict X and Y limits, balancing positive and negative values for diverse trajectory shaping.", "weights": [-110.0, -70.0, -30.0, 10.0, 50.0, 90.0, 50.0, 10.0, -30.0, -70.0, 80.0, 40.0, 0.0, -40.0, -80.0, -40.0, 0.0, 40.0, 80.0, 40.0]}
