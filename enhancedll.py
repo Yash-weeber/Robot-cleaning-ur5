@@ -18,7 +18,7 @@ from pathlib import Path
 
 OLLAMA_MODEL = "gpt-oss:120b"
 SCRIPT_DIR = Path(__file__).resolve().parent
-BASE_DIR = SCRIPT_DIR / "Robot-cleaning-ur5"
+BASE_DIR = SCRIPT_DIR
 LOGS_DIR = BASE_DIR / "logs"
 
 # # ====== EDIT THESE PATHS ======
