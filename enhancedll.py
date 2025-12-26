@@ -14,36 +14,62 @@ import threading
 from google import genai
 import pandas as pd
 import ollama
-
+from pathlib import Path
 
 OLLAMA_MODEL = "gpt-oss:120b"
+SCRIPT_DIR = Path(__file__).resolve().parent
+BASE_DIR = SCRIPT_DIR / "Robot-cleaning-ur5"
+LOGS_DIR = BASE_DIR / "logs"
 
 # # ====== EDIT THESE PATHS ======
-CSV_MOVE_PATH = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/move1.csv"
-WEIGHTS_TXT = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight.txt"
-WEIGHTS_TXT2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/weight2.txt"
-BASE_DIR = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/"
-TRAJ_TXT1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject1.txt"
-TRAJ_TXT2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/traject2.txt"
-TOTAL1 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total1.txt"
-TOTAL2 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/total2.txt"
-GRID1 ="Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist1.txt"
-GRID2 = "Y:/models/ur5hanibenpng/final/Robot-cleaning-ur51/Robot-cleaning-ur5/logs/gridlist2.txt"
-EXAMPLES = "./logs/examples.txt"
+CSV_MOVE_PATH = LOGS_DIR / "move1.csv"
+WEIGHTS_TXT   = LOGS_DIR / "weight.txt"
+WEIGHTS_TXT2  = LOGS_DIR / "weight2.txt"
+
+TRAJ_TXT1 = LOGS_DIR / "traject1.txt"
+TRAJ_TXT2 = LOGS_DIR / "traject2.txt"
+
+TOTAL1 = LOGS_DIR / "total1.txt"
+TOTAL2 = LOGS_DIR / "total2.txt"
+
+GRID1 = LOGS_DIR / "gridlist1.txt"
+GRID2 = LOGS_DIR / "gridlist2.txt"
+
+EXAMPLES = LOGS_DIR / "examples.txt"
+
 # # ==============================
 # ====== EDIT THESE PATHS ======
 # CSV_MOVE_PATH   = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/move.csv"
 # WEIGHTS_TXT     = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/logs/weight.txt"
 # BASE_DIR        = "/home/flash/Assign 1/yash/meshes (3)/Robot-cleaning-ur5/"
 # ==============================
+def setup_experiment_dir(base_path):
+    """Checks for existing experiment folders and creates the next one in sequence."""
+    exp_idx = 1
+    while True:
+        exp_dir = base_path / f"experiment_{exp_idx}"
+        if not exp_dir.exists():
+            break
+        exp_idx += 1
 
+    log_dir = exp_dir / "logs"
+    dialog_dir = log_dir / "llm_dialog"
+
+    # Create the folder structure for this specific run
+    dialog_dir.mkdir(parents=True, exist_ok=True)
+    print(f"New experiment initialized: {exp_dir.name}")
+    return exp_dir, log_dir, dialog_dir
+
+
+# Initialize Experiment
+EXP_DIR, LOGDIR, DIALOG_DIR = setup_experiment_dir(BASE_DIR)
 HISTORY_WINDOW = 25
 TRAJECTORY_HISTORY_WINDOW = 20  # NEW: Track last 20 iterations of X,Y trajectories
 
-LOGDIR = os.path.join(BASE_DIR, "logs")
+# LOGDIR = os.path.join(BASE_DIR, "logs")
 WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
 ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
-DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
+# DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
 WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
 TRAJECTORY_CSV = os.path.join(LOGDIR, "trajectory_feedback.csv")  # NEW: Store X,Y trajectories per iteration
 IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
@@ -538,11 +564,11 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                 if is_failed_iter:
 
                     feedback_text += (
-                        f"  {_ordinal(i)} iteration: f(weights)={current_f_weights} (FAILURE: Out of Bounds ❌)\n"
+                        f"  {_ordinal(i)}  f(weights)={current_f_weights} (FAILURE: Out of Bounds ❌)\n"
                     )
                 else:
                     feedback_text += (
-                        f"  {_ordinal(i)} iteration: f(weights)={current_f_weights}, "
+                        f"  {_ordinal(i)}  f(weights)={current_f_weights}, "
 
                     )
                 # feedback_text += (
@@ -646,42 +672,79 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
         feedback_text += best_iter_summary + best_weight_feedback
 
     return f"""
-    You are a good global optimizer, helping me find the global minimum of a mathematical function
-    f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your
-    goal is to propose input values that efficiently lead us to the global minimum within a limited number
-    of iterations (400).
+You are a good global optimizer, helping me find the global minimum of a mathematical function f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your goal is to propose input values that efficiently lead us to the global minimum within a limited number of iterations (400).
 
-    # Here's how we will interact :
-        1) I will provide you max steps ({MAX_ITERS}) along with a couple of training examples which includes weights for the policy, and its corresponding function value f(weights) for each example. 
-        2) You will provide the response in exact following format: 
-            Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
-            {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
-        3) I will then provide the function evaluation f(weights) at that point and the current iteration.
-        4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
-        
-
-    # Remember :
-        1) XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.
-        2) Balance between exploration and exploitation. 
-        3) Search both the positive and the negative values.
-        4) The global optimum corresponds to the minimum function value, which is close to f(weights). If your current f(weights) is significantly higher than that, you should prioritize exploration over exploitation.
-        5)You must avoid proposing weights that result in trajectories going outside the defined XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}], as trajectories with waypoints out of bounds are invalid and fail to execute correctly. Analyze the `Historical Feedback Summary` to understand which past weights caused poor bounds compliance and avoid similar solutions.
-
-    Next :
-         You will see examples of the dmp weights and their corresponding function value f(weights):
-      
-        {raw_examples_text}
-        
-        
-    {feedback_text}
-
-
-
+# Regarding the policy and weights:
+    policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs). 
+    There are 10 basis functions per dimension, resulting in a total of 20 weights.
+    Weight values should be floats, and can be both positive and negative.
+    The policy defines the trajectory in the XY workspace.
+    The generated trajectory must strictly stay within the defined XY workspace limits.
+    The function f(weights) evaluates the cost of the policy.
+    
+# Here's how we will interact :
+    1. I will provide you max steps (400) along with training examples which includes weights for the policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example. 
+    2. You will provide the response in exact following format: 
+        Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
+        {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly 20 floats]}}
+    3. I will then provide the function's f(weights) at that point and the current iteration.
+    4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
     
 
+# Remember :
+    1. **XY workspace limits: x ∈ [-1.000, 1.000], y ∈ [-0.600, 0.600]. Any path implied by your weights must keep the 2D path strictly within these bounds.**
+    2. **The global optimum should be around 0.0.** If you are higher than that, this is a local optimum. You should  explore instead of exploiting.
+    3. Balance between exploration and exploitation. 
+    4. Search both the positive and the negative values.
+    
 
-    Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
-    """
+Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
+          weights=[-112.4764, -33.3578, 59.715, 128.8156, 148.4835, 111.7044, 32.464, -59.1166, -128.2258, -148.5936, -80.4361, -35.5368, 59.2568, 70.8283, -15.6521, -80.6053, -34.6461, 58.9859, 71.4537, -14.3983], x_range=[-0.9037, 0.9034], y_range=[-0.4198, 0.4039],  f(weights) : 87
+          weights=[-92.3023, -39.8202, 62.2699, 134.411, 174.2582, 144.2103, 23.0802, -84.1046, -133.4343, -151.5446, -90.0398, -69.7053, 81.2945, 69.8265, 35.1867, -56.4124, 4.1354, 53.0416, 97.872, -14.0036], x_range=[-0.9157, 1.0537], y_range=[-0.5065, 0.5088],  f(weights) : 81
+          weights=[-64.2055, -35.3978, 59.3634, 136.875, 186.3787, 192.6657, -15.2519, -132.5551, -120.5084, -147.5145, -93.1741, -54.2644, 54.1423, 83.8608, 56.2532, -51.0143, -15.2817, 73.9993, 122.2556, -15.0372], x_range=[-0.8684, 1.1858], y_range=[-0.4992, 0.6477],  f(weights) : 109
+          weights=[-76.3565, -37.9205, 45.6712, 155.4493, 149.4907, 183.3257, 30.5979, -122.7789, -106.303, -126.4039, -92.0926, -49.1053, 65.9079, 101.5657, 35.913, -53.6882, -24.0454, 83.8681, 118.2754, -40.5368], x_range=[-0.7575, 1.0633], y_range=[-0.5055, 0.6384],  f(weights) : 95
+          weights=[-81.7707, -35.8236, 50.6818, 136.9453, 160.8335, 162.5221, 27.5244, -106.9819, -130.8273, -145.364, -103.4857, -68.6483, 50.4953, 100.8915, 15.2559, -30.8396, -36.241, 113.2565, 148.129, -26.3943], x_range=[-0.8823, 1.0204], y_range=[-0.5706, 0.822],  f(weights) : 105
+            {feedback_text}
+Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
+"""
+
+    # return f"""
+    # You are a good global optimizer, helping me find the global minimum of a mathematical function
+    # f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your
+    # goal is to propose input values that efficiently lead us to the global minimum within a limited number
+    # of iterations (400).
+    #
+    # # Here's how we will interact :
+    #     1) I will provide you max steps ({MAX_ITERS}) along with a couple of training examples which includes weights for the policy, and its corresponding function value f(weights) for each example.
+    #     2) You will provide the response in exact following format:
+    #         Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
+    #         {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
+    #     3) I will then provide the function evaluation f(weights) at that point and the current iteration.
+    #     4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+    #
+    #
+    # # Remember :
+    #     1) XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.
+    #     2) Balance between exploration and exploitation.
+    #     3) Search both the positive and the negative values.
+    #     4) The global optimum corresponds to the minimum function value, which is close to f(weights). If your current f(weights) is significantly higher than that, you should prioritize exploration over exploitation.
+    #     5)You must avoid proposing weights that result in trajectories going outside the defined XY WORKSPACE LIMITS (meters): x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}], as trajectories with waypoints out of bounds are invalid and fail to execute correctly. Analyze the `Historical Feedback Summary` to understand which past weights caused poor bounds compliance and avoid similar solutions.
+    #
+    # Next :
+    #      You will see examples of the dmp weights and their corresponding function value f(weights):
+    #
+    #     {raw_examples_text}
+    #
+    #
+    # {feedback_text}
+    #
+    #
+    #
+    #
+    #
+    #
+    # Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
+    # """
 
 
 
