@@ -1,1 +1,1 @@
-grid_distribution=[28, 17, 31, 25, 22, 21]
+grid_distribution=[38, 42, 10, 4, 20, 35]
