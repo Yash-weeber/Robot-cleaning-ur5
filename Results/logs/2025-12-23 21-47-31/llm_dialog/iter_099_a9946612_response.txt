@@ -1,1 +1,0 @@
-{"reason":"exploring reduced magnitude around best known weights while keeping trajectory within bounds","weights":[-85.0,-30.0,55.0,120.0,140.0,115.0,20.0,-70.0,-110.0,-130.0,-70.0,-30.0,55.0,70.0,-10.0,-60.0,-25.0,60.0,100.0,-12.0]}

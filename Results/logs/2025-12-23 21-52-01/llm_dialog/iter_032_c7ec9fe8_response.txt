@@ -1,1 +1,0 @@
-{"reason":"exploring slight Y-weight adjustments around best known 78-cost configuration", "weights": [-108.0, -28.0, 58.0, 128.0, 148.0, 108.0, 28.0, -58.0, -128.0, -148.0, -70.0, -30.0, 58.0, 68.0, -13.0, -70.0, -28.0, 58.0, 68.0, -13.0]}

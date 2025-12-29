@@ -1,1 +1,0 @@
-{"reason":"exploring scaled-down version of low-cost pattern to seek lower cost while staying within bounds", "weights":[98.0,-21.0,49.0,98.0,112.0,84.0,28.0,-56.0,-98.0,-112.0,-63.0,-24.5,49.0,56.0,-3.5,-63.0,-24.5,49.0,56.0,-3.5]}

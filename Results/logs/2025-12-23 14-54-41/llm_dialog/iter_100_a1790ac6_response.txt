@@ -1,1 +1,0 @@
-{"reason":"small perturbation around best known weights to explore lower cost while staying within bounds","weights":[-145.0,31.0,-80.0,-135.0,-160.0,-108.0,-45.0,78.0,145.0,155.0,90.0,31.0,-80.0,-85.0,0.5,90.0,31.0,-80.0,-90.0,0.5]}

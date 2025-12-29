@@ -1,1 +1,0 @@
-{"reason":"exploring moderate symmetric weights to stay within workspace while probing lower cost region", "weights":[-80.0,20.0,-45.0,-75.0,-90.0,-60.0,-25.0,43.0,80.0,85.0,50.0,18.0,-45.0,-48.0,0.0,50.0,18.0,-45.0,-50.0,0.0]}

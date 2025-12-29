@@ -1,1 +1,0 @@
-{"reason":"exploring region near known low-cost solutions (f≈80) while respecting workspace bounds","weights":[-102.38935,-36.589,-0.0? Wait need correct list: Actually list above. Provide as floats with maybe 5 decimal."]}

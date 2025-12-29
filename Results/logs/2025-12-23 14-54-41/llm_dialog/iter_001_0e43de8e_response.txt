@@ -1,1 +1,0 @@
-{"reason":"exploring near-zero weights to target the global optimum around 0 while staying within bounds", "weights":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}

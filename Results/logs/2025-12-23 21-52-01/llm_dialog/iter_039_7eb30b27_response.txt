@@ -1,1 +1,0 @@
-{"reason": "scaled down best-known weights to explore lower magnitude region while staying within bounds", "weights": [-97.2, -25.2, 52.2, 115.2, 133.2, 97.2, 25.2, -52.2, -115.2, -133.2, -70.2, -29.7, 52.2, 61.2, -11.7, -70.2, -25.2, 52.2, 61.2, -11.7]}

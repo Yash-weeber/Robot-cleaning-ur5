@@ -14,7 +14,7 @@ import mujoco
 import threading
 from google import genai
 import pandas as pd
-from utils.draw_shapes import infinity_trajectory, square_trajectory, triangle_trajectory
+from utils.draw_shapes import infinity_trajectory, square_trajectory, triangle_trajectory, circle_trajectory, elipsoid_trajectory, rectangle_trajectory
 import dotenv
 import ollama
 
@@ -50,17 +50,20 @@ GRID2 = f"./Results/logs/{d}/gridlist2.txt"
 # ==============================
 
 HISTORY_WINDOW = 25
-TRAJECTORY_HISTORY_WINDOW = 20  # NEW: Track last 20 iterations of X,Y trajectories
-n_warmup = 5 # number of initial ICL examples
+TRAJECTORY_HISTORY_WINDOW = 40  # NEW: Track last 20 iterations of X,Y trajectories
+n_warmup = 20 # number of initial ICL examples
 seed_number = 42
-feedback_window = 50  # number of recent iterations to summarize for feedback
+feedback_window = 30  # number of recent iterations to summarize for feedback
+step_size = 50
+random_scale = 10.0
 
-LOGDIR = os.path.join(BASE_DIR, "logs", d)
+LOGDIR = os.path.join(BASE_DIR, "logs", "best_prompt-2_20_warmup_w-stepsize-20-hist", d)
 WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
 ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
 DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
 WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
-TRAJECTORY_CSV = os.path.join(LOGDIR, "trajectory_feedback.csv")  # NEW: Store X,Y trajectories per iteration
+DMP_TRAJECTORY_CSV = os.path.join(LOGDIR, "dmp_trajectory_feedback.csv")  # NEW: Store X,Y trajectories per iteration
+EE_TRAJECTORY_CSV = os.path.join(LOGDIR, "ee_trajectory.csv")
 IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
 IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
 
@@ -91,7 +94,6 @@ from pydmps.dmp_rhythmic import DMPs_rhythmic
 #     "ymin": controller.y_min, "ymax": controller.y_max,
 # }
 
-step_size = 20
 # DELTA_ABS = 5.0
 # DELTA_REL = 0.08
 
@@ -668,7 +670,6 @@ You are a good global optimizer, helping me find the global minimum of a mathema
 # Regarding the policy and weights:
     policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs). 
     There are {N_BFS} basis functions per dimension, resulting in a total of {2 * N_BFS} weights.
-    The first {N_BFS} weights correspond to the X dimension, and the next {N_BFS} weights correspond to the Y dimension.
     Weight values should be floats, and can be both positive and negative.
     The policy defines the trajectory in the XY workspace.
     The generated trajectory must strictly stay within the defined XY workspace limits.
@@ -677,25 +678,23 @@ You are a good global optimizer, helping me find the global minimum of a mathema
 # Here's how we will interact :
     1. I will provide you max steps ({MAX_ITERS}) along with training examples which includes weights for the policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example. 
     2. You will provide the response in exact following format: 
-        Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
-        {{"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {2 * N_BFS} floats]}}
+        * Line 1: a new set of {2 * N_BFS} float weights as an array, aiming to minimizw the functions value f(weights).
+        * Line 2: details explination of why you chose the weights.
     3. I will then provide the function's f(weights) at that point and the current iteration.
     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
     
 
 # Remember :
-    1. **XY workspace limits: x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any path implied by your weights must keep the 2D path strictly within these bounds.**
+    1. **XY workspace limits: x ∈ [{xmin:.3f}, {xmax:.3f}], y ∈ [{ymin:.3f}, {ymax:.3f}]. Any proposed weights must keep the trajectory strictly within these bounds.**
     2. **The global optimum should be around {optimum}.** If you are higher than that, this is a local optimum. You should  explore instead of exploiting.
-    3. Do not repeat the same exact weights from previous iterations.
-    4. Balance between exploration and exploitation. 
-    5. Search both the positive and the negative values.
+    3. Search both the positive and the negative values. **During exploration, use search step size of {step_size}**
     
 
 Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
 {feedback_text}
 
 
-Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format. Do not provide any additional texts.
+Now you are at iteration {iter_idx} out of {MAX_ITERS}.  Please provide the results in the indicated format.
 """
 
 
@@ -921,11 +920,11 @@ def main():
     # if not os.path.exists(WEIGHTS_CSV):
     #     if not os.path.exists(WEIGHTS_TXT):
     # raise FileNotFoundError(f"Missing {WEIGHTS_CSV} and {WEIGHTS_TXT}")
-    x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
-    trajectory = np.vstack((x_traj, y_traj)).T
-    dmp.imitate_path(trajectory.T, plot=False)
-    # print(dmp.w)
-    write_weights_csv(WEIGHTS_CSV, dmp.w.copy())
+    # x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
+    # trajectory = np.vstack((x_traj, y_traj)).T
+    # dmp.imitate_path(trajectory.T, plot=False)
+    # # print(dmp.w)
+    # write_weights_csv(WEIGHTS_CSV, dmp.w.copy())
         
         # else:
         #     flat0 = parse_weights_text(WEIGHTS_TXT)
@@ -947,11 +946,30 @@ def main():
     # dmp.imitate_path(y_des=trajectory.T)
     
     
-
+    n_counter = 0
     # Main optimization loop
     for it in range(1 - n_warmup, MAX_ITERS + 1):
         # Iterations
         controller.hard_reset_from_home(redraw=False)
+        if it < 0:
+            if (it - 1) % 5 != 0:
+                pass
+            else:
+                # Warmup: use predefined trajectories
+                if n_counter == 0:
+                    x_traj, y_traj = circle_trajectory(center=(0.0, -0.1), radius=0.4, num_points=200, plot=False)
+                elif n_counter == 1:
+                    x_traj, y_traj = rectangle_trajectory(center=(0.0, -0.1), width=1.0, height=0.4, num_points=200, plot=False)
+                elif n_counter == 2:
+                    x_traj, y_traj = elipsoid_trajectory(center=(0, 0), axes_lengths=(1.0, 0.3), angle=np.pi/6, num_points=200, plot=False)
+                elif n_counter == 3:
+                    x_traj, y_traj = triangle_trajectory(center=(0, -0.2), side_length=1.25, num_points=200, plot=False)
+                trajectory = np.vstack((x_traj, y_traj))
+                trajectory = np.hstack((np.zeros((2,1)), trajectory)).T
+                dmp.imitate_path(trajectory.T, plot=False)
+                # print(dmp.w)
+                write_weights_csv(WEIGHTS_CSV, dmp.w.copy())
+                n_counter += 1
 
         # Read current weights
         w2 = read_weights_csv(WEIGHTS_CSV)
@@ -986,14 +1004,14 @@ def main():
         start_joints = get_joint_positions(model, data, joint_names)
 
         joint_traj = []
-        task_trajectory = []  # NEW: Store task-space trajectory for feedback
+        dmp_task_trajectory = []  # NEW: Store task-space trajectory for feedback
         steps = int(dmp.timesteps)
         keep_every = max(1, int(DECI_BUILD))
 
         for i in range(steps):
             y, _, _ = dmp.step(tau=2.0)
             target_3d = np.array([y[0], y[1], MOP_Z_HEIGHT], dtype=float)
-            task_trajectory.append(target_3d)  # NEW: Save for trajectory analysis
+            dmp_task_trajectory.append(target_3d)  # NEW: Save for trajectory analysis
 
             ok, err_val = enhanced_ik_solver(
                 model, data, site_id, target_3d, joint_names,
@@ -1015,7 +1033,8 @@ def main():
             controller.execute_joint_trajectory(joint_traj, dt=controller.dt*2)
 
         # NEW: Save trajectory data for this iteration
-        save_trajectory_data(it, task_trajectory, TRAJECTORY_CSV)
+        save_trajectory_data(it, dmp_task_trajectory, DMP_TRAJECTORY_CSV)
+        save_trajectory_data(it, controller.ee_trajectory, EE_TRAJECTORY_CSV)
 
         # Compute cost via your grid counter
         grid = controller.count_balls_in_grid()
@@ -1030,8 +1049,8 @@ def main():
             break
 
         # NEW: Load and analyze trajectory history
-        trajectory_history = load_trajectory_history(TRAJECTORY_CSV, TRAJECTORY_HISTORY_WINDOW)
-        trajectory_analysis = analyze_trajectory_performance(trajectory_history, bounds)
+        dmp_trajectory_history = load_trajectory_history(DMP_TRAJECTORY_CSV, TRAJECTORY_HISTORY_WINDOW)
+        trajectory_analysis = analyze_trajectory_performance(dmp_trajectory_history, bounds)
         # NEW: IK failure feedback (history + summary)
         # ik_error_history = load_ik_error_history(IK_ERROR_CSV, IK_ERROR_HISTORY_WINDOW)
         # ik_error_summary = summarize_ik_errors(ik_error_history)
@@ -1039,7 +1058,7 @@ def main():
 
         
         iter_log_data = load_iteration_log(ITER_LOG_CSV)
-        traj_feedback_data = load_traj_feedback(TRAJECTORY_CSV)
+        traj_feedback_data = load_traj_feedback(DMP_TRAJECTORY_CSV)
         # pdb.set_trace()
 
         # Ask LLM for NEW weights given cost, grid, prev weights, AND trajectory feedback
@@ -1055,12 +1074,12 @@ def main():
 
         if it < 0:
             np.random.seed(seed_number+it)
-            w_next = w2 + np.random.randn(2, N_BFS) * step_size
+            w_next = w2 + np.random.randn(2, N_BFS) * random_scale
             write_weights_csv(WEIGHTS_CSV, w_next)
         elif it >= 0:
             prompt = enhanced_ollama_prompt(
                 w_flat, grid, total_balls, it+1, hist_slice,
-                trajectory_history, trajectory_analysis, bounds,
+                dmp_trajectory_history, trajectory_analysis, bounds,
                 ik_error_summary=None,
                 iter_log_data=iter_log_data,
                 traj_feedback_data=traj_feedback_data,

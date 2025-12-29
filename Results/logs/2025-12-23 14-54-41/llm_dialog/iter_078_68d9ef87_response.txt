@@ -1,1 +1,0 @@
-{"weights":[-150,32,-88,-148,-170,-118,-49,80,150,158,98,33,-88,-90,1,94,33,-88,-94,1],"reason":"exploring around best low-cost region while staying within workspace limits"}

@@ -1,1 +1,0 @@
-{"reason":"small perturbation around low-cost region, staying within workspace bounds", "weights": [-150.0, 35.0, -85.0, -142.0, -170.0, -115.0, -48.0, 88.0, 152.0, 160.0, 95.0, 35.0, -86.0, -91.0, 0.1, 97.0, 35.0, -86.0, -97.0, 0.1]}

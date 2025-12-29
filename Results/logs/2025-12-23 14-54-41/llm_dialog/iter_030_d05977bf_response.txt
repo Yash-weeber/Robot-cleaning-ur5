@@ -1,1 +1,0 @@
-{"reason":"exploring near best found (iteration 29) with reduced magnitude to seek lower cost while staying within workspace bounds","weights":[128.7,-28.8,66.6,121.5,149.4,105.3,37.8,-71.1,-129.6,-139.5,-82.8,-28.8,62.1,73.8,-4.5,-81.9,-29.7,60.3,72.9,-4.5]}

@@ -1,1 +1,0 @@
-{"reason":"exploring varied signs and moderate magnitudes while staying within workspace bounds","weights":[-90.0,-40.0,70.0,140.0,160.0,130.0,20.0,-70.0,-140.0,-160.0,-70.0,-45.0,50.0,80.0,0.0,-60.0,-20.0,50.0,90.0,-5.0]}

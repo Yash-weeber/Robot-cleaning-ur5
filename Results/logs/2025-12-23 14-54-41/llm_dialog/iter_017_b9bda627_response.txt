@@ -1,1 +1,0 @@
-{"reason":"exploring larger amplitude weights to increase workspace coverage while staying within bounds","weights":[140.0,-30.0,70.0,140.0,160.0,120.0,40.0,-80.0,-140.0,-160.0,-90.0,-35.0,70.0,80.0,-5.0,-90.0,-35.0,70.0,80.0,-5.0]}

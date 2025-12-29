@@ -2,3 +2,4 @@
 *.pyc
 /pydmps/__pycache__
 keys.env
+/Results/*

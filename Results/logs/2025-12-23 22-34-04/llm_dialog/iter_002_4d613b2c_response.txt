@@ -1,1 +1,0 @@
-{"reason":"exploring larger magnitude weights similar to successful examples while staying within workspace bounds","weights":[-95.1234, -40.5678, 61.2345, 130.8765, 170.3456, 140.9876, 25.4321, -85.6789, -130.1234, -150.5678, -88.3456, -55.4321, 78.9012, 68.3456, 30.1234, -60.9876, 5.6789, 55.4321, 95.1234, -12.3456]}

@@ -1,1 +1,0 @@
-{"reason":"scaled down best known weights to reduce magnitude while staying within workspace limits","weights":[-119.2,26.4,-67.2,-112.0,-134.4,-89.6,-37.6,64.0,119.2,126.4,74.4,26.4,-67.2,-71.2,0.4,76.0,26.4,-67.2,-76.0,0.4]}

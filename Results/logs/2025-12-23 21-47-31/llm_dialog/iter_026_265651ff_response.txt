@@ -1,1 +1,0 @@
-{"reason":"exploring nearby region of best known weights while staying within workspace bounds","weights":[-92.0,-34.0,58.0,135.0,155.0,122.0,24.0,-82.0,-130.0,-145.0,-81.0,-42.0,61.0,77.0,-13.0,-71.0,-31.0,66.0,112.0,-16.0]}

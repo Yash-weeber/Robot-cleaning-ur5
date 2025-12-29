@@ -1,1 +1,0 @@
-{"weights":[-86.4,-22.4,46.4,102.4,118.4,86.4,22.4,-46.4,-102.4,-118.4,86.4,22.4,-46.4,-102.4,-118.4,-86.4,-22.4,46.4,102.4,118.4],"reason":"Exploring scaled-down version of best-known pattern to seek lower cost while staying within workspace bounds."}

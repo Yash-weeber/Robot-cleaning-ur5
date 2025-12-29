@@ -1,1 +1,0 @@
-{"weights":[-147,33,-76,-143,-165,-121,-43,81,152,157,96,28,-77,-88,0,89,32,-82,-87,0],"reason":"exploring perturbation around best low-cost weights"}

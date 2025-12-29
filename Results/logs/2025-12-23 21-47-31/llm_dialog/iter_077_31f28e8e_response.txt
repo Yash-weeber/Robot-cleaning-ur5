@@ -1,1 +1,0 @@
-{"reasoning":"exploring average of two best known weight vectors to potentially lower cost","weights":[-93.5,-38,63,139,156,129,29.5,-82.5,-126,-145,-81.5,-42.5,64.5,78.5,-14,-72.5,-33,69.5,111.5,-18.5]}

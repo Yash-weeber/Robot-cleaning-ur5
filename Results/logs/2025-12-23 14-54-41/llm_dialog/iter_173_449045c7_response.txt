@@ -1,1 +1,0 @@
-{"reason":"exploring near best solution with reduced magnitude to stay within bounds and potentially lower cost","weights":[-119.2,26.4,-67.2,-112.0,-134.4,-89.6,-37.6,68.0,119.2,126.4,75.6,27.6,-67.6,-71.6,0.0,76.8,27.6,-67.6,-77.2,0.0]}

@@ -1,1 +1,0 @@
-{"reason":"small shift towards zero from best known to explore lower cost", "weights":[-80.0,-27.0,73.0,147.0,167.0,133.0,37.0,-73.0,-117.0,-133.0,-73.0,-33.0,72.0,88.0,-5.0,-63.0,-23.0,77.0,123.0,-9.0]}

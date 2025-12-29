@@ -1,1 +1,0 @@
-{"reason":"exploring slightly reduced magnitude around best known region while keeping sign pattern and bounds", "weights":[-140.0,30.0,-80.0,-130.0,-150.0,-110.0,-45.0,75.0,140.0,150.0,90.0,30.0,-80.0,-85.0,0.0,90.0,30.0,-80.0,-90.0,0.0]}

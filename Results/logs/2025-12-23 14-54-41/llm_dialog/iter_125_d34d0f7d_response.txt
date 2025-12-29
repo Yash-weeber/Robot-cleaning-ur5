@@ -1,1 +1,0 @@
-{"reasoning":"exploring around best known low-cost pattern","weights":[-147,32,-83,-142,-165,-113,-45,78,150,157,91,34,-85,-87,0.6,93,34,-85,-94,0.6]}

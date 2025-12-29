@@ -1,1 +1,0 @@
-{"reason": "exploring near best low-cost pattern while reducing y amplitude for potential improvement", "weights": [140.0, -30.0, 70.0, 140.0, 160.0, 120.0, 40.0, -80.0, -140.0, -160.0, -80.0, -30.0, 60.0, 70.0, -10.0, -80.0, -30.0, 60.0, 70.0, -10.0]}

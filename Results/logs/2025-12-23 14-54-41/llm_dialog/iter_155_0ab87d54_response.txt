@@ -1,1 +1,0 @@
-{"reason":"exploring around best low‑cost region with slight adjustment of terminal amplitude","weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,80.0,149.0,158.0,92.5,33.0,-84.0,-89.0,0.0,94.5,33.0,-84.0,-94.5,0.0]}

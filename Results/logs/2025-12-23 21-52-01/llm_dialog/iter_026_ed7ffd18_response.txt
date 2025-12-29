@@ -1,1 +1,0 @@
-{"reason":"exploring moderate magnitude balanced weights while staying within workspace bounds", "weights":[-85.0, -25.0, 45.0, 110.0, 130.0, 95.0, 20.0, -55.0, -115.0, -130.0, -70.0, -30.0, 45.0, 65.0, -10.0, -70.0, -20.0, 45.0, 65.0, -10.0]}

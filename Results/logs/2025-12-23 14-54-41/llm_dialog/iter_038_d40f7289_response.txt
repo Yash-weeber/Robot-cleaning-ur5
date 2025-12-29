@@ -1,1 +1,0 @@
-{"reason":"exploring slight variations around best known low-cost pattern while keeping trajectory within bounds","weights":[140.0,-38.0,72.0,138.0,162.0,118.0,44.0,-82.0,-146.0,-158.0,-90.0,-34.0,71.0,84.0,-6.0,-92.0,-34.0,69.0,83.0,-6.0]}

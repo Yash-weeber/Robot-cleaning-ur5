@@ -1,1 +1,0 @@
-{"reason":"exploring near best known low cost while staying within workspace bounds","weights":[-88.0,-30.0,55.0,130.0,150.0,115.0,20.0,-78.0,-120.0,-130.0,-75.0,-38.0,58.0,70.0,-10.0,-65.0,-25.0,60.0,105.0,-12.0]}

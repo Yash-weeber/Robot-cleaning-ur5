@@ -1,1 +1,0 @@
-{"reason": "scaled down from best low-cost pattern to stay within bounds while exploring improvement", "weights": [126.0, -27.0, 63.0, 126.0, 144.0, 108.0, 36.0, -72.0, -126.0, -144.0, -81.0, -31.5, 63.0, 72.0, -4.5, -81.0, -31.5, 63.0, 72.0, -4.5]}

@@ -1,1 +1,0 @@
-{"reason": "exploring small variations around best known weights to potentially lower cost", "weights": [-149.0, 33.0, -84.5, -140.5, -168.5, -112.5, -47.5, 85.5, 149.5, 158.5, 95.0, 35.0, -84.5, -89.5, 0.05, 96.5, 35.0, -84.5, -96.8, 0.05]}

@@ -1,1 +1,0 @@
-{"reason":"exploring near best known weights to possibly improve cost", "weights":[-151.0,34.0,-86.0,-142.0,-170.0,-114.0,-48.0,81.0,151.0,160.0,94.0,34.0,-86.0,-90.0,0.3,96.0,34.0,-86.0,-96.0,0.3]}

@@ -1334,7 +1334,7 @@ class EnhancedDMPController:
 
     def execute_joint_trajectory(self, joint_traj, dt=0.01):
         print(f"Executing joint trajectory with {len(joint_traj)} waypoints...")
-
+        self.ee_trajectory = []
         # Reset robot to initial joint configuration
         if len(joint_traj) > 0:
             set_joint_positions(self.model, self.data, self.joint_names, joint_traj[0])
@@ -1347,6 +1347,8 @@ class EnhancedDMPController:
             mujoco.mj_step(self.model, self.data)
             # self.viewer.draw()
             time.sleep(self.dt)
+            cl_pos = self.data.site_xpos[self.site_id].copy()
+            self.ee_trajectory.append(cl_pos)
         print("Discrete trajectory execution complete.")
 
 

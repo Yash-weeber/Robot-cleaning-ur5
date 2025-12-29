@@ -1,1 +1,0 @@
-{"reason":"exploring slightly larger magnitude symmetric pattern near best found while staying within workspace bounds","weights":[-155.0,38.0,-82.0,-145.0,-175.0,-122.0,-47.0,88.0,155.0,165.0,92.0,32.0,-82.0,-88.0,2.0,92.0,32.0,-82.0,-92.0,2.0]}

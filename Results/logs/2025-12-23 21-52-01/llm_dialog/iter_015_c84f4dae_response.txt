@@ -1,1 +1,0 @@
-{"reason":"exploring mixed sign weights while staying within workspace bounds","weights":[-100.0,20.0,-50.0,120.0,-130.0,90.0,-20.0,70.0,-110.0,130.0,60.0,-20.0,-55.0,80.0,10.0,-70.0,30.0,-60.0,90.0,-5.0]}

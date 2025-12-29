@@ -1,1 +1,0 @@
-{"reason": "exploring near-zero weights to reduce cost while staying within bounds", "weights": [0.12, -0.45, 0.78, -0.33, 0.56, -0.89, 0.21, -0.67, 0.34, -0.12, 0.45, -0.23, 0.67, -0.55, 0.09, -0.31, 0.22, -0.48, 0.15, -0.05]}

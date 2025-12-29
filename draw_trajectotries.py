@@ -66,6 +66,37 @@ def square_trajectory(center, side_length, num_points=100, plot=True, color='m',
         plt.grid(True)
     return np.array(x_traj), np.array(y_traj)
 
+def rectangle_trajectory(center, width, height, num_points=100, plot=True, color='y', linestyle='-.'):
+    """
+    Generate and optionally plot a rectangle trajectory.
+    Returns: x, y arrays of trajectory points (shape: [num_points])
+    """
+    half_w = width / 2
+    half_h = height / 2
+    corners = np.array([
+        [center[0] + half_w, center[1] + half_h],   # top right
+        [center[0] + half_w, center[1] - half_h],   # bottom right
+        [center[0] - half_w, center[1] - half_h],   # bottom left
+        [center[0] - half_w, center[1] + half_h],   # top left
+        [center[0] + half_w, center[1] + half_h]    # close loop to top right
+    ])
+    points_per_edge = max(1, num_points // 4)
+    x_traj, y_traj = [], []
+    for i in range(4):
+        start = corners[i]
+        end = corners[i+1]
+        xs = np.linspace(start[0], end[0], points_per_edge, endpoint=False)
+        ys = np.linspace(start[1], end[1], points_per_edge, endpoint=False)
+        x_traj.extend(xs)
+        y_traj.extend(ys)
+    x_traj.append(corners[0][0])
+    y_traj.append(corners[0][1])
+    if plot:
+        plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
+        plt.axis('equal')
+        plt.grid(True)
+    return np.array(x_traj), np.array(y_traj)
+
 def triangle_trajectory(center, side_length, num_points=100, plot=True, color='c', linestyle='--'):
     """
     Generate and optionally plot a triangle trajectory.
@@ -127,12 +158,14 @@ def plot_trajectory(traj, color='k', linestyle='-', label=None):
         plt.legend()
 
 # Example usage:
-circle_trajectory(center=(0, 0), radius=0.6, num_points=200, plot=True)
-elipsoid_trajectory(center=(0, 0), axes_lengths=(1.0, 0.6), angle=0, num_points=200, plot=True)
-square_trajectory(center=(0, 0), side_length=1.0, num_points=200, plot=True)
-triangle_trajectory(center=(0, 0), side_length=1.0, num_points=200, plot=True)
+circle_trajectory(center=(0, -0.1), radius=0.5, num_points=200, plot=False)
+elipsoid_trajectory(center=(0, 0), axes_lengths=(1.0, 0.3), angle=np.pi/6, num_points=200, plot=True)
+square_trajectory(center=(0, -0.1), side_length=1, num_points=200, plot=True)
+triangle_trajectory(center=(0, -0.2), side_length=1.25, num_points=200, plot=False)
 infinity_trajectory(center=(0, 0), size=(2, 2.5), num_points=500, plot=True)
+rectangle_trajectory(center=(0.0, -0.1), width=1.5, height=0.7, num_points=200, plot=True)
 plt.show()
+print(6//2)
 # %%
 x_traj, y_traj = circle_trajectory(center=(0, 0), radius=1.0, num_points=200, plot=False)
 dmp_traj = []

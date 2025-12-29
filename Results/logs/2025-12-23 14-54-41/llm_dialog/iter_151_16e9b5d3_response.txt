@@ -1,1 +1,0 @@
-{"reason":"exploring near best-known low-cost region while staying within bounds", "weights":[-148.0,34.0,-83.0,-139.0,-167.0,-111.0,-46.0,81.0,150.0,159.0,94.0,34.0,-83.0,-88.0,0.6,96.0,34.0,-83.0,-96.0,0.6]}

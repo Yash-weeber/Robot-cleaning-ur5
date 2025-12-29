@@ -1,1 +1,0 @@
-{"reason":"Testing scaled‑down version of the best weights (iteration 84) to reduce magnitude and stay within workspace bounds, aiming for lower cost near zero.","weights":[-74.5,16.5,-42.0,-70.0,-84.0,-56.0,-23.5,40.0,74.5,79.0,46.5,16.5,-42.0,-44.5,0.5,47.0,16.5,-42.0,-47.0,0.5]}

@@ -1,1 +1,0 @@
-{"reason":"exploring moderate‑magnitude weights around the best known 78‑cost solution while varying signs for better coverage", "weights":[-95.0,-25.0,58.0,128.0,148.0,108.0,28.0,-62.0,-128.0,-148.0,-78.0,-38.0,58.0,72.0,-13.0,-78.0,-28.0,58.0,72.0,-13.0]}

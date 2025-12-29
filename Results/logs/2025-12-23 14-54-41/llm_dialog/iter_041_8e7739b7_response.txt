@@ -1,1 +1,0 @@
-{"reason":"exploring larger y‑dimension magnitude while keeping x within limits", "weights":[-143.0,32.0,-74.0,-135.0,-166.0,-117.0,-42.0,79.0,144.0,155.0,101.2,35.2,-75.9,-90.2,5.5,100.1,36.3,-73.7,-89.1,5.5]}

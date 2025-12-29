@@ -1,1 +1,0 @@
-{"reason":"exploring slight perturbation around best known low cost while respecting workspace bounds","weights":[-149.0,33.0,-84.0,-140.0,-168.0,-112.0,-47.0,80.0,149.0,158.0,93.0,33.0,-84.0,-89.0,2.0,93.0,33.0,-84.0,-93.0,2.0]}

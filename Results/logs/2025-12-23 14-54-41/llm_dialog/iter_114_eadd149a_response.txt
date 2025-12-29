@@ -1,1 +1,0 @@
-{"reason":"exploring around best known weights with reduced magnitudes while staying within bounds", "weights":[-130.0,30.0,-70.0,-120.0,-140.0,-100.0,-40.0,70.0,130.0,140.0,80.0,30.0,-70.0,-80.0,0.3,80.0,30.0,-70.0,-80.0,0.3]}

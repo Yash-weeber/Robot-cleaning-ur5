@@ -1,1 +1,0 @@
-{"reason":"exploring reduced magnitude of promising pattern from iteration 17", "weights":[84.0,-18.0,42.0,84.0,96.0,72.0,24.0,-48.0,-84.0,-96.0,-54.0,-21.0,42.0,48.0,-3.0,-54.0,-21.0,42.0,48.0,-3.0]}

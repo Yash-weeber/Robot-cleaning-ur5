@@ -1,1 +1,0 @@
-{"reason":"exploring sign-flipped Y weights around best known 78-cost pattern while keeping X range safe", "weights":[-108.0,-28.0,58.0,128.0,148.0,108.0,28.0,-58.0,-128.0,-148.0,78.0,33.0,-58.0,-68.0,13.0,78.0,28.0,-58.0,-68.0,13.0]}

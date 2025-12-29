@@ -1,1 +1,0 @@
-{"reason":"exploring high‑magnitude diverse weights while staying within workspace limits","weights":[-120.0,-30.0,60.0,130.0,150.0,115.0,35.0,-65.0,-130.0,-150.0,-85.0,-40.0,60.0,75.0,-10.0,-85.0,-30.0,60.0,70.0,-15.0]}

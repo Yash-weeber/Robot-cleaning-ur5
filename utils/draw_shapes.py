@@ -64,6 +64,37 @@ def square_trajectory(center, side_length, num_points=100, plot=True, color='m',
         plt.grid(True)
     return np.array(x_traj), np.array(y_traj)
 
+def rectangle_trajectory(center, width, height, num_points=100, plot=True, color='y', linestyle='-.'):
+    """
+    Generate and optionally plot a rectangle trajectory.
+    Returns: x, y arrays of trajectory points (shape: [num_points])
+    """
+    half_w = width / 2
+    half_h = height / 2
+    corners = np.array([
+        [center[0] + half_w, center[1] + half_h],   # top right
+        [center[0] + half_w, center[1] - half_h],   # bottom right
+        [center[0] - half_w, center[1] - half_h],   # bottom left
+        [center[0] - half_w, center[1] + half_h],   # top left
+        [center[0] + half_w, center[1] + half_h]    # close loop to top right
+    ])
+    points_per_edge = max(1, num_points // 4)
+    x_traj, y_traj = [], []
+    for i in range(4):
+        start = corners[i]
+        end = corners[i+1]
+        xs = np.linspace(start[0], end[0], points_per_edge, endpoint=False)
+        ys = np.linspace(start[1], end[1], points_per_edge, endpoint=False)
+        x_traj.extend(xs)
+        y_traj.extend(ys)
+    x_traj.append(corners[0][0])
+    y_traj.append(corners[0][1])
+    if plot:
+        plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
+        plt.axis('equal')
+        plt.grid(True)
+    return np.array(x_traj), np.array(y_traj)
+
 def triangle_trajectory(center, side_length, num_points=100, plot=True, color='c', linestyle='--'):
     """
     Generate and optionally plot a triangle trajectory.

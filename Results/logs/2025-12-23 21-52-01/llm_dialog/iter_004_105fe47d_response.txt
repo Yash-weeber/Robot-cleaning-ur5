@@ -1,1 +1,0 @@
-{"reason":"exploring near-zero weights likely yields lower cost while staying within bounds","weights":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}
