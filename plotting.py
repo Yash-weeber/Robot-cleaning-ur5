@@ -41,7 +41,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None)
     for it in df_dmp['iter'].unique():
         dmp_traj_data = df_dmp[df_dmp['iter'] == it]
         ee_traj_data = df_ee[df_ee['iter'] == it] if df_ee is not None else None
-        tb_series = df_cost.loc[df_cost["iter"] == it, "total_balls"] if df_cost is not Noned else None
+        tb_series = df_cost.loc[df_cost["iter"] == it, "total_balls"] if df_cost is not None else None
         total_balls = tb_series.iloc[0] if tb_series is not None and not tb_series.empty else None
         plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP traj', color='red' if dmp_traj_data['x'].lt(-1.0).any() or dmp_traj_data['x'].gt(1.0).any() or dmp_traj_data['y'].lt(-0.6).any() or dmp_traj_data['y'].gt(0.6).any() else 'blue')
         if ee_traj_data is not None:
@@ -65,9 +65,9 @@ if __name__ == "__main__":
     # dmp_traj_file = "/scratch/melmisti/robot_cleaning/Results/logs/best_prompt_3/2025-12-25 12-23-58/trajectory_feedback.csv"
     # ee_traj_file = "/scratch/melmisti/robot_cleaning/Results/logs/best_prompt_20_warmup/2025-12-26 21-28-28/ee_trajectory.csv"
     # ee_traj_file = None
-    cost_file = "./Results/logs/best_prompt-2_20_warmup_w-stepsize-30-hist/2025-12-28 14-23-25/llm_iteration_log.csv"
-    dmp_traj_file = "./Results/logs/best_prompt-2_20_warmup_w-stepsize-30-hist/2025-12-28 14-23-25/dmp_trajectory_feedback.csv"
-    ee_traj_file = "./Results/logs/best_prompt-2_20_warmup_w-stepsize-30-hist/2025-12-28 14-23-25/ee_trajectory.csv"
+    cost_file = "./Results/logs/best_prompt-walled-stepsize-20-hist/2025-12-29 17-37-59/llm_iteration_log.csv"
+    dmp_traj_file = "./Results/logs/best_prompt-walled-stepsize-20-hist/2025-12-29 17-37-59/dmp_trajectory_feedback.csv"
+    ee_traj_file = "./Results/logs/best_prompt-walled-stepsize-20-hist/2025-12-29 17-37-59/ee_trajectory.csv"
     plot_cost_history(cost_file)
     plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
 # %%

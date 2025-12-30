@@ -15,6 +15,7 @@ import threading
 from google import genai
 import pandas as pd
 from utils.draw_shapes import infinity_trajectory, square_trajectory, triangle_trajectory, circle_trajectory, elipsoid_trajectory, rectangle_trajectory
+from utils.obstacle_avoidance import *
 import dotenv
 import ollama
 
@@ -57,7 +58,7 @@ feedback_window = 30  # number of recent iterations to summarize for feedback
 step_size = 50
 random_scale = 10.0
 
-LOGDIR = os.path.join(BASE_DIR, "logs", "best_prompt-2_20_warmup_w-stepsize-20-hist", d)
+LOGDIR = os.path.join(BASE_DIR, "logs", "best_prompt-walled-stepsize-20-hist", d)
 WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
 ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
 DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
@@ -1009,7 +1010,9 @@ def main():
         keep_every = max(1, int(DECI_BUILD))
 
         for i in range(steps):
-            y, _, _ = dmp.step(tau=2.0)
+            y, _, _ = dmp.step(tau=2.0, 
+                               external_force=avoid_obstacles(dmp.y, dmp.dy, dmp.goal, 
+                                                              rect_eta=0.5, obs_d0=0.25, obs_eta=25))
             target_3d = np.array([y[0], y[1], MOP_Z_HEIGHT], dtype=float)
             dmp_task_trajectory.append(target_3d)  # NEW: Save for trajectory analysis
 
