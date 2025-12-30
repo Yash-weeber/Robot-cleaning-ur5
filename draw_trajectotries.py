@@ -1,149 +1,10 @@
 #%%
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 from pydmps.dmp_discrete import DMPs_discrete
 from pydmps.dmp_rhythmic import DMPs_rhythmic
-def circle_trajectory(center, radius, num_points=100, plot=True, color='b', linestyle='-'):
-    """
-    Generate and optionally plot a circular trajectory.
-    Returns: x, y arrays of trajectory points (shape: [num_points])
-    """
-    theta = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
-    x = center[0] + radius * np.cos(theta)
-    y = center[1] + radius * np.sin(theta)
-    if plot:
-        plt.plot(x, y, color=color, linestyle=linestyle)
-        plt.axis('equal')
-        plt.grid(True)
-    return x, y
-
-def elipsoid_trajectory(center, axes_lengths, angle=0, num_points=100, plot=True, color='g', linestyle='-'):
-    """
-    Generate and optionally plot an ellipsoid trajectory.
-    Returns: x, y arrays of trajectory points (shape: [num_points])
-    """
-    t = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
-    x = axes_lengths[0] * np.cos(t)
-    y = axes_lengths[1] * np.sin(t)
-    R = np.array([[np.cos(angle), -np.sin(angle)],
-                  [np.sin(angle),  np.cos(angle)]])
-    ellipse = R @ np.vstack((x, y))
-    X = center[0] + ellipse[0, :]
-    Y = center[1] + ellipse[1, :]
-    if plot:
-        plt.plot(X, Y, color=color, linestyle=linestyle)
-        plt.axis('equal')
-        plt.grid(True)
-    return X, Y
-
-def square_trajectory(center, side_length, num_points=100, plot=True, color='m', linestyle=':'):
-    """
-    Generate and optionally plot a square trajectory.
-    Returns: x, y arrays of trajectory points (shape: [num_points])
-    """
-    half_side = side_length / 2
-    corners = np.array([
-        [center[0] - half_side, center[1] - half_side],
-        [center[0] + half_side, center[1] - half_side],
-        [center[0] + half_side, center[1] + half_side],
-        [center[0] - half_side, center[1] + half_side],
-        [center[0] - half_side, center[1] - half_side]
-    ])
-    points_per_edge = max(1, num_points // 4)
-    x_traj, y_traj = [], []
-    for i in range(4):
-        start = corners[i]
-        end = corners[i+1]
-        xs = np.linspace(start[0], end[0], points_per_edge, endpoint=False)
-        ys = np.linspace(start[1], end[1], points_per_edge, endpoint=False)
-        x_traj.extend(xs)
-        y_traj.extend(ys)
-    x_traj.append(corners[0][0])
-    y_traj.append(corners[0][1])
-    if plot:
-        plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
-        plt.axis('equal')
-        plt.grid(True)
-    return np.array(x_traj), np.array(y_traj)
-
-def rectangle_trajectory(center, width, height, num_points=100, plot=True, color='y', linestyle='-.'):
-    """
-    Generate and optionally plot a rectangle trajectory.
-    Returns: x, y arrays of trajectory points (shape: [num_points])
-    """
-    half_w = width / 2
-    half_h = height / 2
-    corners = np.array([
-        [center[0] + half_w, center[1] + half_h],   # top right
-        [center[0] + half_w, center[1] - half_h],   # bottom right
-        [center[0] - half_w, center[1] - half_h],   # bottom left
-        [center[0] - half_w, center[1] + half_h],   # top left
-        [center[0] + half_w, center[1] + half_h]    # close loop to top right
-    ])
-    points_per_edge = max(1, num_points // 4)
-    x_traj, y_traj = [], []
-    for i in range(4):
-        start = corners[i]
-        end = corners[i+1]
-        xs = np.linspace(start[0], end[0], points_per_edge, endpoint=False)
-        ys = np.linspace(start[1], end[1], points_per_edge, endpoint=False)
-        x_traj.extend(xs)
-        y_traj.extend(ys)
-    x_traj.append(corners[0][0])
-    y_traj.append(corners[0][1])
-    if plot:
-        plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
-        plt.axis('equal')
-        plt.grid(True)
-    return np.array(x_traj), np.array(y_traj)
-
-def triangle_trajectory(center, side_length, num_points=100, plot=True, color='c', linestyle='--'):
-    """
-    Generate and optionally plot a triangle trajectory.
-    Returns: x, y arrays of trajectory points (shape: [num_points])
-    """
-    height = (np.sqrt(3) / 2) * side_length
-    corners = np.array([
-        [center[0] - side_length / 2, center[1] - height / 3],
-        [center[0] + side_length / 2, center[1] - height / 3],
-        [center[0], center[1] + 2 * height / 3],
-        [center[0] - side_length / 2, center[1] - height / 3]
-    ])
-    points_per_edge = max(1, num_points // 3)
-    x_traj, y_traj = [], []
-    for i in range(3):
-        start = corners[i]
-        end = corners[i+1]
-        xs = np.linspace(start[0], end[0], points_per_edge, endpoint=False)
-        ys = np.linspace(start[1], end[1], points_per_edge, endpoint=False)
-        x_traj.extend(xs)
-        y_traj.extend(ys)
-    x_traj.append(corners[0][0])
-    y_traj.append(corners[0][1])
-    if plot:
-        plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
-        plt.axis('equal')
-        plt.grid(True)
-    return np.array(x_traj), np.array(y_traj)
-
-def infinity_trajectory(center, size=(1.0, 1.0), num_points=200, plot=True, color='orange', linestyle='-'):
-    """
-    Generate and optionally plot an infinity (figure-eight) trajectory.
-    Returns: x, y arrays of trajectory points (shape: [num_points])
-    The parametric equation used is:
-        x = a * sin(t)
-        y = a * sin(t) * cos(t)
-    """
-    t = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
-    a = size[0] / 2.0  # scale to match other shapes
-    b = size[1] / 2.0
-    x = center[0] + a * np.sin(t)
-    y = center[1] + b * np.sin(t) * np.cos(t)
-    if plot:
-        plt.plot(x, y, color=color, linestyle=linestyle)
-        plt.axis('equal')
-        plt.grid(True)
-    return x, y
+from utils.draw_shapes import *
 
 def plot_trajectory(traj, color='k', linestyle='-', label=None):
     """
@@ -161,22 +22,255 @@ def plot_trajectory(traj, color='k', linestyle='-', label=None):
 circle_trajectory(center=(0, -0.1), radius=0.5, num_points=200, plot=False)
 elipsoid_trajectory(center=(0, 0), axes_lengths=(1.0, 0.3), angle=np.pi/6, num_points=200, plot=True)
 square_trajectory(center=(0, -0.1), side_length=1, num_points=200, plot=True)
-triangle_trajectory(center=(0, -0.2), side_length=1.25, num_points=200, plot=False)
+triangle_trajectory(center=(0, -0.2), side_length=1.25, num_points=200, plot=True)
 infinity_trajectory(center=(0, 0), size=(2, 2.5), num_points=500, plot=True)
-rectangle_trajectory(center=(0.0, -0.1), width=1.5, height=0.7, num_points=200, plot=True)
+x_, y_ = rectangle_trajectory(center=(0.0, 0.0), width=2.1, height=1.3, num_points=400, plot=True)
+obs = np.vstack((x_, y_)).T
+obs = np.vstack((np.array([0, 0.5]),obs))
+plt.scatter(obs[:,0], obs[:,1], color='r', label='Rectangle Traj Points')
 plt.show()
 print(6//2)
+#%% Obstacle avoidance test with DMPs
+beta = 20.0 / np.pi
+gamma = 500
+R_halfpi = np.array(
+        [
+            [np.cos(np.pi / 2.0), -np.sin(np.pi / 2.0)],
+            [np.sin(np.pi / 2.0), np.cos(np.pi / 2.0)],
+        ]
+    )
+
+x_const, y_const = rectangle_trajectory(center=(0.0, 0.0), width=2.1, height=1.2, num_points=200, plot=False)
+obstacles = np.vstack((x_const, y_const)).T
+obstacles = np.vstack((np.array([0, 0.5]),obstacles))
+
+# def avoid_obstacles(y, dy, goal):
+#     p = np.zeros(2)
+
+#     for obstacle in obstacles:
+#         # based on (Hoffmann, 2009)
+
+#         # if we're moving
+#         # if np.linalg.norm(dy) > 1e-5:
+
+#         # get the angle we're heading in
+#         phi_dy = -np.arctan2(dy[1], dy[0])
+#         R_dy = np.array(
+#             [[np.cos(phi_dy), -np.sin(phi_dy)], [np.sin(phi_dy), np.cos(phi_dy)]]
+#         )
+#         # calculate vector to object relative to body
+#         obj_vec = obstacle - y
+#         # rotate it by the direction we're going
+#         obj_vec = np.dot(R_dy, obj_vec)
+#         # calculate the angle of obj relative to the direction we're going
+#         phi = np.arctan2(obj_vec[1], obj_vec[0])
+
+#         dphi = gamma * phi * np.exp(-beta * abs(phi))
+#         R = np.dot(R_halfpi, np.outer(obstacle - y, dy))
+#         pval = -np.nan_to_num(np.dot(R, dy) * dphi)
+
+#         # check to see if the distance to the obstacle is further than
+#         # the distance to the target, if it is, ignore the obstacle
+#         if np.linalg.norm(obj_vec) > np.linalg.norm(goal - y):
+#             pval = 0
+
+#         p += pval
+#     return p
+
+# def avoid_obstacles(y, dy, goal, *, eta=0.5, d0=1.75, max_force=10.0, nearest_only=True):
+#     """
+#     Distance-based repulsive potential field.
+
+#     For obstacle point o and current position y:
+#         d = ||y - o||
+#         if d < d0:
+#             F_rep = eta * (1/d - 1/d0) * (1/d^2) * ( (y-o)/d )
+
+#     Notes:
+#     - d0 is the influence radius (meters).
+#     - eta scales the strength.
+#     - nearest_only=True is recommended when 'obstacles' is a dense point set.
+#     """
+#     y = np.asarray(y, dtype=float).reshape(2,)
+#     goal = np.asarray(goal, dtype=float).reshape(2,)
+
+#     p = np.zeros(2, dtype=float)
+#     eps = 1e-9
+
+#     # Select which obstacle points to consider
+#     if nearest_only:
+#         diffs = y[None, :] - obstacles               # vectors from obstacle -> y
+#         dists = np.linalg.norm(diffs, axis=1) + eps
+#         o_list = [obstacles[int(np.argmin(dists))]]
+#     else:
+#         o_list = obstacles
+
+#     for o in o_list:
+#         o = np.asarray(o, dtype=float).reshape(2,)
+#         r = y - o
+#         d = np.linalg.norm(r) + eps
+
+#         # Outside influence radius -> no effect
+#         if d >= d0:
+#             continue
+
+#         # Optional: ignore obstacles that are farther than the remaining distance to goal
+#         if d > (np.linalg.norm(goal - y) + eps):
+#             continue
+
+#         # Repulsive magnitude (classic potential-field form)
+#         mag = eta * (1.0 / d - 1.0 / d0) * (1.0 / (d * d))
+
+#         # Direction away from obstacle
+#         p += (r / d) * mag
+
+#     # Clamp to keep DMP stable
+#     n = np.linalg.norm(p)
+#     if n > max_force:
+#         p *= (max_force / (n + eps))
+
+#     return p
+
+# Rectangle keep-in zone boundaries/parameters
+RECT_CENTER = np.array([0.0, 0.0], dtype=float)
+RECT_WIDTH = 2.0
+RECT_HEIGHT = 1.2
+
+XMIN = RECT_CENTER[0] - RECT_WIDTH / 2.0
+XMAX = RECT_CENTER[0] + RECT_WIDTH / 2.0
+YMIN = RECT_CENTER[1] - RECT_HEIGHT / 2.0
+YMAX = RECT_CENTER[1] + RECT_HEIGHT / 2.0
+
+# Obstacle points inside the rectangle
+INTERNAL_OBSTACLES = np.array([[0.0, 0.5]], dtype=float)
+
+
+def _project_into_rect(y):
+    """Hard projection into keep-in rectangle."""
+    y = np.asarray(y, dtype=float).reshape(2,)
+    return np.array([np.clip(y[0], XMIN, XMAX), np.clip(y[1], YMIN, YMAX)], dtype=float)
+
+
+def _keep_in_rect_force(y, *, d0=0.10, eta=0.002, k_out=200.0):
+    """
+    Wall-based keep-in force for an axis-aligned rectangle.
+    - Inside but within d0 of a wall: smooth repulsion away from the wall.
+    - Outside: strong linear push back inside (k_out).
+    """
+    y = np.asarray(y, dtype=float).reshape(2,)
+    p = np.zeros(2, dtype=float)
+    eps = 1e-9
+
+    # X walls
+    if y[0] < XMIN:
+        p[0] += k_out * (XMIN - y[0])
+    else:
+        d = y[0] - XMIN
+        if d < d0:
+            dd = d + eps
+            p[0] += eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+
+    if y[0] > XMAX:
+        p[0] -= k_out * (y[0] - XMAX)
+    else:
+        d = XMAX - y[0]
+        if d < d0:
+            dd = d + eps
+            p[0] -= eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+
+    # Y walls
+    if y[1] < YMIN:
+        p[1] += k_out * (YMIN - y[1])
+    else:
+        d = y[1] - YMIN
+        if d < d0:
+            dd = d + eps
+            p[1] += eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+
+    if y[1] > YMAX:
+        p[1] -= k_out * (y[1] - YMAX)
+    else:
+        d = YMAX - y[1]
+        if d < d0:
+            dd = d + eps
+            p[1] -= eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+
+    return p
+
+
+def _repulsive_point_obstacles_force(y, obstacles_xy, *, d0=0.20, eta=0.02):
+    """
+    Distance-based repulsive potential field for point obstacles.
+    Only active within radius d0.
+    """
+    y = np.asarray(y, dtype=float).reshape(2,)
+    p = np.zeros(2, dtype=float)
+    eps = 1e-9
+
+    if obstacles_xy is None or len(obstacles_xy) == 0:
+        return p
+
+    obstacles_xy = np.asarray(obstacles_xy, dtype=float).reshape(-1, 2)
+
+    for o in obstacles_xy:
+        r = y - o
+        d = np.linalg.norm(r) + eps
+        if d >= d0:
+            continue
+
+        mag = eta * (1.0 / d - 1.0 / d0) * (1.0 / (d * d))
+        p += (r / d) * mag
+
+    return p
+
+
+def avoid_obstacles(
+    y,
+    dy,
+    goal,
+    *,
+    # keep-in rectangle params
+    rect_d0=0.10,
+    rect_eta=0.2,
+    rect_k_out=200.0,
+    # internal obstacle params
+    obs_d0=0.25,
+    obs_eta=5,
+    # global clamp
+    max_force=50.0,
+):
+    """
+    Combined coupling term:
+    - keep-in rectangle (walls)
+    - keep-away internal point obstacles 
+    """
+    y = np.asarray(y, dtype=float).reshape(2,)
+    p = np.zeros(2, dtype=float)
+
+    p += _keep_in_rect_force(y, d0=rect_d0, eta=rect_eta, k_out=rect_k_out)
+    p += _repulsive_point_obstacles_force(y, INTERNAL_OBSTACLES, d0=obs_d0, eta=obs_eta)
+
+    # Clamp for stability
+    eps = 1e-9
+    n = np.linalg.norm(p)
+    if n > max_force:
+        p *= (max_force / (n + eps))
+
+    return p
+
+
 # %%
-x_traj, y_traj = circle_trajectory(center=(0, 0), radius=1.0, num_points=200, plot=False)
+x_traj, y_traj = rectangle_trajectory(center=(0.0, 0.0), width=2.4, height=1.0, num_points=100, plot=False)
 dmp_traj = []
 traj = np.vstack((x_traj, y_traj))
+traj = np.vstack((np.array([0.0, 0.0]), traj.T)).T
 # dmp = DMPs_discrete(n_dmps=2, n_bfs=50, dt=0.001)
 dmp = DMPs_rhythmic(n_dmps=2, n_bfs=10, dt=0.001)
 
 dmp.imitate_path(traj, plot=True)
 
 for step in range(dmp.timesteps):
-    dmp_point, _, _ = dmp.step()
+    dmp_point, _, _ = dmp.step(tau=2.0,external_force=avoid_obstacles(dmp.y, dmp.dy, dmp.goal))
     # print(dmp_point)
     dmp_traj.append(dmp_point.copy())
 dmp_traj = np.array(dmp_traj).T
@@ -186,14 +280,18 @@ plt.title("DMP Reproduction of Circle Trajectory")
 plt.legend()
 plt.show()
 
-plt.plot(np.linspace(0, 1, dmp_traj.shape[1]), dmp_traj[0, :], color='k', linestyle='--', label='DMP x')
-plt.plot(np.linspace(0, 1, len(x_traj)), x_traj, color='m', linestyle='-', label='Original x')
-plt.grid(True)
-plt.legend()
-plt.show()
+# plt.plot(np.linspace(0, 1, dmp_traj.shape[1]), dmp_traj[0, :], color='k', linestyle='--', label='DMP x')
 
-plt.plot(np.linspace(0, 1, dmp_traj.shape[1]), dmp_traj[1, :], color='k', linestyle='--', label='DMP y')
-plt.plot(np.linspace(0, 1, len(y_traj)), y_traj, color='m', linestyle='-', label='Original y')
+for obstacle in obstacles:
+    (plot_obs,) = plt.plot(obstacle[0], obstacle[1], "ro", mew=1, markersize=1)
+plt.plot(dmp_traj[0, :], dmp_traj[1,:], color='k', linestyle='--', label='DMP traj')
+# plt.plot(np.linspace(0, 1, len(x_traj)), x_traj, color='m', linestyle='-', label='Original x')
+# plt.grid(True)
+# plt.legend()
+# plt.show()
+
+# plt.plot(np.linspace(0, 1, dmp_traj.shape[1]), dmp_traj[1, :], color='k', linestyle='--', label='DMP y')
+# plt.plot(np.linspace(0, 1, len(y_traj)), y_traj, color='m', linestyle='-', label='Original y')
 plt.grid(True)
 plt.legend()
 plt.show()
@@ -539,14 +637,15 @@ if __name__ == "__main__":
     # Tune PID Gains
     # kp = [500, 500, 500, 500, 500, 500]  # proportional gains 
     # kd = [0, 0, 0, 0, 0, 0]         # damping values
-    kp = [3000, 3000, 1500, 1000, 1000, 1000]
-    kd = [150, 150, 80, 40, 10, 10]  
-    set_joint_pid_gains(model, UR5E_JOINTS, kp, kd)
+    # kp = [3000, 3000, 1500, 1000, 1000, 1000]
+    # kd = [150, 150, 80, 40, 10, 10]  
+    # set_joint_pid_gains(model, UR5E_JOINTS, kp, kd)
     
     # 2. Train DMP
     # get desired trajectory
     x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
     traj = np.vstack((x_traj, y_traj))
+    traj = np.vstack((np.array([0.0, 0.0]), traj.T)).T
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=20, dt=0.001)
     dmp.imitate_path(traj, plot=False)
     np.random.seed(42)
@@ -577,7 +676,8 @@ if __name__ == "__main__":
 
     for _ in range(dmp.timesteps):
         # A. Get DMP Target
-        dmp_pos_2d, _, _ = dmp.step(tau=2.0)
+        dmp_pos_2d, _, _ = dmp.step(tau=2.0, 
+                                    external_force=avoid_obstacles(dmp.y, dmp.dy, dmp.goal, rect_eta=0.5, obs_d0=0.25, obs_eta=25))
         target_3d = np.array([dmp_pos_2d[0], dmp_pos_2d[1], MOP_Z_HEIGHT])
 
         # B. Apply IK Formula
