@@ -1248,7 +1248,7 @@ def main():
                 options={
                     "num_ctx": 8192,
                     "temperature": 0.2,
-                    "num_gpu": 20
+                    "num_gpu": 37
                 }
             )
             response = response_data['response'].strip()
