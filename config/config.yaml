@@ -1,0 +1,28 @@
+# config/config.yaml
+simulation:
+  xml_path: "ballmove.xml"
+  site_name: "ee_site"
+  dt: 0.002
+
+robot:
+  joint_names: ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
+  home_joint_positions: [0.16986918, -2.09439510, -1.1, -0.34906585, 1.57079632, 1.64722557]
+  mop_z_height: 0.49
+
+ik_params:
+  init_lambda: 0.15
+  tol: 0.001
+  step_clip: 0.2
+  max_wp_step: 0.03
+  max_iters_per_wp: 300
+  print_every: 60
+
+dmp_params:
+  n_bfs: 10
+  num_balls: 150
+  num_x_segments: 3
+  num_y_segments: 2
+
+animation:
+  duration: 10.0
+  fps: 75

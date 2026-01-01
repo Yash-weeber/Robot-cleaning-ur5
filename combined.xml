@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mujoco model="ur5e_with_mop_and_dust">
+  <compiler angle="radian" meshdir="assets" autolimits="true"/>
+  <option integrator="implicitfast" timestep="0.01" viscosity="0.01"/>
+
+  <!-- ================= DEFAULT SETTINGS ================= -->
+  <default>
+    <default class="ur5e">
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+        <default class="eef_collision">
+          <geom type="cylinder"/>
+        </default>
+      </default>
+      <joint axis="0 1 0" range="-6.28319 6.28319"/>
+      <default class="joint_limited">
+        <joint range="-3.1415 3.1415"/>
+      </default>
+      <default class="position">
+        <position ctrlrange="-6.2831 6.2831" kp="2000" kv="100" forcerange="-150 150"/>
+        <default class="position_limited">
+          <position ctrlrange="-3.1415 3.1415"/>
+        </default>
+        <default class="position_small">
+          <position kp="500" kv="25" forcerange="-28 28"/>
+        </default>
+      </default>
+    </default>
+    <!-- Improved dust particle physics for MuJoCo 3.3.5 -->
+    <default class="dust">
+      <geom type="sphere" size="0.008" density="600" friction="0.8 0.1 0.05" condim="3"
+            contype="1" conaffinity="1" group="1"
+            solref="0.02 1.0" solimp="0.9 0.95 0.001"/>
+    </default>
+  </default>
+
+  <!-- ================= VISUAL SETTINGS ================= -->
+
+
+  <!-- ================= MATERIALS + MESHES ================= -->
+  <asset>
+    <texture name="skybox" type="skybox" builtin="gradient"
+             rgb1="0.7 0.85 1" rgb2="0.2 0.3 0.5" width="512" height="512"/>
+    <texture name="ground_tex" type="2d" builtin="checker" width="512" height="512"
+         rgb1="0.2 0.4 0.8" rgb2="0.9 0.9 1" mark="cross" random="0.01"/>
+    <material name="ground_mat" texture="ground_tex" texrepeat="4 4"
+          rgba="1 1 1 1" specular="1" shininess="1" reflectance="0.5"/>
+    <material name="black" rgba="0.033 0.033 0.033 1"/>
+    <material name="jointgray" rgba="0.278 0.278 0.278 1"/>
+    <material name="linkgray" rgba="0.82 0.82 0.82 1"/>
+    <material name="urblue" rgba="0.49 0.678 0.8 1"/>
+    <material name="table_material" rgba="0.6 0.4 0.2 1"/>
+    <material name="dust_material" rgba="0.4 0.3 0.2 0.8"/>
+
+    <!-- Robot meshes -->
+    <mesh file="base_0.obj"/>
+    <mesh file="base_1.obj"/>
+    <mesh file="shoulder_0.obj"/>
+    <mesh file="shoulder_1.obj"/>
+    <mesh file="shoulder_2.obj"/>
+    <mesh file="upperarm_0.obj"/>
+    <mesh file="upperarm_1.obj"/>
+    <mesh file="upperarm_2.obj"/>
+    <mesh file="upperarm_3.obj"/>
+    <mesh file="forearm_0.obj"/>
+    <mesh file="forearm_1.obj"/>
+    <mesh file="forearm_2.obj"/>
+    <mesh file="forearm_3.obj"/>
+    <mesh file="wrist1_0.obj"/>
+    <mesh file="wrist1_1.obj"/>
+    <mesh file="wrist1_2.obj"/>
+    <mesh file="wrist2_0.obj"/>
+    <mesh file="wrist2_1.obj"/>
+    <mesh file="wrist2_2.obj"/>
+    <mesh file="wrist3.obj"/>
+
+    <!-- Table and tool meshes -->
+    <mesh file="test.stl" scale="0.28 0.29 0.1" name="table"/>
+    <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002"/>
+    <mesh name="handle_mesh" file="mop_handle.obj" scale="0.002 0.002 0.002"/>
+  </asset>
+
+  <!-- <visual>
+    <map>
+      <skybox name="skybox"/>
+    </map>
+  </visual> -->
+
+  <!-- ================= WORLD OBJECTS ================= -->
+  <worldbody>
+    <!-- Ground with proper contact properties -->
+    <geom name="ground" type="plane" size="3 3 0.1" material="ground_mat"
+      rgba="0.5 0.5 0.5 1" pos="0 0 0"
+      solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05"/>
+
+    <!-- Table positioned as base platform -->
+    <body name="table" pos="0.3 0 0">
+      <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5"/>
+      <geom name="table_collision" type="box" size="1.35 0.7 0.5" pos="-1.35 -0.7 -0.01"
+            material="table_material" group="3" contype="1" conaffinity="1"
+            solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05"/>
+      <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"/>
+      
+    </body>
+
+    <!-- UR5e Robot mounted ON the table surface -->
+    <body name="base" pos="-0.875 -0.2 0.5" quat="1 0 0 1" childclass="ur5e">
+      <inertial mass="4" pos="0 0 0" diaginertia="0.0044 0.0044 0.0072"/>
+      <geom mesh="base_0" material="black" class="visual"/>
+      <geom mesh="base_1" material="jointgray" class="visual"/>
+      <!-- Base collision geometry to sit on table -->
+      <geom name="base_collision" type="cylinder" size="0.06 0.02" pos="0 0 -0.01"
+            contype="1" conaffinity="1" group="3" friction="0.8 0.1 0.05"/>
+
+      <body name="shoulder_link" pos="0 0 0.163">
+        <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102 0.0102 0.0066"/>
+        <joint name="shoulder_pan" axis="0 0 1"/>
+        <geom mesh="shoulder_0" material="urblue" class="visual"/>
+        <geom mesh="shoulder_1" material="black" class="visual"/>
+        <geom mesh="shoulder_2" material="jointgray" class="visual"/>
+
+        <body name="upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
+          <inertial mass="8.39" pos="0 0 0.2125" diaginertia="0.133 0.133 0.015"/>
+          <joint name="shoulder_lift"/>
+          <geom mesh="upperarm_0" material="linkgray" class="visual"/>
+          <geom mesh="upperarm_1" material="black" class="visual"/>
+          <geom mesh="upperarm_2" material="jointgray" class="visual"/>
+          <geom mesh="upperarm_3" material="urblue" class="visual"/>
+
+          <body name="forearm_link" pos="0 -0.131 0.425">
+            <inertial mass="2.27" pos="0 0 0.196" diaginertia="0.031 0.031 0.004"/>
+            <joint name="elbow" class="joint_limited"/>
+            <geom mesh="forearm_0" material="urblue" class="visual"/>
+            <geom mesh="forearm_1" material="linkgray" class="visual"/>
+            <geom mesh="forearm_2" material="black" class="visual"/>
+            <geom mesh="forearm_3" material="jointgray" class="visual"/>
+
+            <body name="wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
+              <inertial mass="1.219" pos="0 0.127 0" diaginertia="0.0025 0.0025 0.0021"/>
+              <joint name="wrist_1"/>
+              <geom mesh="wrist1_0" material="black" class="visual"/>
+              <geom mesh="wrist1_1" material="urblue" class="visual"/>
+              <geom mesh="wrist1_2" material="jointgray" class="visual"/>
+
+              <body name="wrist_2_link" pos="0 0.127 0">
+                <inertial mass="1.219" pos="0 0 0.1" diaginertia="0.0025 0.0025 0.0021"/>
+                <joint name="wrist_2" axis="0 0 1"/>
+                <geom mesh="wrist2_0" material="black" class="visual"/>
+                <geom mesh="wrist2_1" material="urblue" class="visual"/>
+                <geom mesh="wrist2_2" material="jointgray" class="visual"/>
+
+                <body name="wrist_3_link" pos="0 0 0.1">
+                  <inertial mass="0.188" pos="0 0.077 0" diaginertia="0.00013 0.0001 0.0001"/>
+                  <joint name="wrist_3"/>
+                  <geom mesh="wrist3" material="linkgray" class="visual"/>
+                  <site name="ee_site" pos="0 0.08 0" size="0.01" rgba="1 0 0 1"/>
+
+                  <!-- Mop tool attachment -->
+                  <body name="mop_mount" pos="0 0.08 0" quat="1 0 0 1">
+                    <body name="mop_tool" pos="0 -0.6 0">
+                      <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01"/>
+                      <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1"/>
+
+                      <body name="mop_head">
+                        <joint name="mop_socket" type="ball" damping="0.5" limited="false"/>
+                        <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
+                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- Dust particles properly positioned on table surface around the robot -->
+    <!-- Distributed in a cleaning area away from robot base -->
+          <!-- Dust balls (stable with solver parameters) -->
+<!--    <body name="dust_1" pos="-1.2340 -0.6502 0.4">-->
+<!--      <freejoint/>-->
+<!--      <inertial mass="0.5" diaginertia="5e-5 5e-5 5e-5" pos="0 0 0"/>-->
+<!--      <geom name="d1" class="dust" material="dust_material"/>-->
+<!--    </body>-->
+
+      <!-- Dust particles - stable until mop pushes them -->
+
+
+    <body name="ball_1" pos="-0.7354 -0.7826 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_2" pos="-1.2365 -0.8853 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_3" pos="-1.1961 -0.4835 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_4" pos="-0.9355 -0.9623 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_5" pos="-1.6372 -1.0804 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_6" pos="-1.7918 -0.6172 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_7" pos="-0.6779 -0.451 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_8" pos="-0.559 -0.6098 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+      <body name="ball_9" pos="-1.0459 -0.2471 0.5">
+        <freejoint/>
+        <inertial mass="0.03" diaginertia="4.800000000000001e-06 4.800000000000001e-06 4.800000000000001e-06" pos="0 0 0"/>
+        <geom type="sphere" size="0.02" rgba="1 0 0 1"/>
+    </body>
+    </worldbody>
+
+  <!-- ================= ACTUATORS ================= -->
+  <actuator>
+    <position class="position" name="shoulder_pan_act" joint="shoulder_pan"/>
+    <position class="position" name="shoulder_lift_act" joint="shoulder_lift"/>
+    <position class="position_limited" name="elbow_act" joint="elbow"/>
+    <position class="position_small" name="wrist_1_act" joint="wrist_1"/>
+    <position class="position_small" name="wrist_2_act" joint="wrist_2"/>
+    <position class="position_small" name="wrist_3_act" joint="wrist_3"/>
+  </actuator>
+
+</mujoco>

@@ -1,0 +1,222 @@
+import time
+import numpy as np
+import mujoco
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+import threading
+
+# Internal imports from the factorized codebase
+from env.adapter import ViewerAdapter
+from env.robot_logic import (
+    set_joint_positions, get_joint_positions, _clamp_limits,
+    enhanced_ik_solver, animate_robot_movement
+)
+from env.world import count_balls_in_grid
+from agent.dmp_logic import DMPs_discrete, DMPs_rhythmic
+from agent.interfaces import DrawingInterface, RealTimeMouseControl
+from utils.draw_shapes import infinity_trajectory
+
+
+class EnhancedDMPController:
+    def __init__(self, config):
+        # Configuration setup
+        self.xml_path = config['simulation']['xml_path']
+        self.site_name = config['simulation']['site_name']
+        self.dt = config['simulation']['dt']
+        self.joint_names = config['robot']['joint_names']
+        self.home_positions = np.array(config['robot']['home_joint_positions'])
+        self.mop_z_height = config['robot']['mop_z_height']
+
+        self.n_bfs = config['dmp_params']['n_bfs']
+        self.num_balls = config['dmp_params']['num_balls']
+        self.num_x_segments = config['dmp_params']['num_x_segments']
+        self.num_y_segments = config['dmp_params']['num_y_segments']
+
+        self.ik_params = config['ik_params']
+
+        # Load model and data
+        self.model = mujoco.MjModel.from_xml_path(self.xml_path)
+        self.data = mujoco.MjData(self.model)
+
+        self.site_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, self.site_name)
+        if self.site_id == -1:
+            raise RuntimeError(f"Site '{self.site_name}' not found in model")
+
+        # Initialize viewer
+        self.viewer = ViewerAdapter(self.model, self.data)
+        self._qpos0 = self.data.qpos.copy()
+        self._qvel0 = self.data.qvel.copy()
+        self._act0 = self.data.act.copy() if hasattr(self.data, "act") else None
+
+        # State and logging
+        self.running = True
+        self.x_min, self.x_max = -1.0, 1.0
+        self.y_min, self.y_max = -0.6, 0.6
+        self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
+
+        self.reset_robot_to_home()
+
+    def reset_robot_to_home(self):
+        # Exact copy of original reset logic
+        set_joint_positions(self.model, self.data, self.joint_names, self.home_positions)
+        _clamp_limits(self.model, self.data.qpos, self.joint_names)
+        mujoco.mj_forward(self.model, self.data)
+        current_pos = self.data.site_xpos[self.site_id]
+        print(f" Robot reset to home position: [{current_pos[0]:.3f}, {current_pos[1]:.3f}, {current_pos[2]:.3f}]")
+        self.viewer.draw()
+        return True
+
+    def move_to_3d_position(self, target_xy, animate=True):
+        # Exact copy of 3D move logic
+        target_3d = np.array([target_xy[0], target_xy[1], self.mop_z_height])
+        print(f"Moving to 3D target: [{target_3d[0]:.3f}, {target_3d[1]:.3f}, {target_3d[2]:.3f}]")
+
+        start_joints = get_joint_positions(self.model, self.data, self.joint_names)
+
+        success, error = enhanced_ik_solver(
+            self.model, self.data, self.site_id, target_3d, self.joint_names,
+            step_clip=0.2, max_wp_step=0.03, max_iters_per_wp=300,
+            lam_init=self.ik_params['init_lambda'],
+            tol=self.ik_params['tol'],
+            print_every=self.ik_params['print_every']
+        )
+
+        if success:
+            print(f"IK Success! Position error: {error:.6f} m")
+            if animate:
+                target_joints = get_joint_positions(self.model, self.data, self.joint_names)
+                set_joint_positions(self.model, self.data, self.joint_names, start_joints)
+                # Call to animation function preserved exactly
+                animate_robot_movement(self.model, self.data, self.viewer, self.joint_names,
+                                       start_joints, target_joints, duration=2.0, fps=60)
+            return True
+        else:
+            print(f"IK Failed! Final error: {error:.6f} m")
+            return False
+
+    def apply_dmp(self, pattern="discrete", draw_waypoints=False, shape="infinity"):
+        # Original training logic
+        if pattern == "discrete":
+            print("\nDISCRETE DMP MODE (3D)")
+            self.dmp = DMPs_discrete(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)
+        elif pattern == "rhythmic":
+            print("\nRHYTHMIC DMP MODE (3D)")
+            self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)
+
+        if draw_waypoints:
+            drawing_interface = DrawingInterface(title="Draw DMP 2D Trajectory")
+            trajectory = drawing_interface.get_trajectory()
+            if trajectory is None: return None
+            current_pos = self.data.site_xpos[self.site_id]
+            trajectory = np.vstack(([current_pos[:2]], trajectory))
+        else:
+            if shape == "infinity":
+                x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
+                trajectory = np.vstack((x_traj, y_traj)).T
+                start_target_3d = np.array([x_traj[0], y_traj[0], self.mop_z_height])
+                # Training IK preserved
+                enhanced_ik_solver(self.model, self.data, self.site_id, start_target_3d, self.joint_names,
+                                   max_iters_per_wp=50, print_every=1000)
+            else:
+                trajectory = self.get_discrete_waypoints()
+
+        if trajectory is None: return None
+        self.dmp.imitate_path(trajectory.T)
+        self.dmp.reset_state()
+
+        task_traj = []
+        for step in range(self.dmp.timesteps):
+            dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
+            task_traj.append(np.array([dmp_pos_2d[0], dmp_pos_2d[1], self.mop_z_height]))
+            if hasattr(self.dmp, 'x') and self.dmp.x < 0.01: break
+
+        joint_traj = []
+        for target_3d in task_traj:
+            success, _ = enhanced_ik_solver(self.model, self.data, self.site_id, target_3d, self.joint_names,
+                                            max_iters_per_wp=50, print_every=1000)
+            if success:
+                joint_traj.append(get_joint_positions(self.model, self.data, self.joint_names).copy())
+        return joint_traj
+
+    def execute_joint_trajectory(self, joint_traj):
+        # RESTORED PHYSICS STEPPING
+        print(f"Executing joint trajectory with {len(joint_traj)} waypoints...")
+        if len(joint_traj) > 0:
+            set_joint_positions(self.model, self.data, self.joint_names, joint_traj[0])
+            mujoco.mj_forward(self.model, self.data)
+            time.sleep(self.dt)
+
+        for joints in joint_traj:
+            self.data.ctrl[:] = joints
+            mujoco.mj_step(self.model, self.data)
+            self.viewer.draw()  # Added back sync for visual feedback
+            time.sleep(self.dt)
+        print("Trajectory execution complete.")
+
+    def run(self):
+        print("\nEnhanced DMP Controller Started!")
+        while self.running and self.viewer.is_running():
+            print("\nMAIN MENU:")
+            print("1. Discrete DMP Mode (waypoint navigation)")
+            print("2. Discrete DMP Mode (Draw waypoints)")
+            print("3. Rhythmic DMP Mode (mouse-drawn patterns)")
+            print("4. Rhythmic DMP Mode (Predefined Patterns)")
+            print("5. Real-time Mouse Control")
+            print("6. Reset Robot to Home Position")
+            print("7. Move to Custom Position (X, Y)")
+            print("8. Quit")
+            choice = input("\nSelect mode (1-8): ").strip()
+            if choice == '1':
+                traj = self.apply_dmp(pattern="discrete", draw_waypoints=False)
+                if traj: self.execute_joint_trajectory(traj)
+            elif choice == '2':
+                traj = self.apply_dmp(pattern="discrete", draw_waypoints=True)
+                if traj: self.execute_joint_trajectory(traj)
+            elif choice == '3':
+                traj = self.apply_dmp(pattern="rhythmic", draw_waypoints=True)
+                if traj: self.execute_joint_trajectory(traj)
+            elif choice == '4':
+                traj = self.apply_dmp(pattern="rhythmic", draw_waypoints=False)
+                if traj: self.execute_joint_trajectory(traj)
+            elif choice == '5':
+                self.execute_realtime_mode()
+            elif choice == '6':
+                self.reset_robot_to_home()
+            elif choice == '7':
+                self.manual_move_prompt()
+            elif choice == '8':
+                self.running = False
+            time.sleep(0.5)
+
+        # Original end-of-run logic
+        mujoco.mj_step(self.model, self.data)
+        mujoco.mj_forward(self.model, self.data)
+        count_balls_in_grid(self.model, self.data, self.x_min, self.x_max, self.y_min, self.y_max, self.num_x_segments,
+                            self.num_y_segments, self.num_balls)
+        self.viewer.close()
+
+    def manual_move_prompt(self):
+        # Restored original move prompt
+        coord_str = input(f"Enter target (x, y) [Z={self.mop_z_height:.4f}]: ").strip()
+        if not coord_str: return
+        try:
+            x, y = map(float, coord_str.replace(',', ' ').split())
+            if self.move_to_3d_position(np.array([x, y])): print("Movement completed.")
+        except ValueError:
+            print("Invalid coordinates.")
+
+    def get_discrete_waypoints(self):
+        # Restored helper from original
+        root = tk.Tk()
+        root.withdraw()
+        num_points = simpledialog.askinteger("Discrete DMP", "How many waypoints? (2-10)", minvalue=2, maxvalue=10)
+        if num_points is None: return None
+        points = []
+        current_pos = self.data.site_xpos[self.site_id]
+        for i in range(num_points):
+            coord_str = simpledialog.askstring("Waypoint", f"Enter point {i + 1} (x, y):")
+            if coord_str is None: return None
+            x, y = map(float, coord_str.split(','))
+            points.append([x, y])
+        root.destroy()
+        return np.array(points)
