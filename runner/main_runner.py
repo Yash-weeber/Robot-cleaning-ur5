@@ -57,7 +57,7 @@ class EnhancedDMPController:
         self.reset_robot_to_home()
 
     def reset_robot_to_home(self):
-        # Exact copy of original reset logic
+
         set_joint_positions(self.model, self.data, self.joint_names, self.home_positions)
         _clamp_limits(self.model, self.data.qpos, self.joint_names)
         mujoco.mj_forward(self.model, self.data)
@@ -67,9 +67,7 @@ class EnhancedDMPController:
         return True
 
     def hard_reset_from_home(self, redraw=True):
-        """
-        Restores simulation to the initial snapshot but overwrites robot joints to home.
-        """
+
         # 1) Restore full snapshot from the copy created in __init__
         np.copyto(self.data.qpos, self._qpos0)
         np.copyto(self.data.qvel, self._qvel0)
@@ -163,9 +161,7 @@ class EnhancedDMPController:
         return joint_traj
 
     def execute_joint_trajectory(self, joint_traj, dt=None):
-        """
-        Steps through the trajectory and logs end-effector (ee) positions for feedback.
-        """
+
         if dt is None:
             dt = self.dt
 
@@ -190,6 +186,29 @@ class EnhancedDMPController:
             time.sleep(dt)
         print("Trajectory execution complete.")
 
+    def execute_realtime_mode(self):
+
+        print(f"Z-coordinate fixed at: { self.mop_z_height:.4f} m")
+
+        # Create mouse control interface
+        mouse_control = RealTimeMouseControl()
+
+
+        dt = 0.01
+        control_thread = threading.Thread(target=self.manual_move_prompt(),
+                                          args=(mouse_control, dt))
+        control_thread.daemon = True
+        control_thread.start()
+
+        # Keep interface running
+        try:
+            while mouse_control.running and self.viewer.is_running():
+                mouse_control.root.update()
+                time.sleep(0.01)
+        except tk.TclError:
+            pass
+
+        print(" Real-time control mode ended")
     def count_balls_in_grid(self):
         """
         Counts balls in a 2x3 grid and applies the original visual layout transformation.

@@ -26,10 +26,7 @@ from agent.llm_analysis import (
 
 
 def run_llm_optimization(config):
-    """
-    Orchestrates the LLM optimization loop.
-    Matches logic from enhancedll_Mohamed.py exactly.
-    """
+
     # Initialize Controller and LLM Interface
     controller = EnhancedDMPController(config)
     llm = LLMInterface(config)
@@ -110,7 +107,7 @@ def run_llm_optimization(config):
         # Execute Trajectory if joints generated
         if joint_traj:
             set_joint_positions(model, data, joint_names, start_joints)
-            # Original execute call with dt*2 logic
+
             controller.execute_joint_trajectory(joint_traj, dt=controller.dt * 2)
 
         # Data Persistence

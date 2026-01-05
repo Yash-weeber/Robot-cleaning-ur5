@@ -8,10 +8,7 @@ from utils.obstacle_avoidance import avoid_obstacles
 
 
 def generate_warmup_trajectory(n_counter):
-    """
-    Exact copy of the warmup trajectory logic from enhancedll_Mohamed.py.
-    Generates shapes for the initial ICL examples.
-    """
+
     if n_counter == 0:
         x_traj, y_traj = circle_trajectory(center=(0.0, -0.1), radius=0.4, num_points=200, plot=False)
     elif n_counter == 1:
@@ -24,15 +21,12 @@ def generate_warmup_trajectory(n_counter):
         return None
 
     trajectory = np.vstack((x_traj, y_traj))
-    # Adds the specific zero-column horizontal stack found in the original code
+
     trajectory = np.hstack((np.zeros((2, 1)), trajectory)).T
     return trajectory
 
 def get_dmp_step_with_obstacles(dmp):
-    """
-    Executes a single DMP step while applying obstacle avoidance forces.
-    Preserves exact obstacle avoidance parameters from the original script.
-    """
+
     y, _, _ = dmp.step(
         tau=2.0,
         external_force=avoid_obstacles(
@@ -46,10 +40,7 @@ def get_dmp_step_with_obstacles(dmp):
 
 
 def log_iteration_data(iter_idx, grid_mat, total_balls, traj_len, out_csv):
-    """
-    Logs per-iteration grid and ball counts.
-    Maintains formatting for 2x3 grid structure (6 cells).
-    """
+
     import csv
     import os
     import time

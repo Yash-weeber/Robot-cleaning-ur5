@@ -4,9 +4,7 @@ import time
 
 
 def load_config(config_path="config/config.yaml"):
-    """
-    Loads the YAML configuration file and initializes dynamic logging paths.
-    """
+
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file not found at {config_path}")
 

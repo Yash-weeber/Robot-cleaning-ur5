@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 def parse_weights_text(path):
-    """Exact copy of original parse_weights_text."""
+
     with open(path, "r", encoding="utf-8") as f:
         txt = f.read()
     nums = re.findall(r"[-+]?\d*\.?\d+", txt)
@@ -17,7 +17,7 @@ def parse_weights_text(path):
     return np.array([float(x) for x in nums], dtype=float)
 
 def row_to_2x50(arr, n_bfs):
-    """Exact copy of original row_to_2x50 with linear interpolation resize."""
+
     a = np.asarray(arr, dtype=float).flatten()
     if a.size % 2 != 0:
         raise ValueError(f"Expected even number of weights, got {a.size}")

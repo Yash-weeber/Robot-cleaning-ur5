@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def load_trajectory_history(csv_path, max_iters=20):
-    """Exact copy of original logic to load last max_iters of trajectory data."""
+
     if not os.path.exists(csv_path):
         return {}
     try:
@@ -33,7 +33,7 @@ def load_trajectory_history(csv_path, max_iters=20):
 
 
 def load_ik_error_history(csv_path, max_iters=20):
-    """Exact copy of original logic to return dict {iter: [ {step,x,y,z,error_m}, ... ]}."""
+
     if not os.path.exists(csv_path):
         return {}
     try:
@@ -62,7 +62,7 @@ def load_ik_error_history(csv_path, max_iters=20):
 
 
 def summarize_ik_errors(error_history):
-    """Exact copy of original logic to compute per-iter IK failure stats."""
+
     summary = {}
     for it, entries in error_history.items():
         if not entries:
@@ -78,7 +78,7 @@ def summarize_ik_errors(error_history):
 
 
 def analyze_trajectory_performance(trajectory_data, bounds):
-    """Exact copy of original trajectory analysis logic including coverage and smoothness."""
+
     if not trajectory_data:
         return {}
     analysis = {}
@@ -111,7 +111,7 @@ def analyze_trajectory_performance(trajectory_data, bounds):
 
 
 def load_iteration_log(csv_path):
-    """Exact copy of original logic to load llm_iteration_log.csv."""
+
     if not os.path.exists(csv_path):
         return {}
     try:
@@ -134,7 +134,7 @@ def load_iteration_log(csv_path):
 
 
 def load_traj_feedback(csv_path):
-    """Exact copy of original logic to load trajectory_feedback.csv."""
+
     if not os.path.exists(csv_path):
         return {}
     try:
