@@ -1,0 +1,8 @@
+**Line 1:**  
+[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+**Line 2 (explanation):**  
+I start the optimisation from the neutral point – all DMP weights set to 0. With zero weights the generated DMP trajectory is the static point (x = 0, y = 0) for the whole motion, which clearly satisfies the workspace limits (‑0.7937 ≤ x ≤ 0.875, ‑0.502 ≤ y ≤ 0.5103).  
+Because the problem statement says “the global optimum is around 0.0”, a zero‑weight policy is the most natural initial guess: it is centrally located in the weight space, respects the ±50 exploration step (we can later perturb each component by ±50 to sample the neighbourhood), and gives us a clean baseline against which to measure any improvement.  
+
+This choice therefore maximises the chance of obtaining a low cost f (at or below the best observed 111) while guaranteeing the trajectory stays inside the required bounds.

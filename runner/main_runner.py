@@ -66,6 +66,30 @@ class EnhancedDMPController:
         self.viewer.draw()
         return True
 
+    def hard_reset_from_home(self, redraw=True):
+        """
+        Restores simulation to the initial snapshot but overwrites robot joints to home.
+        """
+        # 1) Restore full snapshot from the copy created in __init__
+        np.copyto(self.data.qpos, self._qpos0)
+        np.copyto(self.data.qvel, self._qvel0)
+        if hasattr(self.data, "act") and self._act0 is not None:
+            np.copyto(self.data.act, self._act0)
+
+        # 2) Overwrite robot joints to HOME and zero their velocities
+        for i, jn in enumerate(self.joint_names):
+            jid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+            qadr = self.model.jnt_qposadr[jid]
+            dadr = self.model.jnt_dofadr[jid]
+            self.data.qpos[qadr] = self.home_positions[i]
+            self.data.qvel[dadr] = 0.0
+
+        # 3) Rebuild physics + clear counters
+        mujoco.mj_forward(self.model, self.data)
+
+        # 4) Optional redraw
+        if redraw and self.viewer:
+            self.viewer.draw()
     def move_to_3d_position(self, target_xy, animate=True):
         # Exact copy of 3D move logic
         target_3d = np.array([target_xy[0], target_xy[1], self.mop_z_height])
@@ -138,9 +162,16 @@ class EnhancedDMPController:
                 joint_traj.append(get_joint_positions(self.model, self.data, self.joint_names).copy())
         return joint_traj
 
-    def execute_joint_trajectory(self, joint_traj):
-        # RESTORED PHYSICS STEPPING
+    def execute_joint_trajectory(self, joint_traj, dt=None):
+        """
+        Steps through the trajectory and logs end-effector (ee) positions for feedback.
+        """
+        if dt is None:
+            dt = self.dt
+
         print(f"Executing joint trajectory with {len(joint_traj)} waypoints...")
+        self.ee_trajectory = []  # Essential for trajectory analysis feedback
+
         if len(joint_traj) > 0:
             set_joint_positions(self.model, self.data, self.joint_names, joint_traj[0])
             mujoco.mj_forward(self.model, self.data)
@@ -149,9 +180,41 @@ class EnhancedDMPController:
         for joints in joint_traj:
             self.data.ctrl[:] = joints
             mujoco.mj_step(self.model, self.data)
-            self.viewer.draw()  # Added back sync for visual feedback
-            time.sleep(self.dt)
+
+            # Log current ee position
+            cl_pos = self.data.site_xpos[self.site_id].copy()
+            self.ee_trajectory.append(cl_pos)
+
+            if self.viewer and self.viewer.is_running():
+                self.viewer.draw()
+            time.sleep(dt)
         print("Trajectory execution complete.")
+
+    def count_balls_in_grid(self):
+        """
+        Counts balls in a 2x3 grid and applies the original visual layout transformation.
+        """
+        x_edges = np.linspace(self.x_min, self.x_max, self.num_x_segments + 1)
+        y_edges = np.linspace(self.y_min, self.y_max, self.num_y_segments + 1)
+        grid_counts = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
+
+        # Iterate through balls and check coordinates against grid edges
+        ball_names = [f"ball_{i + 1}" for i in range(self.num_balls)]
+        for name in ball_names:
+            body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, name)
+            if body_id != -1:
+                pos = self.data.xpos[body_id][:2]
+                if (self.x_min <= pos[0] <= self.x_max) and (self.y_min <= pos[1] <= self.y_max):
+                    i = np.searchsorted(x_edges, pos[0], side='right') - 1
+                    j = np.searchsorted(y_edges, pos[1], side='right') - 1
+                    i = min(max(i, 0), self.num_x_segments - 1)
+                    j = min(max(j, 0), self.num_y_segments - 1)
+                    grid_counts[i, j] += 1
+
+        # Match exact visual layout: reverse columns
+        grid_counts = grid_counts[:, ::-1]
+        self.grid_count = grid_counts.copy()
+        return grid_counts
 
     def run(self):
         print("\nEnhanced DMP Controller Started!")

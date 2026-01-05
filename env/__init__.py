@@ -9,3 +9,6 @@ from .robot_logic import (
     animate_robot_movement
 )
 from .world import count_balls_in_grid
+from .llm_robot_logic import (
+    generate_warmup_trajectory, get_dmp_step_with_obstacles, log_iteration_data
+)

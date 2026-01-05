@@ -1,0 +1,23 @@
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\main.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\testiing_2.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\dmp_logic.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\interfaces.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\__init__.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\pydmps\CanonicalSystem.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\pydmps\cd.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\pydmps\dmp.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\pydmps\dmp_discrete.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\pydmps\dmp_rhythmic.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\agent\pydmps\__init__.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\config\loader.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\config\__init__.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\config\config.yaml
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\env\adapter.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\env\robot_logic.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\env\world.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\env\__init__.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\env\New folder\ik_solver.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\runner\main_runner.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\runner\__init__.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\utils\draw_shapes.py
+Y:\models\ur5hanibenpng\final\Robot-cleaning-ur51\factorize\Robot-cleaning-ur5-testing_IK\factor\utils\obstacle_avoidance.py

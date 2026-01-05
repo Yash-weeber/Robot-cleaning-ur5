@@ -1,0 +1,2 @@
+[150, 200, 180, 100, -80, -150, -180, -160, 0, 80, 70, 120, 140, 120, 80, 0, -110, -30, -20, 20]
+Explanation: These weights are a large‑magnitude perturbation (≈ ±50) from the best‑performing example (f≈111). The magnitude should drive exploration toward lower‑cost regions while still keeping the generated trajectory within the allowed workspace limits.

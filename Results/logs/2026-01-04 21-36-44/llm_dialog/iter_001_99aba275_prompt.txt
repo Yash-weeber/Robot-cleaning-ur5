@@ -1,0 +1,50 @@
+You are a good global optimizer, helping me find the global minimum of a mathematical function f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your goal is to propose input values that efficiently lead us to the global minimum within a limited number of iterations (400).
+
+# Regarding the policy and weights:
+    policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs).
+    There are 10 basis functions per dimension, resulting in a total of 20 weights.
+    Weight values should be floats, and can be both positive and negative.
+    The policy defines the trajectory in the XY workspace.
+    The generated trajectory must strictly stay within the defined XY workspace limits.
+    The function f(weights) evaluates the cost of the policy.
+
+# Here's how we will interact :
+    1. I will provide you max steps (400) along with training examples which includes weights for the policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
+    2. You will provide the response in exact following format:
+        * Line 1: a new set of 20 float weights as an array, aiming to minimizw the functions value f(weights).
+        * Line 2: details explination of why you chose the weights.
+    3. I will then provide the function's f(weights) at that point and the current iteration.
+    4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+
+
+# Remember :
+    1. **XY workspace limits: x ∈ [-1.0, 1.0], y ∈ [-0.6, 0.6]. Any proposed weights must keep the trajectory strictly within these bounds.**
+    2. **The global optimum should be around 0.0.** If you are higher than that, this is a local optimum. You should  explore instead of exploiting.
+    3. Search both the positive and the negative values. **During exploration, use search step size of 50**
+
+
+Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
+Examples 1: weights=[38.5152, 64.0776, 62.8039, 31.7747, -4.2308, -38.4127, -57.9275, -55.322, -31.5914, 4.2005, -45.7105, -15.9019, 20.648, 50.5859, 59.5223, 45.6766, 14.384, -22.4029, -50.6326, -59.5225], x_range=[-0.3584, 0.3996], y_range=[-0.4615, 0.2561], f(weights)=136
+Examples 2: weights=[45.1851, 64.3357, 55.0277, 41.2611, 2.7859, -48.9235, -61.603, -66.6966, -44.8128, 21.9231, -49.1851, -9.2005, 23.8707, 51.1893, 49.0878, 35.5772, 18.8013, -11.1141, -69.0133, -68.9102], x_range=[-0.4097, 0.3886], y_range=[-0.5042, 0.2158], f(weights)=134
+Examples 3: weights=[58.4772, 56.6354, 51.8649, 31.353, -7.9223, -63.3106, -55.9589, -63.7394, -61.0769, 24.1188, -42.397, 9.6922, 33.4861, 52.2294, 44.2761, 44.0795, 33.3356, -0.5368, -67.3577, -63.76], x_range=[-0.3988, 0.3635], y_range=[-0.502, 0.2133], f(weights)=136
+Examples 4: weights=[60.76, 66.9043, 43.469, 25.4412, -17.4912, -65.5339, -62.158, -45.3604, -81.6092, 32.8046, -51.6044, 7.3691, 55.0156, 38.8828, 45.0399, 31.6186, 45.3583, -11.0362, -56.7916, -67.9568], x_range=[-0.4198, 0.4083], y_range=[-0.502, 0.2053], f(weights)=135
+Examples 5: weights=[62.7199, 47.492, 50.6069, 32.0626, -19.7798, -62.8164, -62.4487, -62.9562, -89.552, 39.0308, -50.011, -5.7739, 64.5782, 30.9219, 35.7878, 21.2988, 39.515, 16.4231, -51.8154, -47.0757], x_range=[-0.4842, 0.3677], y_range=[-0.4082, 0.2297], f(weights)=132
+Examples 6: weights=[-5.6564, 60.5897, 86.9001, 77.8941, 61.699, 7.3421, -51.3447, -76.875, -77.5748, -60.7769, 31.2378, 31.3007, 17.1362, -9.0339, -27.8457, -31.1968, -29.6212, -14.7101, 9.6863, 28.0901], x_range=[-0.4895, 0.5296], y_range=[-0.2954, 0.0985], f(weights)=146
+Examples 7: weights=[-1.1931, 77.2809, 84.2573, 68.2157, 62.2909, 22.4883, -47.976, -79.8986, -85.9612, -65.9542, 33.7728, 6.4537, 10.622, -26.7886, -25.5028, -18.8028, -36.1246, -17.3723, 4.2991, 32.2975], x_range=[-0.5312, 0.5199], y_range=[-0.3002, 0.1053], f(weights)=143
+Examples 8: weights=[-5.3679, 84.3413, 103.4172, 46.7982, 69.4814, 27.1591, -40.3088, -71.0786, -77.8737, -75.4259, 32.4825, 0.1451, -3.7623, -20.2666, -15.6533, -30.2469, -32.2562, -13.1064, 25.3637, 30.3188], x_range=[-0.49, 0.6061], y_range=[-0.2967, 0.0969], f(weights)=143
+Examples 9: weights=[-18.0084, 99.6203, 93.7101, 51.5038, 68.4745, 30.197, -57.5684, -55.2276, -76.5308, -86.4944, 48.2647, 1.22, -11.4027, -28.0185, -1.8149, -22.643, -35.1126, -7.7227, 4.5248, 39.6966], x_range=[-0.5142, 0.5986], y_range=[-0.2936, 0.1769], f(weights)=143
+Examples 10: weights=[-22.156, 96.2866, 94.521, 43.5935, 66.2885, 22.565, -65.3396, -36.734, -83.5868, -87.3548, 51.144, -0.0938, -21.2302, -37.2064, 10.1795, -26.0568, -52.6987, -7.2116, -1.1945, 32.691], x_range=[-0.5342, 0.5908], y_range=[-0.3779, 0.1763], f(weights)=131
+Examples 11: weights=[100.535, 144.1344, 127.5457, 49.8226, -31.4627, -100.2764, -130.7926, -111.3564, -49.3919, 31.4335, 18.4799, 70.7754, 93.1393, 72.6138, 33.3763, -18.3441, -63.0629, -83.6997, -72.3721, -33.4064], x_range=[-0.7937, 0.875], y_range=[-0.502, 0.5103], f(weights)=111
+Examples 12: weights=[97.3465, 128.1046, 112.1935, 44.1186, -33.63, -97.7277, -132.2871, -91.2486, -50.3597, 35.6555, 16.2253, 64.3959, 92.9764, 83.056, 22.5275, -40.4033, -72.575, -75.37, -82.3742, -29.9718], x_range=[-0.7808, 0.7806], y_range=[-0.4997, 0.5111], f(weights)=117
+Examples 13: weights=[99.7848, 120.6314, 96.5817, 39.4761, -37.1506, -110.5426, -129.3941, -81.4483, -45.5805, 40.1637, 23.7497, 59.2902, 85.9189, 78.8128, 20.2059, -22.2519, -93.5225, -65.0105, -96.7156, -32.754], x_range=[-0.7766, 0.7325], y_range=[-0.5051, 0.5048], f(weights)=118
+Examples 14: weights=[80.8874, 116.4955, 88.9215, 30.2348, -51.3666, -102.49, -117.9055, -69.754, -53.6006, 47.3885, 24.2796, 47.475, 79.1574, 77.1505, 24.8802, -18.9147, -102.0191, -64.3236, -96.5298, -19.5987], x_range=[-0.709, 0.6907], y_range=[-0.5093, 0.4915], f(weights)=125
+Examples 15: weights=[87.6516, 131.7065, 83.8027, 41.7368, -57.2738, -110.1777, -121.2556, -68.824, -67.3761, 49.6676, 18.3779, 34.5056, 63.1768, 74.1764, 10.3647, -20.9133, -107.5466, -44.739, -113.5781, -10.4644], x_range=[-0.7365, 0.7633], y_range=[-0.5107, 0.4338], f(weights)=115
+Examples 16: weights=[-58.4656, -91.9842, -71.6627, -3.0367, 54.6778, 81.9809, 59.4281, 30.0274, 0.5827, -28.8626, -16.5469, -72.7284, -94.6126, -84.8839, -83.6966, -65.4587, -18.4391, 32.1369, 64.9201, 34.2492], x_range=[-0.5425, 0.4811], y_range=[-0.5194, 0.2791], f(weights)=122
+Examples 17: weights=[-48.3786, -95.2154, -70.3853, -0.239, 67.5651, 98.2339, 54.7362, 17.5334, -2.0216, -30.3381, -21.3488, -89.8127, -83.5938, -85.3848, -58.2772, -53.3623, 0.9517, 29.1648, 78.1292, 34.4466], x_range=[-0.5495, 0.5653], y_range=[-0.5097, 0.2716], f(weights)=126
+Examples 18: weights=[-34.3302, -93.0042, -71.8385, 0.993, 73.6253, 122.4616, 35.5702, -6.6918, 4.4413, -28.3231, -22.9159, -82.0922, -97.1699, -78.3676, -47.7439, -50.6632, -8.7569, 39.6436, 90.321, 33.9298], x_range=[-0.5339, 0.6727], y_range=[-0.5244, 0.3082], f(weights)=121
+Examples 19: weights=[-40.4056, -94.2655, -78.6846, 10.2801, 55.1813, 117.7915, 58.4951, -1.8037, 11.544, -17.7678, -22.3752, -79.5127, -91.2871, -69.5152, -57.914, -52.0001, -13.1387, 44.578, 88.331, 21.1799], x_range=[-0.5525, 0.648], y_range=[-0.5135, 0.3062], f(weights)=126
+Examples 20: weights=[-43.1128, -93.2171, -76.1793, 1.0282, 60.8528, 107.3897, 56.9583, 6.0948, -0.7181, -27.2478, -28.0717, -89.2842, -98.9934, -69.8523, -68.2426, -40.5758, -19.2365, 59.2722, 103.2577, 28.2512], x_range=[-0.5454, 0.603], y_range=[-0.5281, 0.4151], f(weights)=118
+
+
+
+Now you are at iteration 1 out of 400.  Please provide the results in the indicated format.
