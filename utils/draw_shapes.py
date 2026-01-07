@@ -11,7 +11,7 @@ def circle_trajectory(center, radius, num_points=100, plot=True, color='b', line
     y = center[1] + radius * np.sin(theta)
     if plot:
         plt.plot(x, y, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')n
         plt.grid(True)
     return x, y
 

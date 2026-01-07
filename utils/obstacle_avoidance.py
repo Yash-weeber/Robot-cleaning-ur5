@@ -10,7 +10,10 @@ YMIN = RECT_CENTER[1] - RECT_HEIGHT / 2.0
 YMAX = RECT_CENTER[1] + RECT_HEIGHT / 2.0
 
 # Obstacle points inside the rectangle
-INTERNAL_OBSTACLES = np.array([[0.0, 0.5]], dtype=float)
+INTERNAL_OBSTACLES = np.array([[0.0, 0.5],
+                               [0.0, 0.525],
+                               [0.0, 0.55],
+                               [0.0, 0.575]], dtype=float)
 
 
 def _project_into_rect(y):
@@ -98,14 +101,14 @@ def avoid_obstacles(
     goal,
     *,
     # keep-in rectangle params
-    rect_d0=0.10,
+    rect_d0=0.05,
     rect_eta=0.2,
     rect_k_out=200.0,
     # internal obstacle params
     obs_d0=0.25,
     obs_eta=5,
     # global clamp
-    max_force=50.0,
+    max_force=200.0,
 ):
     """
     Combined coupling term:
