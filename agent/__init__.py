@@ -6,7 +6,12 @@ from .dmp_logic import (
     DMPs_rhythmic,
     MOVEMENT_PRIMITIVES_AVAILABLE
 )
-from .interfaces import DrawingInterface, RealTimeMouseControl
+try:
+    from .interfaces import DrawingInterface, RealTimeMouseControl
+except ImportError:
+    DrawingInterface = None
+    RealTimeMouseControl = None
+    
 from .llm_client import LLMInterface
 from .llm_data_utils import (
     parse_weights_text, 
@@ -28,3 +33,4 @@ from .llm_analysis import (
     summarize_ik_errors,
     build_llm_feedback
 )
+

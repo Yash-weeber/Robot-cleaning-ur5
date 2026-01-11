@@ -43,8 +43,8 @@ class LLMInterface:
 
         # Rendering context synchronized with the Architect version
         return template.render(
-            MAX_ITERS=self.config['simulation']['max_iters'],
-            N_BFS=self.config['dmp_params']['n_bfs'],
+            max_iters=self.config['simulation']['max_iters'],
+            n_bfs=self.config['dmp_params']['n_bfs'],
             xmin=bounds["xmin"],
             xmax=bounds["xmax"],
             ymin=bounds["ymin"],

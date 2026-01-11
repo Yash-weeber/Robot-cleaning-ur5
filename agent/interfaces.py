@@ -1,9 +1,18 @@
-import tkinter as tk
-from tkinter import messagebox
+try:
+    import tkinter as tk
+    from tkinter import messagebox
+    TK_AVAILABLE = True
+except ImportError:
+    tk = None
+    messagebox = None
+    TK_AVAILABLE = False
 import numpy as np
 
 class DrawingInterface:
     def __init__(self, width=400, height=300, title="Draw Trajectory"):
+        if not TK_AVAILABLE:
+            print(" GUI not available. DrawingInterface initialization skipped.")
+            return
         self.width = width
         self.height = height
         self.title = title
@@ -93,6 +102,8 @@ class DrawingInterface:
 
     def get_trajectory(self):
         """Run the drawing interface and return the trajectory"""
+        if not TK_AVAILABLE:
+            return None
         self.root.mainloop()
         if self.completed and len(self.trajectory) > 1:
             return np.array(self.trajectory)
@@ -100,6 +111,9 @@ class DrawingInterface:
 
 class RealTimeMouseControl:
     def __init__(self, width=600, height=600):
+        if not TK_AVAILABLE:
+            print(" GUI not available. RealTimeMouseControl initialization skipped.")
+            return
         self.width = width
         self.height = height
         self.active = False

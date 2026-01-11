@@ -49,7 +49,7 @@ def run_llm_optimization(config):
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=n_bfs, dt=controller.dt)
     n_counter = 0
 
-    print("\n🚀 Starting Synchronized LLM-Driven Optimization...")
+    print("\n Starting Synchronized LLM-Driven Optimization...")
 
     for it in range(1 - n_warmup, max_iters + 1):
         # Reset world snapshot but place robot at HOME

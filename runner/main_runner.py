@@ -1,8 +1,16 @@
 import time
 import numpy as np
 import mujoco
-import tkinter as tk
-from tkinter import messagebox, simpledialog
+try:
+    import tkinter as tk
+    from tkinter import messagebox, simpledialog
+    GUI_AVAILABLE = True
+except ImportError:
+    tk = None
+    messagebox = None
+    simpledialog = None
+    GUI_AVAILABLE = False
+
 import threading
 
 # Internal imports from the factorized codebase
@@ -15,11 +23,13 @@ from env.world import count_balls_in_grid
 from agent.dmp_logic import DMPs_discrete, DMPs_rhythmic
 from agent.interfaces import DrawingInterface, RealTimeMouseControl
 from utils.draw_shapes import infinity_trajectory
+from utils.obstacle_avoidance import avoid_obstacles
 
 
 class EnhancedDMPController:
     def __init__(self, config):
         # Configuration setup
+        self.config = config
         self.xml_path = config['simulation']['xml_path']
         self.site_name = config['simulation']['site_name']
         self.dt = config['simulation']['dt']
@@ -147,6 +157,15 @@ class EnhancedDMPController:
         self.dmp.reset_state()
 
         task_traj = []
+        for i in range(int(self.dmp.timesteps)):
+           
+            ext_f = avoid_obstacles(
+                self.dmp.y, self.dmp.dy, self.dmp.goal,
+                rect_d0=0.05, rect_eta=25.0, 
+                obs_d0=0.1, obs_eta=25.0, max_force=220.0
+            )
+            y, _, _ = self.dmp.step(tau=2.0, external_force=ext_f)
+            task_traj.append(np.array([y[0], y[1], self.mop_z_height]))
         for step in range(self.dmp.timesteps):
             dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
             task_traj.append(np.array([dmp_pos_2d[0], dmp_pos_2d[1], self.mop_z_height]))
@@ -189,6 +208,9 @@ class EnhancedDMPController:
     def execute_realtime_mode(self):
 
         print(f"Z-coordinate fixed at: { self.mop_z_height:.4f} m")
+        if not GUI_AVAILABLE:
+            print("⚠️ Real-time mode requires a GUI. Skipping.")
+            return
 
         # Create mouse control interface
         mouse_control = RealTimeMouseControl()
@@ -270,7 +292,7 @@ class EnhancedDMPController:
                 self.running = False
             time.sleep(0.5)
 
-        # Original end-of-run logic
+ 
         mujoco.mj_step(self.model, self.data)
         mujoco.mj_forward(self.model, self.data)
         count_balls_in_grid(self.model, self.data, self.x_min, self.x_max, self.y_min, self.y_max, self.num_x_segments,
@@ -278,7 +300,7 @@ class EnhancedDMPController:
         self.viewer.close()
 
     def manual_move_prompt(self):
-        # Restored original move prompt
+      
         coord_str = input(f"Enter target (x, y) [Z={self.mop_z_height:.4f}]: ").strip()
         if not coord_str: return
         try:
@@ -288,7 +310,10 @@ class EnhancedDMPController:
             print("Invalid coordinates.")
 
     def get_discrete_waypoints(self):
-        # Restored helper from original
+        
+        if not GUI_AVAILABLE:
+            print("⚠️ Waypoint dialog requires a GUI.")
+            return None
         root = tk.Tk()
         root.withdraw()
         num_points = simpledialog.askinteger("Discrete DMP", "How many waypoints? (2-10)", minvalue=2, maxvalue=10)

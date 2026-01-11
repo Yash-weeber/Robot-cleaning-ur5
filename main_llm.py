@@ -1,7 +1,8 @@
 import sys
 import os
 import dotenv
-
+os.environ["MUJOCO_GL"] = "egl"
+os.environ["PYOPENGL_PLATFORM"] = "egl"
 # Ensure project root is in path for modular imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
