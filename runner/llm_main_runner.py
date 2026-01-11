@@ -24,14 +24,13 @@ from agent.llm_analysis import (
     load_iteration_log, load_traj_feedback, build_llm_feedback
 )
 
-
 def run_llm_optimization(config):
 
     # Initialize Controller and LLM Interface
     controller = EnhancedDMPController(config)
     llm = LLMInterface(config)
 
-    # Setup directories as defined in original ensure_dirs
+    # Setup directories
     os.makedirs(config['logs']['root'], exist_ok=True)
     os.makedirs(config['logs']['dialog_dir'], exist_ok=True)
 
@@ -46,17 +45,17 @@ def run_llm_optimization(config):
     feedback_window = config['llm_settings']['feedback_window']
     weights_csv_path = os.path.join(config['logs']['root'], "weights.csv")
 
-    # Initialize DMP exactly as original script
+    # Initialize DMP
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=n_bfs, dt=controller.dt)
     n_counter = 0
 
-    print("\nStarting LLM-Driven Optimization Loop...")
+    print("\n🚀 Starting Synchronized LLM-Driven Optimization...")
 
     for it in range(1 - n_warmup, max_iters + 1):
-        # Reset controller at start of every iteration
+        # Reset world snapshot but place robot at HOME
         controller.hard_reset_from_home(redraw=False)
 
-        # Warmup: Use predefined trajectories and bootstrap weights
+        # Warmup: Predefined trajectories and weight bootstrapping
         if it < 0:
             if (it - 1) % 5 == 0:
                 trajectory = generate_warmup_trajectory(n_counter)
@@ -72,7 +71,7 @@ def run_llm_optimization(config):
             print(f"Error loading weights at iter {it}: {e}")
             continue
 
-        print(f"Iteration {it}: Applying Weights")
+        print(f"Iteration {it}: Executing Policy")
         dmp.w = w2.copy()
         dmp.reset_state()
         append_weight_history(config['logs']['weight_history_csv'], it, "executed", w2.copy(), n_bfs)
@@ -87,72 +86,72 @@ def run_llm_optimization(config):
         keep_every = max(1, int(config['dmp_params']['deci_build']))
 
         for i in range(int(dmp.timesteps)):
+            # Step DMP with aggressive obstacle avoidance gains
             y = get_dmp_step_with_obstacles(dmp)
             target_3d = np.array([y[0], y[1], config['robot']['mop_z_height']], dtype=float)
             dmp_task_trajectory.append(target_3d)
 
+            # High-speed IK solver settings for optimization runs
             ok, err_val = enhanced_ik_solver(
                 model, data, controller.site_id, target_3d, joint_names,
                 max_iters_per_wp=50, print_every=1000
             )
 
             if not ok:
-                # Log IK failures as per original save_ik_error logic
-                save_ik_error(it, i, target_3d, err_val or float("nan"), config['logs']['root'] + "/ik_errors.csv")
+                save_ik_error(it, i, target_3d, err_val or float("nan"), config['logs']['ik_error_csv'])
                 continue
 
             if i % keep_every == 0:
                 joint_traj.append(get_joint_positions(model, data, joint_names).copy())
 
-        # Execute Trajectory if joints generated
+        # Execute joint movements if successful
         if joint_traj:
             set_joint_positions(model, data, joint_names, start_joints)
-
             controller.execute_joint_trajectory(joint_traj, dt=controller.dt * 2)
 
-        # Data Persistence
-        save_trajectory_data(it, dmp_task_trajectory, config['logs']['dmp_trajectory_csv'])
-
-        # World state cleanup before ball count
+        # Physics Settlement: Extra steps to let balls stop rolling before count
         mujoco.mj_step(model, data)
         mujoco.mj_forward(model, data)
 
+        # Data Persistence
+        save_trajectory_data(it, dmp_task_trajectory, config['logs']['dmp_trajectory_csv'])
+        save_trajectory_data(it, controller.ee_trajectory, config['logs']['ee_trajectory_csv'])
+
+        # Spatial Ball Counting
         grid = controller.count_balls_in_grid()
         total_balls = int(np.sum(grid))
         log_iteration_data(it, grid, total_balls, len(joint_traj), config['logs']['iter_log_csv'])
 
-        if total_balls == 0:
-            print("Cleanup complete. Optimization successful.")
-            break
-
-        # Load historical data for prompt construction
+        # LLM Feedback Construction
         iter_log_data = load_iteration_log(config['logs']['iter_log_csv'])
-        traj_feedback_data = load_traj_feedback(config['logs']['dmp_trajectory_csv'])
+        # CRITICAL: Use Actual EE Trajectory for Bounds Analysis
+        traj_feedback_data = load_traj_feedback(config['logs']['ee_trajectory_csv'])
+        ee_traj_df = pd.read_csv(config['logs']['ee_trajectory_csv']) if os.path.exists(config['logs']['ee_trajectory_csv']) else None
 
         # Logic to decide next weights
         if it < 0:
-            # Exploration during warmup
+            # Random exploration during warmup period
             np.random.seed(config['llm_settings']['seed_number'] + it)
             w_next = w2 + np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
         else:
-            # Build detailed feedback text for the LLM prompt
-            w_df = pd.read_csv(config['logs']['weight_history_csv']) if os.path.exists(
-                config['logs']['weight_history_csv']) else None
+            # Build detailed prompt with coordinate tables and grid markdown
             feedback_text = build_llm_feedback(
-                it + 1, w_df, iter_log_data, traj_feedback_data, feedback_window, n_warmup
+                it + 1, pd.read_csv(config['logs']['weight_history_csv']),
+                iter_log_data, traj_feedback_data, ee_traj_df, config, bounds
             )
 
             prompt = llm.render_prompt(it + 1, feedback_text, bounds)
 
             try:
-                response = llm.call_ollama(prompt)
+                # Use large token limit for coordinate tables
+                response = llm.call_ollama(prompt, token_limit=100000)
                 w_next = parse_ollama_weights(response, n_bfs)
                 save_dialog(config['logs']['dialog_dir'], it + 1, prompt, response)
             except Exception as e:
                 print(f"LLM Error at iteration {it}: {e}. Reusing current weights.")
                 w_next = w2.copy()
 
-        # Update weights for next iteration
+        # Update for next iteration
         append_weight_history(config['logs']['weight_history_csv'], it + 1, "proposed", w_next, n_bfs)
         write_weights_csv(weights_csv_path, w_next)
 

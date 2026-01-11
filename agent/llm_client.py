@@ -12,35 +12,58 @@ _call_gemini_lock = threading.Lock()
 class LLMInterface:
     def __init__(self, config):
         self.config = config
-        # Load template from the agent/templates/ directory
-        self.jinja_env = Environment(loader=FileSystemLoader(os.path.join('agent', 'templates')))
-        self.template = self.jinja_env.get_template('llm_policy.j2')
+
+        template_dir = os.path.join('agent', 'templates')
+        self.jinja_env = Environment(
+            loader=FileSystemLoader(template_dir),
+            autoescape=False,
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
 
         if not hasattr(self, "_active_idx"):
             self._active_idx = 0
 
     def render_prompt(self, iter_idx, feedback_text, bounds):
-        """Renders the Jinja2 template with current data."""
-        return self.template.render(
-            max_iters=self.config['simulation']['max_iters'],
-            n_bfs=self.config['dmp_params']['n_bfs'],
-            total_weights=2 * self.config['dmp_params']['n_bfs'],
+
+        # Determine template name based on configuration flags
+        traj_in_prompt = self.config['llm_settings'].get('traj_in_prompt', True)
+        grid_reward = self.config['llm_settings'].get('grid_reward', False)
+
+        run_type = "semantics-RL-optimizer"
+        if traj_in_prompt:
+            run_type += "-traj"
+
+        template_name = f"{run_type}-totalcost.j2" if not grid_reward else f"{run_type}-gridreward.j2"
+
+        try:
+            template = self.jinja_env.get_template(template_name)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load Jinja2 template '{template_name}': {e}")
+
+        # Rendering context synchronized with the Architect version
+        return template.render(
+            MAX_ITERS=self.config['simulation']['max_iters'],
+            N_BFS=self.config['dmp_params']['n_bfs'],
             xmin=bounds["xmin"],
             xmax=bounds["xmax"],
             ymin=bounds["ymin"],
             ymax=bounds["ymax"],
             optimum=0.0,
-            step_size=self.config['dmp_params'].get('step_size', 50),
+            step_size=self.config['dmp_params'].get('step_size', 100),
             feedback_text=feedback_text,
-            iter_idx=iter_idx
+            iter_idx=iter_idx,
+            n_x_seg=self.config['dmp_params']['num_x_segments'],
+            n_y_seg=self.config['dmp_params']['num_y_segments']
         )
 
-    def call_ollama(self, prompt):
-        """Standard Ollama call as defined in original script."""
+    def call_ollama(self, prompt, token_limit=100000):
+
         try:
             response = ollama.chat(
                 model=self.config['llm_settings']['ollama_model'],
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
+                options={'num_predict': token_limit}  # Mapping token_limit to Ollama's parameter
             )
             return response["message"]["content"].strip()
         except Exception as e:
@@ -71,7 +94,7 @@ class LLMInterface:
             if not api_key:
                 continue
 
-            print(f"Using {api_var} (index {api_index + 1}/{n})")
+            print(f" Using {api_var} (index {api_index + 1}/{n})")
             try:
                 client = genai.Client(api_key=api_key)
                 for attempt in range(max_retries_per_key):
@@ -86,12 +109,11 @@ class LLMInterface:
                         return text.strip()
                     except Exception as e:
                         last_error = e
-                        # Decide if transient (429, 503, etc.)
                         s = str(e).lower()
                         if any(x in s for x in ["429", "503", "502", "504", "timeout", "unavailable"]):
                             sleep_time = min(base_wait_time * (backoff_factor ** attempt) + random.uniform(0, 1.5),
                                              max_sleep_cap)
-                            print(f"Transient error: {e}. Retrying in {sleep_time:.1f}s...")
+                            print(f"Transient Gemini error: {e}. Retrying in {sleep_time:.1f}s...")
                             time.sleep(sleep_time)
                             continue
                         break

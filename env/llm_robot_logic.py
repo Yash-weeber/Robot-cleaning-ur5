@@ -31,9 +31,11 @@ def get_dmp_step_with_obstacles(dmp):
         tau=2.0,
         external_force=avoid_obstacles(
             dmp.y, dmp.dy, dmp.goal,
-            rect_eta=0.5,
-            obs_d0=0.25,
-            obs_eta=25
+            rect_d0=0.05,
+            rect_eta=25.0,
+            obs_d0=0.1,
+            obs_eta=25.0,
+            max_force=220.0
         )
     )
     return y
