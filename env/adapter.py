@@ -1,6 +1,5 @@
 import mujoco
 import os
-import mujoco.viewer
 
 class ViewerAdapter:
     def __init__(self, model, data, title="MuJoCo DMP Controller"):
@@ -8,52 +7,58 @@ class ViewerAdapter:
         self.data = data
         self.backend = None
         self.viewer = None
-        self._dm_context_mgr = None
+        
+        # Guard: Check if a display (monitor) is actually available
+        has_display = "DISPLAY" in os.environ
 
-        # Try DeepMind's built-in viewer (MuJoCo >= 3.1)
-        try:
-            import mujoco.viewer as mview
-            self.backend = "dm"
-            self.viewer = mview.launch_passive(model, data)
-            self._dm_context_mgr = self.viewer
-            print("[Viewer] Using mujoco.viewer (DeepMind).")
-            return
-        except Exception:
-            pass
+        if has_display:
+            # 1. Try DeepMind's built-in passive viewer (MuJoCo >= 3.1)
+            try:
+                import mujoco.viewer as mview # Moved inside to prevent crash
+                self.backend = "dm"
+                self.viewer = mview.launch_passive(model, data)
+                print("[Viewer] Using mujoco.viewer (DeepMind).")
+                return
+            except Exception:
+                pass
 
-        # Try community viewer
-        try:
-            import mujoco_viewer
-            self.backend = "community"
-            self.viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=False)
-            print("[Viewer] Using mujoco-python-viewer.")
-            return
-        except Exception:
-            pass
+            # 2. Try community viewer fallback
+            try:
+                import mujoco_viewer
+                self.backend = "community"
+                self.viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=False)
+                print("[Viewer] Using mujoco-python-viewer.")
+                return
+            except Exception:
+                pass
 
-        print("[Viewer] No viewer available. Running headless.")
+        # 3. Headless Fallback: If no display or viewers fail
+        print("[Viewer] No display detected or viewers failed. Running in HEADLESS mode (EGL).")
         self.backend = "none"
 
     def is_running(self):
+        """
+        Keeps the simulation loop alive. 
+        In headless mode, we always return True.
+        """
         if self.backend == "dm":
             return self.viewer.is_running()
         elif self.backend == "community":
             return not self.viewer.closed
-        else:
-            return False
+        return True # Headless mode is 'always running'
 
     def draw(self):
+        """Syncs the visuals only if a viewer backend is active."""
         if self.backend == "dm":
             self.viewer.sync()
         elif self.backend == "community":
             self.viewer.render()
-        else:
-            pass
 
     def close(self):
+        """Gracefully closes active viewer contexts."""
         if self.backend == "dm":
             try:
-                self._dm_context_mgr.close()
+                self.viewer.close()
             except Exception:
                 pass
         elif self.backend == "community":

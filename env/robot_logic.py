@@ -124,8 +124,8 @@ def enhanced_interpolate(start_pos, end_pos, t):
 
 def animate_robot_movement(model, data, viewer, joint_names, start_joints, target_joints,
                            duration=2.0, fps=60):
-    """Smooth animation between joint configurations"""
-    print(f"🎬 Animating robot movement over {duration:.1f} seconds...")
+
+    print(f" Animating robot movement over {duration:.1f} seconds...")
 
     total_frames = int(duration * fps)
     dt = 1.0 / fps

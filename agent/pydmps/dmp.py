@@ -1,5 +1,5 @@
 import numpy as np
-from pydmps.CanonicalSystem import CanonicalSystem
+from .CanonicalSystem import CanonicalSystem
 
 class DMPs:
     def __init__(self, n_dmps, n_bfs, dt=0.01, y0=0, goal=1, w=None, ay=None, by=None, **kwargs):
