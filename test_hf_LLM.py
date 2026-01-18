@@ -21,10 +21,18 @@ except ImportError as e:
 
 # Check what Transformers' MXFP4 quantizer sees
 try:
-    from transformers.quantizers.quantizer_mxfp4 import Mxfp4Config
-    print('Mxfp4Config imported successfully')
-except ImportError as e:
-    print('❌ Cannot import Mxfp4Config:', e)
+    import transformers.quantizers.quantizer_mxfp4 as mxfp4_mod
+    print("quantizer_mxfp4 file:", mxfp4_mod.__file__)
+    candidates = ["Mxfp4Config", "MXFP4Config", "Mxfp4QuantizationConfig", "MXFP4QuantizationConfig"]
+    found = [name for name in candidates if hasattr(mxfp4_mod, name)]
+    print("MXFP4-related symbols found:", found)
+    if found:
+        Mxfp4Config = getattr(mxfp4_mod, found[0])
+        print(f"Using {found[0]} from quantizer_mxfp4")
+    else:
+        print("❌ No known MXFP4 config symbol found in this Transformers build.")
+except Exception as e:
+    print("❌ MXFP4 module check failed:", e)
 
 MODEL_DIR = "/scratch/melmisti/hf/models/gpt-oss-120b"
 

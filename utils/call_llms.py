@@ -30,7 +30,7 @@ def call_ollama(prompt: str, model:str = OLLAMA_MODEL, token_limit=64000) -> str
         response = ollama.chat(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            options={'num_ctx': token_limit}
+            options={'num_ctx': token_limit, 'num_predict': 8192, 'temperature': 0.4},#, "num_gpu": 37},
             )
         # Ollama returns a dict with a 'message' key containing another dict with 'content'
         # breakpoint()

@@ -21,7 +21,6 @@ import ollama
 from jinja2 import Template, Environment, FileSystemLoader
 from utils.call_llms import *
 import traceback
-import argparse
 
 
 
@@ -39,47 +38,34 @@ optimum = 0.0
 OLLAMA_MODEL = "gpt-oss:120b"
 #%%
 # # ====== EDIT THESE PATHS ======
-BASE_DIR = f"/home/melmisti/GitHub/Robot-cleaning-ur5/Results/"
-TEMPLATE_DIR = "/home/melmisti/GitHub/Robot-cleaning-ur5/agent/policy/templates"
+BASE_DIR = f"./Results/"
+TEMPLATE_DIR = "./agent/policy/templates"
 
-# --- Defaults (kept as defaults, but overridable via CLI) ---
 HISTORY_WINDOW = 25
-TRAJECTORY_HISTORY_WINDOW = 40
-n_warmup = 20
+TRAJECTORY_HISTORY_WINDOW = 40  # NEW: Track last 20 iterations of X,Y trajectories
+n_warmup = 20 # number of initial ICL examples
 seed_number = 42
-
-feedback_window = 100
-resample_rate = None
+feedback_window = 100  # number of recent iterations to summarize for feedback
+resample_rate = 20
 step_size = 100
 random_scale = 10.0
-
 run_type = "semantics-RL-optimizer"
 template_number = 2
 traj_in_prompt = False
-GRID_REWARD = True
+GRID_REWARD = True # whether to include grid-based reward in LLM feedback
 n_x_seg = 3
 n_y_seg = 2
+if traj_in_prompt:
+    run_type += "-traj"
+template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
+if resample_rate is not None and traj_in_prompt:
+    run_type += f"-{resample_rate}"
+save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
 
-# These depend on n_x_seg/n_y_seg; will be recomputed after CLI parse in main()
-x_edges = None
-y_edges = None
-raw_cell_cols = None
+x_edges = np.linspace(-1, 1, n_x_seg + 1)
+y_edges = np.linspace(-0.6, 0.6, n_y_seg + 1)
+raw_cell_cols = [f"cell{i}" for i in range(n_x_seg * n_y_seg)]
 
-# These depend on save_results_file; will be set in main() after CLI parse
-LOG_PARENT = None
-LOGDIR = None
-WEIGHTS_CSV = None
-ITER_LOG_CSV = None
-DIALOG_DIR = None
-WEIGHT_HISTORY_CSV = None
-DMP_TRAJECTORY_CSV = None
-EE_TRAJECTORY_CSV = None
-IK_ERROR_CSV = None
-
-template_name = None
-save_results_file = None
-
-#%%
 JINJA_ENV = Environment(
     loader=FileSystemLoader(TEMPLATE_DIR),
     autoescape=False,
@@ -114,15 +100,15 @@ def _make_next_numeric_run_dir(parent_dir: str) -> str:
             next_id += 1
 
 # Put runs under: ./Results/logs/best_prompt-walled-stepsize-20-hist/{N}/
-# LOG_PARENT = os.path.join(BASE_DIR, "logs", save_results_file)
-# LOGDIR = _make_next_numeric_run_dir(LOG_PARENT)
-# WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
-# ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
-# DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
-# WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
-# DMP_TRAJECTORY_CSV = os.path.join(LOGDIR, "dmp_trajectory_feedback.csv")  # NEW: Store X,Y trajectories per iteration
-# EE_TRAJECTORY_CSV = os.path.join(LOGDIR, "ee_trajectory.csv")
-# IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
+LOG_PARENT = os.path.join(BASE_DIR, "logs", save_results_file)
+LOGDIR = _make_next_numeric_run_dir(LOG_PARENT)
+WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
+ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
+DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
+WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
+DMP_TRAJECTORY_CSV = os.path.join(LOGDIR, "dmp_trajectory_feedback.csv")  # NEW: Store X,Y trajectories per iteration
+EE_TRAJECTORY_CSV = os.path.join(LOGDIR, "ee_trajectory.csv")
+IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
 IK_ERROR_HISTORY_WINDOW = 40 # how many past iterations of IK errors to summarize
 
 N_BFS = 10
@@ -146,90 +132,19 @@ from testiing_2 import (
 )
 from pydmps.dmp_rhythmic import DMPs_rhythmic
 
+# controller = EnhancedDMPController()
+# bounds = {
+#     "xmin": controller.x_min, "xmax": controller.x_max,
+#     "ymin": controller.y_min, "ymax": controller.y_max,
+# }
+
+# DELTA_ABS = 5.0
+# DELTA_REL = 0.08
+
+
 # ----------------- utils -----------------
 
-def _str2bool(v):
-    if isinstance(v, bool):
-        return v
-    s = str(v).strip().lower()
-    if s in {"true", "t", "1", "yes", "y", "on"}:
-        return True
-    if s in {"false", "f", "0", "no", "n", "off"}:
-        return False
-    raise argparse.ArgumentTypeError(f"Expected true/false, got: {v}")
-
-def _parse_args():
-    p = argparse.ArgumentParser(description="UR5 cleaning optimizer run config")
-    p.add_argument("--run-type", type=str, default=run_type)
-    p.add_argument("--step-size", type=int, default=step_size)
-    p.add_argument("--feedback-window", type=int, default=feedback_window)
-    p.add_argument("--template-number", type=int, default=template_number)
-
-    p.add_argument("--traj_in_prompt", "--traj-in-prompt", type=_str2bool, default=traj_in_prompt)
-    p.add_argument("--resample-rate", type=int, default=resample_rate)
-
-    # Grid reward toggle
-    p.add_argument("--grid_reward", "--grid-reward", type=_str2bool, default=GRID_REWARD)
-
-    p.add_argument("--n-x-seg", type=int, default=n_x_seg)
-    p.add_argument("--n-y-seg", type=int, default=n_y_seg)
-
-    # Optional: output folder override (otherwise uses ./Results/logs/<save_results_file>/)
-    p.add_argument("--log-parent", type=str, default=BASE_DIR, help="Override ./Results/logs/<save_results_file>")
-
-    return p.parse_args()
-
-
-def _compute_names(args):
-    """
-    Matches your existing naming logic, but driven by CLI args.
-    Returns (template_name, save_results_file).
-    """
-    rt = args.run_type
-    if args.traj_in_prompt:
-        rt += f"-traj"
-
-    tmpl = (
-        f"{rt}-totalcost-{args.template_number}.j2"
-        if not args.grid_reward
-        else f"{rt}-gridreward-{args.template_number}.j2"
-    )
-    
-    if args.resample_rate is not None and args.traj_in_prompt:
-        rt += f"-{args.resample_rate}"
-    save = (
-        f"{rt}-walled-stepsize-{args.step_size}-hist-{args.feedback_window}-{args.template_number}-t04"
-        if not args.grid_reward
-        else f"{rt}-walled-stepsize-{args.step_size}-hist-{args.feedback_window}-gridreward-{args.n_x_seg}x{args.n_y_seg}-{args.template_number}-t04"
-    )
-    return tmpl, save
-
-
-def _init_paths(save_results_file_local: str, log_parent_override: str | None = None):
-    """Initialize global log paths based on save_results_file."""
-    global LOG_PARENT, LOGDIR, WEIGHTS_CSV, ITER_LOG_CSV, DIALOG_DIR
-    global WEIGHT_HISTORY_CSV, DMP_TRAJECTORY_CSV, EE_TRAJECTORY_CSV, IK_ERROR_CSV
-
-    parent = (
-        log_parent_override
-        if log_parent_override is not None
-        else os.path.join(BASE_DIR, "logs", save_results_file_local)
-    )
-    LOG_PARENT = parent
-    LOGDIR = _make_next_numeric_run_dir(LOG_PARENT)
-
-    WEIGHTS_CSV = os.path.join(LOGDIR, "weights.csv")
-    ITER_LOG_CSV = os.path.join(LOGDIR, "llm_iteration_log.csv")
-    DIALOG_DIR = os.path.join(LOGDIR, "llm_dialog")
-    WEIGHT_HISTORY_CSV = os.path.join(LOGDIR, "weights_history.csv")
-    DMP_TRAJECTORY_CSV = os.path.join(LOGDIR, "dmp_trajectory_feedback.csv")
-    EE_TRAJECTORY_CSV = os.path.join(LOGDIR, "ee_trajectory.csv")
-    IK_ERROR_CSV = os.path.join(LOGDIR, "ik_errors.csv")
-
-
 def ensure_dirs():
-    if LOGDIR is None or DIALOG_DIR is None:
-        raise RuntimeError("LOGDIR/DIALOG_DIR not initialized. Call _init_paths(...) first.")
     os.makedirs(LOGDIR, exist_ok=True)
     os.makedirs(DIALOG_DIR, exist_ok=True)
 
@@ -463,7 +378,6 @@ def analyze_trajectory_performance(trajectory_data, bounds):
         }
 
     return analysis
-
 def load_iteration_log(csv_path):
     """Load llm_iteration_log.csv into a dictionary keyed by iteration number."""
     if not os.path.exists(csv_path):
@@ -549,6 +463,40 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
 
             valid_df = iter_df[iter_df["traj_waypoints"] >= waypoint_cutoff]
 
+            # Find the best run (lowest f(weights) among valid)
+            # if not valid_df.empty:
+            #     best_iter = valid_df.loc[valid_df["total_balls"].idxmin()]
+            #     best_iter_num = int(best_iter["iter"])
+            #     best_iter_data = best_iter
+
+            #     # Fetch matching weights from weights_history
+            #     weight_row = w_df[w_df["iter"] == best_iter_num]
+            #     if not weight_row.empty:
+            #         # Flatten weight columns only (ignore non-float columns)
+            #         best_weights = [
+            #             float(x) for x in weight_row.iloc[0].values[1:]
+            #             if str(x).replace('.', '', 1).replace('-', '', 1).isdigit()
+            #         ]
+
+                # # Construct readable text
+                # best_iter_summary = (
+                #     f"\n# Best Historical Policy (Iteration {best_iter_num}):\n"
+                #     f" f(weights): {best_iter['total_balls']} | "
+                #     #
+                #     # f"Grid: {[best_iter.get(f'cell{i}', 'N/A') for i in range(6)]}\n"
+                # )
+
+                # if best_weights:
+                #     w_min, w_max = np.min(best_weights), np.max(best_weights)
+                #     w_range = w_max - w_min
+                #     wrange = 340
+                #     max_step = round(wrange / 12, 3)
+                #     best_weight_feedback = (
+                #         f"# Weight Range Insight:\n"
+                #         f"  Weight range = [-170,170]  "
+                #         f"(Δ = {wrange:.3f}) → Suggested MAX_STEP = {max_step}\n"
+                #     )
+
     except Exception as e:
         best_iter_summary = f"\n# ⚠️ Error analyzing historical weights: {str(e)}\n"
 
@@ -624,6 +572,12 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                                     f"y_range=[{y_min_traj}, {y_max_traj}]"
                                 )
 
+                            # bounds_info = (
+                            #     f", x_range=[{x_min_traj}, {x_max_traj}], "
+                            #     f"y_range=[{y_min_traj}, {y_max_traj}]"
+                            # )
+
+
                     if weights:
                         # Convert the list of weights into a JSON string to include in the prompt
                         # Rounding to 4 decimal places keeps it clean
@@ -657,7 +611,24 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
                 )
             else:
                 feedback_text += f"# ⚠️ Error processing executed weights history: {e}\n"
-    # === 3. Render the Jinja2 template with all data ===
+
+
+    # # Add performance trends analysis if we have enough data
+    # if iter_log_data and len([k for k in iter_log_data.keys() if k < iter_idx]) >= 3:
+    #     recent_3 = sorted([k for k in iter_log_data.keys() if k < iter_idx])[-10:]
+    #     ball_trend = [iter_log_data[k]['total_balls'] for k in recent_3]
+    #     if ball_trend[0] > ball_trend[-1]:
+    #         trend = "IMPROVING (f(weights) decreasing)"
+    #     elif ball_trend[0] < ball_trend[-1]:
+    #         trend = "WORSENING (f(weights) increasing)"
+    #     else:
+    #         trend = "STABLE (f(weights) unchanged)"
+    #     # feedback_text += f"\n# Recent Trend: {trend} - Last 3 iterations: {ball_trend}\n"
+
+    # if best_iter_summary or best_weight_feedback:
+    #     feedback_text += "\n# Historical Weight Performance Feedback:\n"
+    #     feedback_text += best_iter_summary + best_weight_feedback
+    
     try:
         tmpl = JINJA_ENV.get_template(template_name)
     except Exception as e:
@@ -755,36 +726,6 @@ def append_weight_history(csv_path, iter_idx, tag, w2):
 # --------------- main loop ---------------
 
 def main():
-    global feedback_window, resample_rate, step_size, run_type, template_number
-    global traj_in_prompt, GRID_REWARD, n_x_seg, n_y_seg
-    global x_edges, y_edges, raw_cell_cols
-    global template_name, save_results_file
-
-    args = _parse_args()
-
-    # Apply CLI config to globals used throughout the file
-    run_type = args.run_type
-    step_size = args.step_size
-    feedback_window = args.feedback_window
-    template_number = args.template_number
-    traj_in_prompt = args.traj_in_prompt
-    resample_rate = args.resample_rate
-    GRID_REWARD = args.grid_reward
-    n_x_seg = args.n_x_seg
-    n_y_seg = args.n_y_seg
-
-    # Recompute derived globals
-    x_edges = np.linspace(-1, 1, n_x_seg + 1)
-    y_edges = np.linspace(-0.6, 0.6, n_y_seg + 1)
-    raw_cell_cols = [f"cell{i}" for i in range(n_x_seg * n_y_seg)]
-
-    template_name, save_results_file = _compute_names(args)
-    _init_paths(save_results_file)
-
-    print(f"template_name: {template_name}")
-    print(f"save_results_file: {save_results_file}")
-    print(f"LOGDIR: {LOGDIR}")
-
     ensure_dirs()
 
     weight_history = []
