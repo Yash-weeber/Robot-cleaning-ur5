@@ -607,7 +607,7 @@ if __name__ == "__main__":
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
     resample_rate = 20
-    template_number = '-1'  # which prompt template to use
+    template_number = '-2'  # which prompt template to use
     temp = "-t04"
     n_x_seg = 3
     n_y_seg = 2
