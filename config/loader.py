@@ -31,12 +31,26 @@ def load_config(config_path="config/config.yaml"):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
 
-
-    run_type = "semantics-RL-optimizer-traj"
+    template_number = config['simulation'].get('template_number', 1)
+    grid_reward = config['llm_settings'].get('grid_reward', False)
+    resample_rate = config['llm_settings'].get('resample_rate', 30)
+    n_x_seg = config['dmp_params'].get('num_x_segments', 3)
+    n_y_seg = config['dmp_params'].get('num_y_segments', 2)
+    run_type = config['llm_settings'].get('run_type', "semantics-RL-optimizer")
     feedback_window = config['llm_settings'].get('feedback_window', 30)
-    step_size = config['dmp_params'].get('step_size', 100)
+    step_size = config['llm_settings'].get('step_size', 100)
+    traj_in_prompt = config['llm_settings'].get('traj_in_prompt', False)
 
-    save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-2"
+    if traj_in_prompt:
+        run_type += "-traj"
+    
+    template = f"{run_type}-totalcost-{template_number}.j2" if not grid_reward else f"{run_type}-gridreward-{template_number}.j2"
+    
+    if traj_in_prompt:
+        run_type += f"-{resample_rate}"
+    save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
+
+    config['llm_settings']['template'] = template
 
     log_parent = os.path.join(config['simulation']['base_dir'], "logs", save_results_file)
     log_root = _make_next_numeric_run_dir(log_parent)

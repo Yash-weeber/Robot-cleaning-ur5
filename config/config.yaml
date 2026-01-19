@@ -8,8 +8,10 @@ simulation:
   max_iters: 400
 
 robot:
-  joint_names: ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-  home_joint_positions: [0.16986918, -2.09439510, -1.1, -0.34906585, 1.57079632, 1.64722557]
+  joint_names:
+    ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
+  home_joint_positions:
+    [0.16986918, -2.09439510, -1.1, -0.34906585, 1.57079632, 1.64722557]
   mop_z_height: 0.51
 
 ik_params:
@@ -26,7 +28,6 @@ dmp_params:
   num_balls: 150
   num_x_segments: 3
   num_y_segments: 2
-  step_size: 100
   random_scale: 10.0
   deci_build: 2
 
@@ -43,6 +44,11 @@ llm_settings:
   n_warmup: 20
   seed_number: 42
   traj_in_prompt: True
+  grid_reward: True
+  run_type: "semantics-RL-optimizer"
+  template_number: 2
+  resample_rate: 30
+  step_size: 100
 
 obstacle_params:
   rect_d0: 0.05

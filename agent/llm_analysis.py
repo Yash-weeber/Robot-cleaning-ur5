@@ -165,6 +165,7 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     feedback_window = config['llm_settings']['feedback_window']
     traj_in_prompt = config['llm_settings']['traj_in_prompt']
     grid_reward_enabled = config['llm_settings'].get('grid_reward', False)
+    resample_rate = config['llm_settings'].get('resample_rate', 30)
 
     # Grid parameters for labeling markdown tables
     n_x_seg = config['dmp_params']['num_x_segments']
@@ -212,8 +213,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
                 it_traj = ee_traj_df[ee_traj_df["iter"] == it_num].copy()
                 if not it_traj.empty:
                     it_traj.drop(columns=['iter', 'timestamp'], inplace=True, errors='ignore')
-                    resampled = it_traj.iloc[::30, :].reset_index(drop=True)
-                    resampled.index.name = 'step'
+                    resampled = it_traj.iloc[::resample_rate, :].reset_index(drop=True)
+                    resampled.set_index('step', inplace=True)
                     feedback_text += f"Resampled 2D Trajectory:\n{resampled.to_markdown()}\n"
 
             # Grid Reward Markdown Table

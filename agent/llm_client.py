@@ -29,12 +29,7 @@ class LLMInterface:
         # Determine template name based on configuration flags
         traj_in_prompt = self.config['llm_settings'].get('traj_in_prompt', True)
         grid_reward = self.config['llm_settings'].get('grid_reward', False)
-
-        run_type = "semantics-RL-optimizer"
-        if traj_in_prompt:
-            run_type += "-traj"
-
-        template_name = f"{run_type}-totalcost.j2" if not grid_reward else f"{run_type}-gridreward.j2"
+        template_name = self.config['llm_settings']['template']
 
         try:
             template = self.jinja_env.get_template(template_name)
@@ -50,7 +45,7 @@ class LLMInterface:
             ymin=bounds["ymin"],
             ymax=bounds["ymax"],
             optimum=0.0,
-            step_size=self.config['dmp_params'].get('step_size', 100),
+            step_size=self.config['llm_settings'].get('step_size', 100),
             feedback_text=feedback_text,
             iter_idx=iter_idx,
             n_x_seg=self.config['dmp_params']['num_x_segments'],
