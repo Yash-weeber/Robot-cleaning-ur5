@@ -57,6 +57,7 @@ run_type = "semantics-RL-optimizer"
 template_number = 2
 traj_in_prompt = False
 GRID_REWARD = True
+GUIDED = False
 n_x_seg = 3
 n_y_seg = 2
 
@@ -170,6 +171,7 @@ def _parse_args():
 
     # Grid reward toggle
     p.add_argument("--grid_reward", "--grid-reward", type=_str2bool, default=GRID_REWARD)
+    p.add_argument("--guided", "--guided", type=_str2bool, default=GUIDED)
 
     p.add_argument("--n-x-seg", type=int, default=n_x_seg)
     p.add_argument("--n-y-seg", type=int, default=n_y_seg)
@@ -188,7 +190,8 @@ def _compute_names(args):
     rt = args.run_type
     if args.traj_in_prompt:
         rt += f"-traj"
-
+    if args.guided:
+        rt += f"-guided"
     tmpl = (
         f"{rt}-totalcost-{args.template_number}.j2"
         if not args.grid_reward
@@ -196,11 +199,13 @@ def _compute_names(args):
     )
     
     if args.resample_rate is not None and args.traj_in_prompt:
-        rt += f"-{args.resample_rate}"
+        rt = f"{args.run_type}-traj-{args.resample_rate}"
+        if args.guided:
+            rt += f"-guided"
     save = (
-        f"{rt}-walled-stepsize-{args.step_size}-hist-{args.feedback_window}-{args.template_number}-t04"
+        f"{rt}-walled-stepsize-{args.step_size}-hist-{args.feedback_window}-{args.template_number}"
         if not args.grid_reward
-        else f"{rt}-walled-stepsize-{args.step_size}-hist-{args.feedback_window}-gridreward-{args.n_x_seg}x{args.n_y_seg}-{args.template_number}-t04"
+        else f"{rt}-walled-stepsize-{args.step_size}-hist-{args.feedback_window}-gridreward-{args.n_x_seg}x{args.n_y_seg}-{args.template_number}"
     )
     return tmpl, save
 
@@ -517,6 +522,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     ymin, ymax = bounds["ymin"], bounds["ymax"]
     grid_list = grid_mat.tolist()
 
+    guidance_text = "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+
     # --- NEW: Define Strict Global Limits for Failure Check (Based on your request) ---
     STRICT_X_MIN = -1.050
     STRICT_X_MAX = 1.050
@@ -678,6 +685,7 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
         iter_idx=iter_idx,
         n_x_seg=n_x_seg,
         n_y_seg=n_y_seg,
+        guidance_text=guidance_text,
         # If you later add more placeholders to the template, pass them here.
         # grid_list=grid_list,
         # total_balls=total_balls,
@@ -756,7 +764,7 @@ def append_weight_history(csv_path, iter_idx, tag, w2):
 
 def main():
     global feedback_window, resample_rate, step_size, run_type, template_number
-    global traj_in_prompt, GRID_REWARD, n_x_seg, n_y_seg
+    global traj_in_prompt, GRID_REWARD, n_x_seg, n_y_seg, GUIDED
     global x_edges, y_edges, raw_cell_cols
     global template_name, save_results_file
 
@@ -772,6 +780,7 @@ def main():
     GRID_REWARD = args.grid_reward
     n_x_seg = args.n_x_seg
     n_y_seg = args.n_y_seg
+    GUIDED = args.guided
 
     # Recompute derived globals
     x_edges = np.linspace(-1, 1, n_x_seg + 1)

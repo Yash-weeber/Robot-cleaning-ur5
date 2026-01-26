@@ -607,13 +607,16 @@ if __name__ == "__main__":
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
     resample_rate = 20
-    template_number = '-2'  # which prompt template to use
-    temp = "-t04"
+    template_number = '-1'  # which prompt template to use
+    temp = ""
     n_x_seg = 3
     n_y_seg = 2
     GRID_REWARD = True # whether to include grid-based reward in LLM feedback
+    guided = True
     if traj_in_prompt:
         run_type += f"-traj-{resample_rate}"
+    if guided:
+        run_type += "-guided"
     template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     root_dir = Path(f"./Results/logs/{save_results_file}/")
@@ -632,7 +635,7 @@ if __name__ == "__main__":
     # Aggregate across all runs in the experiment folder
     plot_avg_cost_history_across_runs(root_dir, show=True, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(1,6)]
+    exp_nums = [i for i in range(1,16)]
     # exp_num = 3
     for exp_num in exp_nums:
         print(f"Processing experiment run: {exp_num}")

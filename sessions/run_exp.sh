@@ -4,9 +4,9 @@
 #SBATCH -c 8
 #SBATCH -t 0-8:30:00
 #SBATCH -p general
-#SBATCH -q public
+#SBATCH -q private
 #SBATCH --mem=64G
-#SBATCH --gpus-per-node=a100:1
+#SBATCH --gpus-per-node=h100:1
 #SBATCH -o sessions/errors/template-2.%j.out
 #SBATCH -e sessions/errors/template-2.%j.err
 #SBATCH --mail-type=ALL
@@ -56,9 +56,11 @@ done
 xvfb-run -a python /home/melmisti/GitHub/Robot-cleaning-ur5/enhancedll_Mohamed.py \
   --run-type semantics-RL-optimizer \
   --step-size 100 \
-  --feedback-window 100 \
+  --feedback-window 30 \
   --n-x-seg 3 \
   --n-y-seg 2 \
-  --grid_reward True \
-  --traj_in_prompt False \
-  --template-number 2
+  --grid_reward False \
+  --traj_in_prompt True \
+  --template-number 1 \
+  --guided True \
+  --resample-rate 20 \
