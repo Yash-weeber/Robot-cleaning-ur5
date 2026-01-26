@@ -110,7 +110,7 @@
       <!-- pos="-1.35 -0.7 -0.01" -->
 
       <!-- Table positioned as base platform -->
-      <body name="table" pos="0 0 0">
+      <body name="table" pos="0.5 0 0">
          <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5" />
          <geom name="table_collision" type="box" size="1 0.6 0.45" pos="0.0 0.0 0.01"
             material="table_material" group="3" contype="1" conaffinity="1"
@@ -142,7 +142,7 @@
       </body>
 
       <!-- UR5e Robot mounted ON the table surface -->
-      <body name="base" pos="0.0 0.5 0.45" quat="1 0 0 1" childclass="ur5e">
+      <body name="base" pos="0.0 0.0 0.45" quat="1 0 0 1" childclass="ur5e">
          <inertial mass="4" pos="0 0 0" diaginertia="0.0044 0.0044 0.0072" />
          <geom mesh="base_0" material="black" class="visual" />
          <geom mesh="base_1" material="jointgray" class="visual" />

@@ -2,8 +2,8 @@ import numpy as np
 import math
 
 try:
-    from pydmps.dmp_discrete import DMPs_discrete
-    from pydmps.dmp_rhythmic import DMPs_rhythmic
+    from .pydmps.dmp_discrete import DMPs_discrete
+    from .pydmps.dmp_rhythmic import DMPs_rhythmic
     MOVEMENT_PRIMITIVES_AVAILABLE = True
 except ImportError:
     print("movement_primitives not found. Using custom implementation.")

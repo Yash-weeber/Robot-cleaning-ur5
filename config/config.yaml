@@ -6,6 +6,9 @@ simulation:
   base_dir: "./Results/"
   move_csv_path: "./Results/logs/move.csv"
   max_iters: 400
+  ws_width: 1.2192
+  ws_length: 0.9144
+  ws_center: [0.0, 0.0]
 
 robot:
   joint_names:

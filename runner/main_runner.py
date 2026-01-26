@@ -60,8 +60,13 @@ class EnhancedDMPController:
 
         # State and logging
         self.running = True
-        self.x_min, self.x_max = -1.0, 1.0
-        self.y_min, self.y_max = -0.6, 0.6
+        ws_center = config["simulation"]["ws_center"]
+        ws_width = config["simulation"]["ws_width"]
+        ws_length = config["simulation"]["ws_length"]
+        self.x_min = ws_center[0] - ws_width / 2.0
+        self.x_max = ws_center[0] + ws_width / 2.0
+        self.y_min = ws_center[1] - ws_length / 2.0
+        self.y_max = ws_center[1] + ws_length / 2.0
         self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
 
         self.reset_robot_to_home()
@@ -166,10 +171,10 @@ class EnhancedDMPController:
             )
             y, _, _ = self.dmp.step(tau=2.0, external_force=ext_f)
             task_traj.append(np.array([y[0], y[1], self.mop_z_height]))
-        for step in range(self.dmp.timesteps):
-            dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
-            task_traj.append(np.array([dmp_pos_2d[0], dmp_pos_2d[1], self.mop_z_height]))
-            if hasattr(self.dmp, 'x') and self.dmp.x < 0.01: break
+        # for step in range(self.dmp.timesteps):
+        #     dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
+        #     task_traj.append(np.array([dmp_pos_2d[0], dmp_pos_2d[1], self.mop_z_height]))
+        #     if hasattr(self.dmp, 'x') and self.dmp.x < 0.01: break
 
         joint_traj = []
         for target_3d in task_traj:
