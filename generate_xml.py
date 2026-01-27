@@ -3,6 +3,7 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 import threading  # NEW
+from config.loader import load_config
 
 def is_in_exclusion(x, y, x_center, y_center, excl_width, excl_length):
     """
@@ -65,30 +66,35 @@ def generate_balls_xml(num_balls, mass, radii, positions, inertias, output_path=
         f.write(xml)
 
 if __name__ == "__main__":
+    config = load_config('config/config.yaml')
     # Simulation parameters
-    num_balls = 200  # Number of balls to generate
+    num_balls = 150  # Number of balls to generate
     radius = 0.02  # Ball radius (meters)
-    mass = 0.05    # Ball mass (kg)
+    mass = 0.03    # Ball mass (kg)
     inertia = 2/5 * mass * radius**2  # Sphere inertia formula
     # inertia = 3e-3  # Approximate inertia value for small spheres
     radii = [radius] * num_balls
     inertias = [(inertia, inertia, inertia)] * num_balls
 
     # Position limits for random generation
-    x_pos_low = -1.3
-    x_pos_high = 1.3
-    y_pos_low = -0.6
-    y_pos_high = 0.6
+    ws_center = config["simulation"]["ws_center"]
+    ws_width = config["simulation"]["ws_width"]
+    ws_length = config["simulation"]["ws_length"]
+    ws_center_x, ws_center_y = ws_center
+    x_pos_low = ws_center_x - ws_width / 2
+    x_pos_high = ws_center_x + ws_width / 2
+    y_pos_low = ws_center_y - ws_length / 2
+    y_pos_high = ws_center_y + ws_length / 2
     z_pos_low = 0.48
     z_pos_high = 0.48  # Fixed z position
 
     # Center of exclusion rectangle
-    x_pos_center = (x_pos_low + x_pos_high) / 2
-    y_pos_center = (y_pos_low + y_pos_high) / 2
+    x_pos_center = ws_center_x
+    y_pos_center = ws_center_y
 
     # Exclusion rectangle dimensions (centered in x/y range)
     swiffer_head_length = 0.3  # x direction
-    swiffer_head_width = 1.4    # y direction
+    swiffer_head_width = 0.4    # y direction
 
     # Generate random positions, excluding the rectangle
     positions = []
@@ -114,7 +120,7 @@ if __name__ == "__main__":
 
     # Desired joint angles (radians) in UR5e joint order
     joint_names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-    desired_pose = [0.188, -2.15, -0.87, 0.0, np.pi/2, np.pi/2]
+    desired_pose = [1.63, -1.51, -1.89, -0.88, 1.76, 0.0]
     # from -1.45 to 1.76
 
     # Set qpos using qpos addresses (not joint IDs)
