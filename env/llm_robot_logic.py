@@ -12,19 +12,19 @@ def generate_warmup_trajectory(n_counter, config):
     ws_width = config["simulation"]["ws_width"]
     ws_length = config["simulation"]["ws_length"]
     if n_counter == 0:
-        x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1] - 0.1), radius=0.4/2.1*ws_width, num_points=200, plot=False)
+        x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.4/2.1*ws_width, num_points=200, plot=False)
     elif n_counter == 1:
-        x_traj, y_traj = rectangle_trajectory(center=(ws_center[0], ws_center[1] - 0.1), width=1.0/2.1*ws_width, height=0.4/1.3*ws_length, num_points=200, plot=False)
+        x_traj, y_traj = rectangle_trajectory(center=(ws_center[0], ws_center[1]), width=1.0/2.1*ws_width, height=0.4/1.3*ws_length, num_points=200, plot=False)
     elif n_counter == 2:
         x_traj, y_traj = elipsoid_trajectory(center=(ws_center[0], ws_center[1]), axes_lengths=(1.0/2.1*ws_width, 0.3), angle=np.pi/6, num_points=200, plot=False)
     elif n_counter == 3:
-        x_traj, y_traj = triangle_trajectory(center=(ws_center[0], ws_center[1] - 0.2), side_length=1.25/2.1*ws_width, num_points=200, plot=False)
+        x_traj, y_traj = triangle_trajectory(center=(ws_center[0], ws_center[1]), side_length=1.25/2.1*ws_width, num_points=200, plot=False)
     else:
         return None
 
     trajectory = np.vstack((x_traj, y_traj))
 
-    trajectory = np.hstack((np.zeros((2, 1)), trajectory)).T
+    trajectory = np.hstack((np.array(ws_center).reshape(2, 1), trajectory)).T
     return trajectory
 
 def get_dmp_step_with_obstacles(dmp):

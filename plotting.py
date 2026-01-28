@@ -7,15 +7,21 @@ import matplotlib.pyplot as plt
 import pdb
 from utils.draw_shapes import rectangle_trajectory, circle_trajectory
 import tiktoken
+from config.loader import load_config
 
-INTERNAL_OBSTACLES = np.array([[0.0, 0.5],
+config = load_config("config/config.yaml")
+
+INTERNAL_OBSTACLES = np.array([[0.0, 0.0],
                             #    [0.0, 0.525],
                             #    [0.0, 0.55],
                             #    [0.0, 0.575]
                                ], dtype=float)
 
-y_min, y_max = -0.6, 0.6
-x_min, x_max = -1.0, 1.0
+ws_center = config["simulation"]["ws_center"]
+ws_width = config["simulation"]["ws_width"]
+ws_length = config["simulation"]["ws_length"]
+y_min, y_max = ws_center[1] - ws_length / 2, ws_center[1] + ws_length / 2
+x_min, x_max = ws_center[0] - ws_width / 2, ws_center[0] + ws_width / 2
 
 def make_trajectories_gif(
     dmp_trajectory_csv,
@@ -65,7 +71,7 @@ def make_trajectories_gif(
         output_path = Path(output_path)
 
     x_bounds, y_bounds = rectangle_trajectory(
-        center=(0, 0), width=2.0, height=1.2, num_points=200, plot=False
+        center=ws_center, width=ws_width, height=ws_length, num_points=200, plot=False
     )
 
     with imageio.get_writer(output_path, mode="I", fps=fps) as writer:
@@ -137,8 +143,8 @@ def make_trajectories_gif(
 
             ax.set_xlabel("X Position")
             ax.set_ylabel("Y Position")
-            ax.set_xlim(-1.05, 1.05)
-            ax.set_ylim(-0.65, 0.65)
+            ax.set_xlim(x_min-0.05, x_max+0.05)
+            ax.set_ylim(y_min-0.05, y_max+0.05)
             ax.grid(True)
             ax.legend()
 
@@ -316,7 +322,7 @@ def plot_avg_cost_history_across_runs(
     logs_root_dir,
     *,
     output_path=None,
-    show=True,
+    show=False,
     min_runs_per_iter=1,
     n_x_seg=4,
     n_y_seg=4,
@@ -481,7 +487,7 @@ def plot_avg_cost_history_across_runs(
     # print(stats, cell_stats if 'cell_stats' in locals() else None)
     return stats, csv_paths
 
-def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_seg=4):
+def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_seg=4, show=False):
     # Load cost history from CSV
     df = pd.read_csv(cost_history_csv)
     p = Path(cost_history_csv).resolve()
@@ -518,7 +524,8 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
     plt.grid(True)
     plt.legend()
     plt.savefig(cost_plots_dir / 'cost_history.png')
-    plt.show()
+    if show:
+        plt.show()
     plt.close()
 
     # 2x3 subplot for cell0 to cell5, arranged as transposed 3x2
@@ -536,7 +543,8 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
                 axes[row, col].grid(True)
         plt.tight_layout()
         plt.savefig(cost_plots_dir / 'cost_history_cells_grid.png')
-        plt.show()
+        if show:
+            plt.show()
         plt.close()
     elif cell_cols:
         fig, axes = plt.subplots(n_y_seg, n_x_seg, figsize=(15, 8), sharex=True)
@@ -551,10 +559,11 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
             fig.delaxes(axes[j])
         plt.tight_layout()
         plt.savefig(cost_plots_dir / 'cost_history_cells.png')
-        plt.show()
+        if show:
+            plt.show()
         plt.close()
 
-def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None):
+def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None, show=False):
     # Load trajectory data from CSV
     df_dmp = pd.read_csv(dmp_trajectory_csv)
     df_ee = pd.read_csv(ee_trajectory_csv) if ee_trajectory_csv else None
@@ -565,7 +574,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None)
     traj_plots_dir = parent_folder / "traj_plots"
     traj_plots_dir.mkdir(parents=True, exist_ok=True)
     # os.chdir(traj_plots_dir)
-    x_bounds, y_bounds = rectangle_trajectory(center=(0,0), width=2.0, height=1.2, num_points=200, plot=False)
+    x_bounds, y_bounds = rectangle_trajectory(center=ws_center, width=ws_width, height=ws_length, num_points=200, plot=False)
     plt.figure(figsize=(10, 6))
     for it in df_dmp['iter'].unique():
         plot_path = traj_plots_dir / f'iteration_{it}.png'
@@ -592,12 +601,14 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None)
         # plt.title('Trajectories Over Iterations')
         plt.xlabel('X Position')
         plt.ylabel('Y Position')
-        plt.xlim(-1.05, 1.05)
-        plt.ylim(-0.65, 0.65)
+        plt.xlim(-0.05, x_max+0.05)
+        plt.ylim(y_min-0.05, y_max+0.05)
+        plt.axis('equal')
         plt.legend()
         plt.grid(True)
         plt.savefig(plot_path)
-        plt.show()
+        if show:
+            plt.show()
         plt.close()
 
 #%%
@@ -612,7 +623,7 @@ if __name__ == "__main__":
     n_x_seg = 3
     n_y_seg = 2
     GRID_REWARD = True # whether to include grid-based reward in LLM feedback
-    guided = True
+    guided = False  # whether to use guided trajectory optimization
     if traj_in_prompt:
         run_type += f"-traj-{resample_rate}"
     if guided:
@@ -633,7 +644,7 @@ if __name__ == "__main__":
     
     print(f"Processing experiment folder: {root_dir}")
     # Aggregate across all runs in the experiment folder
-    plot_avg_cost_history_across_runs(root_dir, show=True, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
+    plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
     exp_nums = [i for i in range(1,16)]
     # exp_num = 3

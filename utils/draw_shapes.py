@@ -11,7 +11,7 @@ def circle_trajectory(center, radius, num_points=100, plot=True, color='b', line
     y = center[1] + radius * np.sin(theta)
     if plot:
         plt.plot(x, y, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')
         plt.grid(True)
     return x, y
 
@@ -30,7 +30,7 @@ def elipsoid_trajectory(center, axes_lengths, angle=0, num_points=100, plot=True
     Y = center[1] + ellipse[1, :]
     if plot:
         plt.plot(X, Y, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')
         plt.grid(True)
     return X, Y
 
@@ -60,7 +60,7 @@ def square_trajectory(center, side_length, num_points=100, plot=True, color='m',
     y_traj.append(corners[0][1])
     if plot:
         plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')
         plt.grid(True)
     return np.array(x_traj), np.array(y_traj)
 
@@ -91,7 +91,7 @@ def rectangle_trajectory(center, width, height, num_points=100, plot=True, color
     y_traj.append(corners[0][1])
     if plot:
         plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')
         plt.grid(True)
     return np.array(x_traj), np.array(y_traj)
 
@@ -120,7 +120,7 @@ def triangle_trajectory(center, side_length, num_points=100, plot=True, color='c
     y_traj.append(corners[0][1])
     if plot:
         plt.plot(x_traj, y_traj, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')
         plt.grid(True)
     return np.array(x_traj), np.array(y_traj)
 
@@ -139,6 +139,6 @@ def infinity_trajectory(center, size=(1.0, 1.0), num_points=200, plot=True, colo
     y = center[1] + b * np.sin(t) * np.cos(t)
     if plot:
         plt.plot(x, y, color=color, linestyle=linestyle)
-        plt.axis('equal')
+        # plt.axis('equal')
         plt.grid(True)
     return x, y

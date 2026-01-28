@@ -24,7 +24,7 @@ class LLMInterface:
         if not hasattr(self, "_active_idx"):
             self._active_idx = 0
 
-    def render_prompt(self, iter_idx, feedback_text, bounds):
+    def render_prompt(self, iter_idx, feedback_text, bounds, guidance_text=""):
 
         # Determine template name based on configuration flags
         traj_in_prompt = self.config['llm_settings'].get('traj_in_prompt', True)
@@ -38,8 +38,8 @@ class LLMInterface:
 
         # Rendering context synchronized with the Architect version
         return template.render(
-            max_iters=self.config['simulation']['max_iters'],
-            n_bfs=self.config['dmp_params']['n_bfs'],
+            MAX_ITERS=self.config['simulation']['max_iters'],
+            N_BFS=self.config['dmp_params']['n_bfs'],
             xmin=bounds["xmin"],
             xmax=bounds["xmax"],
             ymin=bounds["ymin"],
@@ -49,7 +49,8 @@ class LLMInterface:
             feedback_text=feedback_text,
             iter_idx=iter_idx,
             n_x_seg=self.config['dmp_params']['num_x_segments'],
-            n_y_seg=self.config['dmp_params']['num_y_segments']
+            n_y_seg=self.config['dmp_params']['num_y_segments'],
+            guidance_text=guidance_text
         )
 
     def call_ollama(self, prompt, token_limit=100000):
@@ -58,7 +59,7 @@ class LLMInterface:
             response = ollama.chat(
                 model=self.config['llm_settings']['ollama_model'],
                 messages=[{"role": "user", "content": prompt}],
-                options={'num_predict': token_limit}  # Mapping token_limit to Ollama's parameter
+                options={'num_ctx': token_limit}  # Mapping token_limit to Ollama's parameter
             )
             return response["message"]["content"].strip()
         except Exception as e:

@@ -55,11 +55,16 @@ def load_config(config_path="config/config.yaml"):
         if guided:
             rt += "-guided"
     
-    save_results_file = f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
+    save_results_file = f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
 
+    config['llm_settings']['save_results_file'] = save_results_file
     config['llm_settings']['template'] = template
 
-    log_parent = os.path.join(config['simulation']['base_dir'], "logs", save_results_file)
+    return config
+
+def setup_logging_dirs(config):
+
+    log_parent = os.path.join(config['simulation']['base_dir'], "logs", config['llm_settings']['save_results_file'])
     log_root = _make_next_numeric_run_dir(log_parent)
 
     config['logs'] = {
