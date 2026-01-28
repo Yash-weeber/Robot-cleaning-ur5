@@ -40,15 +40,22 @@ def load_config(config_path="config/config.yaml"):
     feedback_window = config['llm_settings'].get('feedback_window', 30)
     step_size = config['llm_settings'].get('step_size', 100)
     traj_in_prompt = config['llm_settings'].get('traj_in_prompt', False)
+    guided = config['llm_settings'].get('guided', False)
+    rt = run_type
 
     if traj_in_prompt:
-        run_type += "-traj"
+        rt += "-traj"
+    if guided:
+        rt += "-guided"
     
-    template = f"{run_type}-totalcost-{template_number}.j2" if not grid_reward else f"{run_type}-gridreward-{template_number}.j2"
+    template = f"{rt}-totalcost-{template_number}.j2" if not grid_reward else f"{rt}-gridreward-{template_number}.j2"
     
     if traj_in_prompt:
-        run_type += f"-{resample_rate}"
-    save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
+        rt = run_type + f"-traj-{resample_rate}"
+        if guided:
+            rt += "-guided"
+    
+    save_results_file = f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
 
     config['llm_settings']['template'] = template
 

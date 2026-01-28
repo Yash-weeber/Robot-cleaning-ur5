@@ -68,9 +68,9 @@ def generate_balls_xml(num_balls, mass, radii, positions, inertias, output_path=
 if __name__ == "__main__":
     config = load_config('config/config.yaml')
     # Simulation parameters
-    num_balls = 150  # Number of balls to generate
-    radius = 0.02  # Ball radius (meters)
-    mass = 0.03    # Ball mass (kg)
+    num_balls = 500  # Number of balls to generate
+    radius = 0.003  # Ball radius (meters)
+    mass = 0.025    # Ball mass (kg)
     inertia = 2/5 * mass * radius**2  # Sphere inertia formula
     # inertia = 3e-3  # Approximate inertia value for small spheres
     radii = [radius] * num_balls

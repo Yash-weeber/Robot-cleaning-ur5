@@ -171,10 +171,6 @@ class EnhancedDMPController:
             )
             y, _, _ = self.dmp.step(tau=2.0, external_force=ext_f)
             task_traj.append(np.array([y[0], y[1], self.mop_z_height]))
-        # for step in range(self.dmp.timesteps):
-        #     dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
-        #     task_traj.append(np.array([dmp_pos_2d[0], dmp_pos_2d[1], self.mop_z_height]))
-        #     if hasattr(self.dmp, 'x') and self.dmp.x < 0.01: break
 
         joint_traj = []
         for target_3d in task_traj:
