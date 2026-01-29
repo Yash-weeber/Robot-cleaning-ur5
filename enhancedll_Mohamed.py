@@ -522,7 +522,8 @@ def enhanced_ollama_prompt(prev_w_flat, grid_mat, total_balls, iter_idx, history
     ymin, ymax = bounds["ymin"], bounds["ymax"]
     grid_list = grid_mat.tolist()
 
-    guidance_text = "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+    # guidance_text = "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+    guidance_text = "The policy should result in an infinity sign shaped trajectory that covers the workspace, while avoiding going out of bounds. The infinity sign shaped sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
 
     # --- NEW: Define Strict Global Limits for Failure Check (Based on your request) ---
     STRICT_X_MIN = -1.050
@@ -764,7 +765,7 @@ def append_weight_history(csv_path, iter_idx, tag, w2):
 
 def main():
     global feedback_window, resample_rate, step_size, run_type, template_number
-    global traj_in_prompt, GRID_REWARD, n_x_seg, n_y_seg, GUIDED
+    global traj_in_prompt, GRID_REWARD, n_x_seg, n_y_seg, GUIDED, BASE_DIR
     global x_edges, y_edges, raw_cell_cols
     global template_name, save_results_file
 
@@ -781,6 +782,7 @@ def main():
     n_x_seg = args.n_x_seg
     n_y_seg = args.n_y_seg
     GUIDED = args.guided
+    BASE_DIR = args.log_parent
 
     # Recompute derived globals
     x_edges = np.linspace(-1, 1, n_x_seg + 1)
@@ -941,7 +943,7 @@ def main():
             # return
             try:
                 # response = call_gemini(prompt)
-                response = call_ollama(prompt, token_limit=100000)
+                response = call_ollama(prompt, token_limit=110000)
 
             except Exception as e:
 

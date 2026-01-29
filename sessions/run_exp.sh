@@ -56,11 +56,12 @@ done
 xvfb-run -a python /home/melmisti/GitHub/Robot-cleaning-ur5/enhancedll_Mohamed.py \
   --run-type semantics-RL-optimizer \
   --step-size 100 \
-  --feedback-window 30 \
+  --feedback-window 400 \
   --n-x-seg 3 \
   --n-y-seg 2 \
-  --grid_reward False \
-  --traj_in_prompt True \
+  --grid_reward True \
+  --traj_in_prompt False \
   --template-number 1 \
   --guided True \
   --resample-rate 20 \
+  --log-parent /scratch/melmisti/robot_cleaning/Results2/ \

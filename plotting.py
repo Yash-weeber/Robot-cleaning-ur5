@@ -602,7 +602,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None)
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 100  # number of recent iterations to summarize for feedback
+    feedback_window = 400  # number of recent iterations to summarize for feedback
     step_size = 100
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
@@ -620,6 +620,7 @@ if __name__ == "__main__":
     template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     root_dir = Path(f"./Results/logs/{save_results_file}/")
+    # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results2/logs/{save_results_file}/")
     # root_dir = f"/scratch/melmisti/robot_cleaning/Results/logs/{save_results_file}/"
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
@@ -647,19 +648,19 @@ if __name__ == "__main__":
         # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%
-# root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"
-# ee_traj_file = root_dir + f"1/ee_trajectory.csv"
-# df_ee = pd.read_csv(ee_traj_file)
-# df_it = df_ee[df_ee['iter'] == 50]
-# df_it.drop(columns=['iter', 'timestamp'], inplace=True)
-# print(df_it.shape)
-# df_resampled = df_it.iloc[::30, :].reset_index(drop=True)
-# df_resampled.set_index('step', inplace=True)
-# print(df_resampled.shape)
-# plt.figure(figsize=(10, 6))
-# plt.plot(df_resampled['x'], df_resampled['y'], marker='o', linestyle='-')
-# plt.plot(df_it['x'], df_it['y'], linestyle='--', color='gray', alpha=0.5)
-# plt.show()
+# # root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"
+# # ee_traj_file = root_dir + f"1/ee_trajectory.csv"
+# # df_ee = pd.read_csv(ee_traj_file)
+# # df_it = df_ee[df_ee['iter'] == 50]
+# # df_it.drop(columns=['iter', 'timestamp'], inplace=True)
+# # print(df_it.shape)
+# # df_resampled = df_it.iloc[::30, :].reset_index(drop=True)
+# # df_resampled.set_index('step', inplace=True)
+# # print(df_resampled.shape)
+# # plt.figure(figsize=(10, 6))
+# # plt.plot(df_resampled['x'], df_resampled['y'], marker='o', linestyle='-')
+# # plt.plot(df_it['x'], df_it['y'], linestyle='--', color='gray', alpha=0.5)
+# # plt.show()
 
 # one_iteration = "-"*70 + " Iteration 14 " + "-"*70 + "\n" + f"""weights=[63.0, 180.0, 200.0, 150.0, 100.0, -30.0, -100.0, -130.0, -50.0, -30.0, 120.0, 80.0, 110.0, 150.0, 170.0, 90.0, 20.0, -100.0, -50.0, -100.0] 
 # x_range=[-0.7714, 0.9389], y_range=[-0.5174, 0.6445] 
@@ -673,8 +674,8 @@ if __name__ == "__main__":
 # print(one_iteration)
 # model = "gpt-oss-120b"
 # enc = tiktoken.encoding_for_model(model)
-# tokens = enc.encode(one_iteration)
-# print(f"Resampled trajectory token count for model {model}: {len(tokens)}")
+# one_iteration_tokens = enc.encode(100*one_iteration)
+# print(f"token count for model {model} one iteration: {len(one_iteration_tokens)}")
 # print(1e5//1365)
 
 # # # %%
@@ -694,18 +695,8 @@ if __name__ == "__main__":
 # # Here's how we will interact :
 #     1. I will provide you max steps (400) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
 #     2. You will provide the response in exact following format:
-#         * Block 1: 
-#                 **<think>**
-#                     Perform a detailed analysis of the current state:
-#                     - **State Summary**: Identify the Global Best step from the history buffer and its proximity to 0.0 value in each grid segment.
-#                     - **Trend Analysis**: Compare the most recent trials to determine the current trajectory.
-#                     - **Step Evaluation**: Analyze how the previous change in policy weights affected the cost values in each grid segment.
-#                     - **Strategy & Pacing**: State whether you are **Exploring** (using step ≈ 100) or **Exploiting** (smaller step). Justify this based on the iteration index  to pace the search (starting broad, narrowing later).
-#                 </think>
-#         * Block 2: 
-#                 <weights>
-#                     a new set of 20 float weights as an array, aiming to minimize the functions value f(weights). in the following format: [w1, w2, ..., w20]
-#                 </weights>
+#         * Line 1: a new set of 20 float weights as an array, aiming to minimizw the functions value f(weights).
+#         * Line 2: details explination of why you chose the weights.
 #     3. I will then provide the function's f(weights) at that point and the current iteration.
 #     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
 
@@ -714,11 +705,14 @@ if __name__ == "__main__":
 #     2. **The global optimum should be around 0.0.** If you are higher than that, this is a local optimum. You should explore instead of exploiting.
 #     3. Search both the positive and the negative values. **During exploration, use search step size of 100**
 
+# # Guidance:
+#     The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous.
+
 # Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
 # """
 
-# tokens_prompt = enc.encode(prompt)
+# tokens_prompt = enc.encode(prompt+"\n"+400*one_iteration+"\n"+"Now you are at iteration 15 out of 400. Please provide the results in the indicated format.")
 # print(f"Prompt tokens length: {len(tokens_prompt)}")
-# print(f"total hist for context window 10k: {1e5//(len(tokens) + len(tokens_prompt))}")
+# print(f"total hist for context window 100k: {1e5//(len(one_iteration_tokens) + len(tokens_prompt))}")
 # %%
 
