@@ -135,12 +135,12 @@ def run_llm_optimization(config):
             w_next = w2 + np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
         else:
             # Build detailed prompt with coordinate tables and grid markdown
-            feedback_text = build_llm_feedback(
+            feedback_text, guidance_text = build_llm_feedback(
                 it + 1, pd.read_csv(config['logs']['weight_history_csv']),
                 iter_log_data, traj_feedback_data, ee_traj_df, config, bounds
             )
 
-            prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text="")
+            prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text=guidance_text)
 
             try:
                 # Use large token limit for coordinate tables

@@ -613,7 +613,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 100  # number of recent iterations to summarize for feedback
+    feedback_window = 400  # number of recent iterations to summarize for feedback
     step_size = 100
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
@@ -622,7 +622,7 @@ if __name__ == "__main__":
     temp = ""
     n_x_seg = 3
     n_y_seg = 2
-    GRID_REWARD = True # whether to include grid-based reward in LLM feedback
+    GRID_REWARD = False # whether to include grid-based reward in LLM feedback
     guided = False  # whether to use guided trajectory optimization
     if traj_in_prompt:
         run_type += f"-traj-{resample_rate}"
