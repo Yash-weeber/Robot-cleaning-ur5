@@ -1,0 +1,8 @@
+*.pyc
+*.pyc
+/pydmps/__pycache__
+keys.env
+*.png
+*.gif
+/Results/*
+/sessions/errors/*
