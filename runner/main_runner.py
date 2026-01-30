@@ -60,8 +60,13 @@ class EnhancedDMPController:
 
         # State and logging
         self.running = True
-        self.x_min, self.x_max = -1.0, 1.0
-        self.y_min, self.y_max = -0.6, 0.6
+        self.ws_center = config["simulation"]["ws_center"]
+        ws_width = config["simulation"]["ws_width"]
+        ws_length = config["simulation"]["ws_length"]
+        self.x_min = self.ws_center[0] - ws_width / 2.0
+        self.x_max = self.ws_center[0] + ws_width / 2.0
+        self.y_min = self.ws_center[1] - ws_length / 2.0
+        self.y_max = self.ws_center[1] + ws_length / 2.0
         self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
 
         self.reset_robot_to_home()
@@ -143,7 +148,7 @@ class EnhancedDMPController:
             trajectory = np.vstack(([current_pos[:2]], trajectory))
         else:
             if shape == "infinity":
-                x_traj, y_traj = infinity_trajectory(center=(0.0, 0.0), size=(2.0, 2.5), num_points=400, plot=False)
+                x_traj, y_traj = infinity_trajectory(center=(self.ws_center[0], self.ws_center[1]), size=(1.0, 2.5), num_points=400, plot=False)
                 trajectory = np.vstack((x_traj, y_traj)).T
                 start_target_3d = np.array([x_traj[0], y_traj[0], self.mop_z_height])
                 # Training IK preserved
@@ -166,10 +171,6 @@ class EnhancedDMPController:
             )
             y, _, _ = self.dmp.step(tau=2.0, external_force=ext_f)
             task_traj.append(np.array([y[0], y[1], self.mop_z_height]))
-        for step in range(self.dmp.timesteps):
-            dmp_pos_2d, _, _ = self.dmp.step(tau=2.0)
-            task_traj.append(np.array([dmp_pos_2d[0], dmp_pos_2d[1], self.mop_z_height]))
-            if hasattr(self.dmp, 'x') and self.dmp.x < 0.01: break
 
         joint_traj = []
         for target_3d in task_traj:

@@ -6,11 +6,15 @@ simulation:
   base_dir: "./Results/"
   move_csv_path: "./Results/logs/move.csv"
   max_iters: 400
+  ws_width: 0.9144
+  ws_length: 1.2192
+  ws_center: [0.6, 0.0]
 
 robot:
-  joint_names: ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
-  home_joint_positions: [0.16986918, -2.09439510, -1.1, -0.34906585, 1.57079632, 1.64722557]
-  mop_z_height: 0.51
+  joint_names:
+    ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
+  home_joint_positions: [1.63, -1.51, -1.89, -0.88, 1.76, 0.0]
+  mop_z_height: 0.49
 
 ik_params:
   init_lambda: 0.15
@@ -26,7 +30,6 @@ dmp_params:
   num_balls: 150
   num_x_segments: 3
   num_y_segments: 2
-  step_size: 100
   random_scale: 10.0
   deci_build: 2
 
@@ -36,13 +39,19 @@ animation:
 
 llm_settings:
   gemini_model: "gemini-2.5-flash"
-  ollama_model: "gpt-oss:120b"
+  ollama_model: "gpt-oss:20b"
   history_window: 25
   trajectory_history_window: 40
-  feedback_window: 30
+  feedback_window: 400
   n_warmup: 20
   seed_number: 42
-  traj_in_prompt: True
+  traj_in_prompt: False
+  grid_reward: False
+  guided: False
+  run_type: "semantics-RL-optimizer"
+  template_number: 1
+  resample_rate: 20
+  step_size: 100
 
 obstacle_params:
   rect_d0: 0.05

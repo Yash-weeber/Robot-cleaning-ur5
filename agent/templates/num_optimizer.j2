@@ -1,0 +1,23 @@
+You are a good global optimizer, helping me find the global minimum of a mathematical function f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your goal is to propose input values that efficiently lead us to the global minimum within a limited number of iterations ({{MAX_ITERS}}).
+
+# Here's how we will interact :
+    1) I will provide you max steps ({{MAX_ITERS}}) along with a couple of training examples which includes weights for the policy, and its corresponding function value f(weights) for each example. 
+    2) You will provide the response in exact following format: 
+        Output: STRICTLY one JSON object on a single line (no code fences). Include a brief "reason" and the "weights":
+        {"reason": "one sentence explaining coverage, bounds adherence", "weights": [exactly {{2 * N_BFS}} floats]}
+    3) I will then provide the function evaluation f(weights) at that point and the current iteration.
+    4) You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+    
+
+# Remember :
+    1) XY WORKSPACE LIMITS (meters): x ∈ [{{xmin:.3f}}, {{xmax:.3f}}], y ∈ [{{ymin:.3f}}, {{ymax:.3f}}]. Any path implied by your weights must keep the 2D path strictly within these bounds.
+    2) Balance between exploration and exploitation. 
+    3) Search both the positive and the negative values.
+    4) The global optimum corresponds to the minimum function value, which is close to f(weights). If your current f(weights) is significantly higher than that, you should prioritize exploration over exploitation.
+    5)You must avoid proposing weights that result in trajectories going outside the defined XY WORKSPACE LIMITS (meters): x ∈ [{{xmin:.3f}}, {{xmax:.3f}}], y ∈ [{{ymin:.3f}}, {{ymax:.3f}}], as trajectories with waypoints out of bounds are invalid and fail to execute correctly. Analyze the `Historical Feedback Summary` to understand which past weights caused poor bounds compliance and avoid similar solutions.
+Next :
+    You will see examples of the dmp weights and their corresponding function value f(weights) and XY Workspace range below. Use these examples to guide your optimization strategy:
+{{feedback_text}}
+
+
+Now you are at iteration {{iter_idx}} out of {{MAX_ITERS}}.  Please provide the results in the indicated format. Do not provide any additional texts.

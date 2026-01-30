@@ -1,12 +1,12 @@
 import sys
 import os
 import dotenv
-os.environ["MUJOCO_GL"] = "egl"
-os.environ["PYOPENGL_PLATFORM"] = "egl"
+# os.environ["MUJOCO_GL"] = "egl"
+# os.environ["PYOPENGL_PLATFORM"] = "egl"
 # Ensure project root is in path for modular imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from config.loader import load_config
+from config.loader import load_config, setup_logging_dirs
 from runner.llm_main_runner import run_llm_optimization
 
 
@@ -24,6 +24,7 @@ def main():
     try:
         # 1. Load configuration from YAML
         config = load_config("config/config.yaml")
+        setup_logging_dirs(config)
 
         # 2. Run the optimization loop
         run_llm_optimization(config)

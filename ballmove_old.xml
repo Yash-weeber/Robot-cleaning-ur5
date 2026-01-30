@@ -148,10 +148,18 @@
                       <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01"/>
                       <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1"/>
 
-                      <body name="mop_head">
-                        <joint name="mop_socket" type="ball" damping="0.5" limited="false"/>
-                        <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
-                        <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1" pos="0 -0.05 -0.1"/>
+                      <body name="mop_head_y">
+                        <joint name="mop_socket_y" type="hinge" axis="0 1 0" damping="0.5"
+                              limited="true" range="-1.57079633 1.57079633"/>
+
+                        <body name="mop_head_x">
+                          <joint name="mop_socket_x" type="hinge" axis="1 0 0" damping="0.5"
+                                limited="true" range="-1.57079633 1.57079633"/>
+
+                          <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005"/>
+                          <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1"
+                                pos="0 -0.05 -0.1"/>
+                        </body>
                       </body>
                     </body>
                   </body>

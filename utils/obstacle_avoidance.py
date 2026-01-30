@@ -1,16 +1,23 @@
 import numpy as np
-# Rectangle keep-in zone boundaries/parameters
-RECT_CENTER = np.array([0.0, 0.0], dtype=float)
-RECT_WIDTH = 2.0
-RECT_HEIGHT = 1.2
+from config.loader import load_config
 
-XMIN = RECT_CENTER[0] - RECT_WIDTH / 2.0
-XMAX = RECT_CENTER[0] + RECT_WIDTH / 2.0
-YMIN = RECT_CENTER[1] - RECT_HEIGHT / 2.0
-YMAX = RECT_CENTER[1] + RECT_HEIGHT / 2.0
+config = load_config(config_path="config/config.yaml")
+
+# Rectangle keep-in zone boundaries/parameters
+ws_center = config["simulation"]["ws_center"]
+ws_width = config["simulation"]["ws_width"]
+ws_length = config["simulation"]["ws_length"]
+
+XMIN = ws_center[0] - ws_width / 2.0
+XMAX = ws_center[0] + ws_width / 2.0
+YMIN = ws_center[1] - ws_length / 2.0
+YMAX = ws_center[1] + ws_length / 2.0
 
 # Obstacle points inside the rectangle
-INTERNAL_OBSTACLES = np.array([[0.0, 0.5]], dtype=float)
+INTERNAL_OBSTACLES = np.array([[0.0, 0.5],
+                               [0.0, 0.525],
+                               [0.0, 0.55],
+                               [0.0, 0.575]], dtype=float)
 
 
 def _project_into_rect(y):

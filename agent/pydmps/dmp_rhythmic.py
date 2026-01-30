@@ -1,4 +1,4 @@
-from pydmps.dmp import DMPs  # Import the base DMPs class from the dmps.dmp module
+from .dmp import DMPs  # Import the base DMPs class from the dmps.dmp module
 import numpy as np         # Import numpy for numerical operations
 
 class DMPs_rhythmic(DMPs):  # Define a class for rhythmic DMPs, inheriting from DMPs

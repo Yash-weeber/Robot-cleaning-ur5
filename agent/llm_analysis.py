@@ -158,13 +158,15 @@ def load_traj_feedback(csv_path):
 
 def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_traj_df, config, bounds):
 
-    STRICT_X_MIN, STRICT_X_MAX = -1.050, 1.050
-    STRICT_Y_MIN, STRICT_Y_MAX = -0.650, 0.650
+    STRICT_X_MIN, STRICT_X_MAX = bounds['xmin'], bounds['xmax']
+    STRICT_Y_MIN, STRICT_Y_MAX = bounds['ymin'], bounds['ymax']
+    guided = config['llm_settings'].get('guided', False)
 
     n_warmup = config['llm_settings']['n_warmup']
     feedback_window = config['llm_settings']['feedback_window']
     traj_in_prompt = config['llm_settings']['traj_in_prompt']
     grid_reward_enabled = config['llm_settings'].get('grid_reward', False)
+    resample_rate = config['llm_settings'].get('resample_rate', 30)
 
     # Grid parameters for labeling markdown tables
     n_x_seg = config['dmp_params']['num_x_segments']
@@ -173,6 +175,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     y_edges = np.linspace(bounds['ymin'], bounds['ymax'], n_y_seg + 1)
 
     feedback_text = ""
+
+    guidance_text = "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
 
     if w_df is not None and not w_df.empty:
         # Get recent executed iterations
@@ -198,8 +202,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
                 is_failed = (min(x_vals) < STRICT_X_MIN or max(x_vals) > STRICT_X_MAX or
                              min(y_vals) < STRICT_Y_MIN or max(y_vals) > STRICT_Y_MAX)
                 bounds_info = f"x_range=[{min(x_vals):.4f}, {max(x_vals):.4f}], y_range=[{min(y_vals):.4f}, {max(y_vals):.4f}]"
-                if is_failed:
-                    bounds_info += " (FAILED)"
+                # if is_failed:
+                #     bounds_info += " (FAILED)"
 
             # Construct iteration block with exact separators
             iter_label = f" Examples {it_num + n_warmup} " if it_num < 1 else f" Iteration {it_num} "
@@ -212,8 +216,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
                 it_traj = ee_traj_df[ee_traj_df["iter"] == it_num].copy()
                 if not it_traj.empty:
                     it_traj.drop(columns=['iter', 'timestamp'], inplace=True, errors='ignore')
-                    resampled = it_traj.iloc[::30, :].reset_index(drop=True)
-                    resampled.index.name = 'step'
+                    resampled = it_traj.iloc[::resample_rate, :].reset_index(drop=True)
+                    resampled.set_index('step', inplace=True)
                     feedback_text += f"Resampled 2D Trajectory:\n{resampled.to_markdown()}\n"
 
             # Grid Reward Markdown Table
@@ -227,4 +231,4 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
             else:
                 feedback_text += f"f(weights)={current_f}\n\n"
 
-    return feedback_text
+    return feedback_text, guidance_text

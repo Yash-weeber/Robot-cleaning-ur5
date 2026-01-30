@@ -31,14 +31,40 @@ def load_config(config_path="config/config.yaml"):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
 
-
-    run_type = "semantics-RL-optimizer-traj"
+    template_number = config['simulation'].get('template_number', 1)
+    grid_reward = config['llm_settings'].get('grid_reward', False)
+    resample_rate = config['llm_settings'].get('resample_rate', 30)
+    n_x_seg = config['dmp_params'].get('num_x_segments', 3)
+    n_y_seg = config['dmp_params'].get('num_y_segments', 2)
+    run_type = config['llm_settings'].get('run_type', "semantics-RL-optimizer")
     feedback_window = config['llm_settings'].get('feedback_window', 30)
-    step_size = config['dmp_params'].get('step_size', 100)
+    step_size = config['llm_settings'].get('step_size', 100)
+    traj_in_prompt = config['llm_settings'].get('traj_in_prompt', False)
+    guided = config['llm_settings'].get('guided', False)
+    rt = run_type
 
-    save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-2"
+    if traj_in_prompt:
+        rt += "-traj"
+    if guided:
+        rt += "-guided"
+    
+    template = f"{rt}-totalcost-{template_number}.j2" if not grid_reward else f"{rt}-gridreward-{template_number}.j2"
+    
+    if traj_in_prompt:
+        rt = run_type + f"-traj-{resample_rate}"
+        if guided:
+            rt += "-guided"
+    
+    save_results_file = f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
 
-    log_parent = os.path.join(config['simulation']['base_dir'], "logs", save_results_file)
+    config['llm_settings']['save_results_file'] = save_results_file
+    config['llm_settings']['template'] = template
+
+    return config
+
+def setup_logging_dirs(config):
+
+    log_parent = os.path.join(config['simulation']['base_dir'], "logs", config['llm_settings']['save_results_file'])
     log_root = _make_next_numeric_run_dir(log_parent)
 
     config['logs'] = {

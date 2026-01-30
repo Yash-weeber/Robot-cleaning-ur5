@@ -104,6 +104,9 @@ def parse_ollama_weights(out_text, n_bfs):
     text = out_text.strip()
     if text.startswith("```"):
         text = re.sub(r"^```[^\n]*\n|\n```$", "", text, flags=re.MULTILINE).strip()
+    
+    text = text.split("<weights>")[1].split("</weights>")[0].strip() if "<weights>" in text and "</weights>" in text else text
+    
     try:
         obj = json.loads(text)
         cand = obj.get("weights", None)
