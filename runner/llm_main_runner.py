@@ -123,7 +123,7 @@ def run_llm_optimization(config):
         log_iteration_data(it, grid, total_balls, len(joint_traj), config['logs']['iter_log_csv'])
 
         # LLM Feedback Construction
-        iter_log_data = load_iteration_log(config['logs']['iter_log_csv'])
+        iter_log_data = load_iteration_log(config['logs']['iter_log_csv'], config['dmp_params']['num_x_segments'], config['dmp_params']['num_y_segments'])
         # CRITICAL: Use Actual EE Trajectory for Bounds Analysis
         traj_feedback_data = load_traj_feedback(config['logs']['ee_trajectory_csv'])
         ee_traj_df = pd.read_csv(config['logs']['ee_trajectory_csv']) if os.path.exists(config['logs']['ee_trajectory_csv']) else None
@@ -141,10 +141,11 @@ def run_llm_optimization(config):
             )
 
             prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text=guidance_text)
+            # save_dialog(config['logs']['dialog_dir'], it + 1, prompt, "")
 
             try:
                 # Use large token limit for coordinate tables
-                response = llm.call_ollama(prompt, token_limit=100000)
+                response = llm.call_ollama(prompt, token_limit=118000)
                 w_next = parse_ollama_weights(response, n_bfs)
                 save_dialog(config['logs']['dialog_dir'], it + 1, prompt, response)
             except Exception as e:

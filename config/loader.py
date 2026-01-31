@@ -40,22 +40,45 @@ def load_config(config_path="config/config.yaml"):
     feedback_window = config['llm_settings'].get('feedback_window', 30)
     step_size = config['llm_settings'].get('step_size', 100)
     traj_in_prompt = config['llm_settings'].get('traj_in_prompt', False)
+    grid_coverage_in_prompt = config['llm_settings'].get('grid_coverage_in_prompt', False)
     guided = config['llm_settings'].get('guided', False)
     rt = run_type
 
     if traj_in_prompt:
         rt += "-traj"
+    
+    if grid_coverage_in_prompt:
+        rt += f"-gridcov"
+
+    if grid_reward:
+        rt += "-gridreward"
+    else: 
+        rt += "-totalcost"
     if guided:
         rt += "-guided"
     
-    template = f"{rt}-totalcost-{template_number}.j2" if not grid_reward else f"{rt}-gridreward-{template_number}.j2"
+    template = f"{rt}-{template_number}.j2"
+    
+    print(f"Using template: {template}")
+    
+    rt = run_type
     
     if traj_in_prompt:
-        rt = run_type + f"-traj-{resample_rate}"
-        if guided:
-            rt += "-guided"
+        rt += f"-traj-{resample_rate}"
     
-    save_results_file = f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-{template_number}" if not grid_reward else f"{rt}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}-{template_number}"
+    if grid_coverage_in_prompt:
+        rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
+        
+    if grid_reward:
+        rt += f"-gridreward-{n_x_seg}x{n_y_seg}"
+    else: 
+        rt += "-totalcost"
+        
+    if guided:
+        rt += "-guided"
+    
+    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
+    print(f"Results will be saved to: {save_results_file}")
 
     config['llm_settings']['save_results_file'] = save_results_file
     config['llm_settings']['template'] = template

@@ -110,7 +110,7 @@ def analyze_trajectory_performance(trajectory_data, bounds):
     return analysis
 
 
-def load_iteration_log(csv_path):
+def load_iteration_log(csv_path, n_x_seg, n_y_seg):
 
     if not os.path.exists(csv_path):
         return {}
@@ -121,7 +121,7 @@ def load_iteration_log(csv_path):
         log_data = {}
         for row in np.atleast_1d(data):
             it = int(row["iter"])
-            cells = [int(row[f"cell{i}"]) for i in range(6)]
+            cells = [int(row[f"cell{i}"]) for i in range(n_x_seg * n_y_seg)]
             log_data[it] = {
                 "traj_waypoints": int(row["traj_waypoints"]),
                 "total_balls": int(row["total_balls"]),
@@ -165,6 +165,7 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     n_warmup = config['llm_settings']['n_warmup']
     feedback_window = config['llm_settings']['feedback_window']
     traj_in_prompt = config['llm_settings']['traj_in_prompt']
+    grid_coverage_in_prompt = config['llm_settings'].get('grid_coverage_in_prompt', False)
     grid_reward_enabled = config['llm_settings'].get('grid_reward', False)
     resample_rate = config['llm_settings'].get('resample_rate', 30)
 
@@ -173,10 +174,42 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     n_y_seg = config['dmp_params']['num_y_segments']
     x_edges = np.linspace(bounds['xmin'], bounds['xmax'], n_x_seg + 1)
     y_edges = np.linspace(bounds['ymin'], bounds['ymax'], n_y_seg + 1)
+    
+    def _trajectory_coverage_grid(df_points: pd.DataFrame) -> np.ndarray:
+        """
+        Returns a (n_y_seg, n_x_seg) binary grid where grid[y, x] == 1
+        if any trajectory point falls into that (x,y) segment.
+        """
+        if df_points is None or df_points.empty:
+            return np.zeros((n_y_seg, n_x_seg), dtype=int)
+
+        xs = pd.to_numeric(df_points["x"], errors="coerce").to_numpy(dtype=float)
+        ys = pd.to_numeric(df_points["y"], errors="coerce").to_numpy(dtype=float)
+
+        valid = ~np.isnan(xs) & ~np.isnan(ys)
+        xs, ys = xs[valid], ys[valid]
+        if xs.size == 0:
+            return np.zeros((n_y_seg, n_x_seg), dtype=int)
+
+        # Bin indices in [0..n-1]
+        x_idx = np.digitize(xs, x_edges, right=False) - 1
+        y_idx = np.digitize(ys, y_edges, right=False) - 1
+
+        # Clamp points exactly at max edge into the last bin
+        x_idx = np.where(x_idx == n_x_seg, n_x_seg - 1, x_idx)
+        y_idx = np.where(y_idx == n_y_seg, n_y_seg - 1, y_idx)
+
+        in_bounds = (x_idx >= 0) & (x_idx < n_x_seg) & (y_idx >= 0) & (y_idx < n_y_seg)
+        x_idx = x_idx[in_bounds]
+        y_idx = y_idx[in_bounds]
+
+        grid = np.zeros((n_y_seg, n_x_seg), dtype=int)
+        grid[y_idx, x_idx] = 1
+        return grid
 
     feedback_text = ""
 
-    guidance_text = "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+    guidance_text = "The optimal policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The vertical sinusoidal sweeping motion should be along the y-axis (sweeping side to side along the x-axis), smooth, and continuous. The optimal policy should aim to reach the global optimum and cover as much as possible of the workspace while abiding by the described pattern guidance." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
 
     if w_df is not None and not w_df.empty:
         # Get recent executed iterations
@@ -219,10 +252,22 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
                     resampled = it_traj.iloc[::resample_rate, :].reset_index(drop=True)
                     resampled.set_index('step', inplace=True)
                     feedback_text += f"Resampled 2D Trajectory:\n{resampled.to_markdown()}\n"
+                    
+            if grid_coverage_in_prompt and ee_traj_df is not None:
+                it_traj = ee_traj_df[ee_traj_df["iter"] == it_num].copy()
+                if not it_traj.empty and ("x" in it_traj.columns) and ("y" in it_traj.columns):
+                    coverage_grid = _trajectory_coverage_grid(it_traj)
+
+                    cov_df = pd.DataFrame(coverage_grid)
+                    cov_df.index = [f"y:[{y_edges[j]:.2f},{y_edges[j+1]:.2f}]" for j in range(n_y_seg)]
+                    cov_df.columns = [f"x:[{x_edges[i]:.2f},{x_edges[i+1]:.2f}]" for i in range(n_x_seg)]
+
+                    feedback_text += "Trajectory coverage (1=visited, 0=not visited):\n"
+                    feedback_text += f"{cov_df.to_markdown(index=True)}\n\n"
 
             # Grid Reward Markdown Table
             if grid_reward_enabled and cells_list:
-                # Reshape flat list to 2D grid: 3 columns, 2 rows
+                # Reshape flat list to 2D grid: n_x_seg columns, n_y_seg rows
                 cells_arr = np.array(cells_list).reshape(n_x_seg, n_y_seg).T
                 cells_df = pd.DataFrame(cells_arr)
                 cells_df.index = [f"y:[{y_edges[j]:.2f},{y_edges[j+1]:.2f}]" for j in range(n_y_seg)]
