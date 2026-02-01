@@ -2,7 +2,7 @@
 #SBATCH -A grp_hbenamor
 #SBATCH -N 1
 #SBATCH -c 4
-#SBATCH -t 0-9:30:00
+#SBATCH -t 0-10:30:00
 #SBATCH -p public
 #SBATCH -q public
 #SBATCH --mem=16G

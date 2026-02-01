@@ -192,7 +192,7 @@ def make_trajectories_gif(
                 if not tb_series.empty:
                     total_balls = tb_series.iloc[0]
 
-            fig, ax = plt.subplots(figsize=(10, 6), dpi=dpi)
+            fig, ax = plt.subplots(figsize=(9, 12), dpi=dpi)
 
             ax.plot(x_bounds, y_bounds, linestyle=":", color="black", label="Workspace Boundary")
 
@@ -868,18 +868,18 @@ def plot_trajectory_coverage_heatmap(
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 30  # number of recent iterations to summarize for feedback
+    feedback_window = 100  # number of recent iterations to summarize for feedback
     step_size = 50
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
     resample_rate = 20
     template_number = '1'  # which prompt template to use
     temp = ""
-    n_x_seg = 20
-    n_y_seg = 20
-    grid_coverage_in_prompt = True  # whether to include grid coverage info in LLM feedback
-    grid_reward = False # whether to include grid-based reward in LLM feedback
-    guided = 1  # whether to use guided trajectory optimization
+    n_x_seg = 10
+    n_y_seg = 10
+    grid_coverage_in_prompt = 0  # whether to include grid coverage info in LLM feedback
+    grid_reward = 0 # whether to include grid-based reward in LLM feedback
+    guided = 0  # whether to use guided trajectory optimization
     rt = run_type
 
     if traj_in_prompt:
@@ -919,7 +919,7 @@ if __name__ == "__main__":
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results3/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results4/logs/{save_results_file}/")
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
@@ -944,7 +944,7 @@ if __name__ == "__main__":
         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=25, cmap="Blues")
+        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues")
         # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%
@@ -1025,8 +1025,8 @@ prompt = """You are good global RL policy optimizer, helping me find the global 
 # Here's how we will interact :
     1. I will provide you max steps (400) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
     2. You will provide the response in exact following format:
-        * Line 1: a new set of 20 float weights as an array, aiming to minimizw the functions value f(weights).
-        * Line 2: details explination of why you chose the weights.
+        * Line 1: a new set of 20 float weights as an array, aiming to minimize the functions value f(weights).
+        * Line 2: details explanation of why you chose the weights.
     3. I will then provide the function's f(weights) at that point and the current iteration.
     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
 

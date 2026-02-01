@@ -14,8 +14,8 @@ You are good global RL policy optimizer, helping me find the global optimal poli
 # Here's how we will interact :
     1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
     2. You will provide the response in exact following format:
-        * Line 1: a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimizw the functions value f(weights).
-        * Line 2: details explination of why you chose the weights.
+        * Line 1: a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights).
+        * Line 2: details explanation of why you chose the weights.
     3. I will then provide the function's f(weights) at that point and the current iteration.
     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
 
