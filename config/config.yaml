@@ -27,11 +27,12 @@ ik_params:
 
 dmp_params:
   n_bfs: 10
-  num_balls: 150
+  num_balls: 500
   num_x_segments: 3
   num_y_segments: 2
   random_scale: 10.0
   deci_build: 2
+  dt: 0.002
 
 animation:
   duration: 4.0

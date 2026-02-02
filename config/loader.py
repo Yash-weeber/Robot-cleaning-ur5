@@ -98,7 +98,8 @@ def setup_logging_dirs(config):
         'dmp_trajectory_csv': os.path.join(log_root, "dmp_trajectory_feedback.csv"),
         'ee_trajectory_csv': os.path.join(log_root, "ee_trajectory.csv"),
         'ik_error_csv': os.path.join(log_root, "ik_errors.csv"),
-        'dialog_dir': os.path.join(log_root, "llm_dialog")
+        'dialog_dir': os.path.join(log_root, "llm_dialog"),
+        'traj_out_pkl': os.path.join(log_root, "llm_traj.pkl")
     }
 
     return config
