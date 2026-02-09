@@ -2,6 +2,7 @@ import sys
 import os
 import dotenv
 import argparse
+from runner.llm_main_runner_onsite import LLM_Brain
 # os.environ["MUJOCO_GL"] = "egl"
 # os.environ["PYOPENGL_PLATFORM"] = "egl"
 # Ensure project root is in path for modular imports
@@ -33,7 +34,8 @@ def main():
     """
     args = _parse_args()
     args.config = f"config/{args.config}" if not args.config.startswith("config/") else args.config
-
+    config_path = args.config
+    config_path = "config/config-on-site-grid-coverage.yaml"
     # Load API keys from keys.env (overrideable via --keys)
     if args.keys and os.path.exists(args.keys):
         dotenv.load_dotenv(args.keys)
@@ -42,14 +44,16 @@ def main():
 
     try:
         # 1. Load configuration from YAML (overrideable via --config)
-        if not os.path.exists(args.config):
-            raise FileNotFoundError(f"Config file not found: {args.config}")
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        config = load_config(args.config)
+        config = load_config(config_path)
         setup_logging_dirs(config)
 
         # 2. Run the optimization loop
-        run_llm_optimization(config)
+        llm_brain = LLM_Brain(config)
+        for _ in range(config['simulation']['max_iters']):
+            llm_brain.step()
 
     except Exception as e:
         print(f"Critical error during LLM optimization: {e}")

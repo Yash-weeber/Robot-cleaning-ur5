@@ -59,7 +59,7 @@ class LLM_Brain:
 
         # Initialize DMP
         self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)
-        self.iteration = self._find_iteration_number(self)
+        self.iteration = self._find_iteration_number()
     
     def _find_iteration_number(self):
         '''Find the current iteration number based on existing logs'''
@@ -67,7 +67,7 @@ class LLM_Brain:
         if os.path.exists(weight_history_path):
             df = pd.read_csv(weight_history_path)
             if not df.empty:
-                return int(df['iteration'].max()) + 1
+                return int(df['iter'].max()) + 1
         return 0
     
     def _prompt_llm(self):
@@ -79,14 +79,16 @@ class LLM_Brain:
                 self.iteration + 1, pd.read_csv(self.config['logs']['weight_history_csv']),
                 iter_log_data, traj_feedback_data, ee_traj_df, self.config, self.bounds
             )
-        prompt = self.llm_interface.render_prompt(self.iteration + 1, feedback_text, self.bounds, guidance_text=guidance_text)
+        prompt = self.llm_interface.render_prompt(self.iteration, feedback_text, self.bounds, guidance_text=guidance_text)
         response = self.llm_interface.call_ollama(prompt, token_limit=118000)
         w_next = parse_ollama_weights(response, self.n_bfs)
-        save_dialog(self.config['logs']['dialog_dir'], self.iteration + 1, prompt, response)
+        save_dialog(self.config['logs']['dialog_dir'], self.iteration, prompt, response)
         return w_next
 
     def _generate_dmp_trajectory(self, weights):
         """Generates a DMP trajectory given weights"""
+        trajectory = generate_warmup_trajectory(0, self.config)
+        self.dmp.imitate_path(trajectory.T, plot=False)
         self.dmp.w = weights.copy()
         self.dmp.reset_state()
         dmp_task_trajectory = []
@@ -103,6 +105,7 @@ class LLM_Brain:
         """Checks if the trajectory stays within bounds"""
         for point in trajectory:
             if not (self.x_min <= point[0] <= self.x_max and self.y_min <= point[1] <= self.y_max):
+                print(f"Trajectory point {point} out of bounds: {self.bounds}")
                 return False
         return True
     
@@ -111,6 +114,7 @@ class LLM_Brain:
         while True:
             try:
                 reward = float(input(f"Please provide a reward score (0-100) for iteration {self.iteration}: "))
+                reward = 100 - reward  # Convert to cost
                 if 0 <= reward <= 100:
                     return reward
                 else:
@@ -124,17 +128,26 @@ class LLM_Brain:
         dmp_traj_data = df_dmp[df_dmp['iter'] == self.iteration]
         dmp_traj_data.drop(columns=['iter', 'timestamp', 'step'], inplace=True)
         dmp_traj_data = dmp_traj_data.iloc[::resample_rate, :].reset_index(drop=True)
-        print(dmp_traj_data.head())
-        x_traj = dmp_traj_data.filter(like='x').to_numpy()
-        y_traj = dmp_traj_data.filter(like='y').to_numpy()
-        dmp_traj_data_dict = {
-            'iteration': self.iteration,
-            'x_traj': x_traj,
-            'y_traj': y_traj
-        }
-        # Save to pickle
+        # print(dmp_traj_data.head())
+        # x_traj = dmp_traj_data.filter(like='x').to_numpy()
+        # y_traj = dmp_traj_data.filter(like='y').to_numpy()
+        # dmp_traj_data_dict = {
+        #     'iteration': self.iteration,
+        #     'x_traj': x_traj,
+        #     'y_traj': y_traj
+        # }
+        # # Save to pickle
+        # with open(self.config['logs']['traj_out_pkl'], 'wb') as f:
+        #     pickle.dump(dmp_traj_data_dict, f)
+        x_traj = dmp_traj_data.filter(like='x').to_numpy().ravel().tolist()
+        y_traj = dmp_traj_data.filter(like='y').to_numpy().ravel().tolist()
+        traj = []
+        for k in range(len(x_traj)):
+            traj.append([x_traj[k], y_traj[k], -0.108])
+
         with open(self.config['logs']['traj_out_pkl'], 'wb') as f:
-            pickle.dump(dmp_traj_data_dict, f)
+            print(f"Saving trajectory pickle for iteration {self.iteration} with {len(traj)} points.\n in {self.config['logs']['traj_out_pkl']}")
+            pickle.dump(traj, f)
 
     def step(self):
         """Performs a single optimization step"""
@@ -146,13 +159,19 @@ class LLM_Brain:
         
         save_trajectory_data(self.iteration, trajectory, self.config['logs']['dmp_trajectory_csv'])
         save_trajectory_data(self.iteration, trajectory, self.config['logs']['ee_trajectory_csv'])
-
-        append_weight_history(self.config['logs']['weight_history_csv'], self.iteration + 1, "proposed", w_next, self.n_bfs)
+        # Update for next iteration
+        self.extract_traj_to_pkl(resample_rate=20)
+        append_weight_history(self.config['logs']['weight_history_csv'], self.iteration, "proposed", w_next, self.n_bfs)
         write_weights_csv(self.weights_csv_path, w_next)
         reward = self._obtain_reward_from_user()
+        grid_mat = None #np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
         print(f"Received reward: {reward} for iteration {self.iteration}")
-        # Update for next iteration
-        self.extract_traj_to_pkl()
+        
+        log_iteration_data(self.iteration, grid_mat, reward, len(trajectory), self.config['logs']['iter_log_csv'])
+        
+        append_weight_history(self.config['logs']['weight_history_csv'], self.iteration, "executed", w_next, self.n_bfs)
+        # write_weights_csv(self.weights_csv_path, w_next)
+        
         self.iteration += 1
     
     

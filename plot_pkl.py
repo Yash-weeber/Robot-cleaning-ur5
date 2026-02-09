@@ -10,6 +10,7 @@ from utils.draw_shapes import rectangle_trajectory, circle_trajectory
 import tiktoken
 from config.loader import load_config
 import re
+import pickle
 
 config = load_config("config/config.yaml")
 
@@ -594,11 +595,9 @@ def plot_avg_cost_history_across_runs(
     # # print(stats, cell_stats if 'cell_stats' in locals() else None)
     # return stats, csv_paths
 
-def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_seg=4, starting_from=0, show=False):
+def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_seg=4, show=False):
     # Load cost history from CSV
     df = pd.read_csv(cost_history_csv)
-    df = df[df['iter'] >= starting_from].copy()
-    figure_name = 'cost_history.png' if starting_from == 0 else f'cost_history_from_{starting_from}.png'
     p = Path(cost_history_csv).resolve()
     parent_folder = p.parent
     cost_plots_dir = parent_folder
@@ -632,7 +631,7 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
     plt.ylabel('Cost')
     plt.grid(True)
     plt.legend()
-    plt.savefig(cost_plots_dir / figure_name)
+    plt.savefig(cost_plots_dir / 'cost_history.png')
     if show:
         plt.show()
     plt.close()
@@ -733,9 +732,6 @@ def plot_trajectory_coverage_heatmap(
     show: bool = False,
     title: str | None = None,
     cmap: str = "Greys",
-    y_window: int = 0,
-    x_window: int = 0,
-    cost_csv=None,
 ):
     """
     Create a 0/1 heatmap over the workspace grid indicating which segments
@@ -763,19 +759,6 @@ def plot_trajectory_coverage_heatmap(
 
     df = df.dropna(subset=[x_col, y_col])
 
-    # Load cost dictionary (iter -> total_balls) if provided
-    cost_map = {}
-    if cost_csv is not None:
-        try:
-            df_c = pd.read_csv(cost_csv)
-            if "iter" in df_c.columns and "total_balls" in df_c.columns:
-                # Ensure numeric
-                df_c["iter"] = pd.to_numeric(df_c["iter"], errors="coerce")
-                df_c["total_balls"] = pd.to_numeric(df_c["total_balls"], errors="coerce")
-                cost_map = df_c.dropna(subset=["iter"]).set_index("iter")["total_balls"].to_dict()
-        except Exception as e:
-            print(f"Warning: Failed to load cost_csv: {e}")
-
     if df.empty:
         raise ValueError("No trajectory points available after parsing/filtering.")
 
@@ -796,35 +779,7 @@ def plot_trajectory_coverage_heatmap(
         y_idx = y_idx[in_bounds]
 
         grid = np.zeros((int(n_y_seg), int(n_x_seg)), dtype=int)
-
-        yw = int(y_window)
-        if yw < 0:
-            raise ValueError("y_window must be >= 0")
-
-        xw = int(x_window)
-        if xw < 0:
-            raise ValueError("x_window must be >= 0")
-
-        if x_idx.size == 0:
-            return grid
-
-        if yw == 0 and xw == 0:
-            grid[y_idx, x_idx] = 1
-        else:
-            y_shifts = np.arange(-yw, yw + 1, dtype=int)
-            x_shifts = np.arange(-xw, xw + 1, dtype=int)
-
-            # create meshgrid of shifts
-            sy, sx = np.meshgrid(y_shifts, x_shifts, indexing='ij')
-            sy = sy.ravel()
-            sx = sx.ravel()
-
-            # Broadcast to shape (N, K)
-            y_expanded = (y_idx[:, None] + sy[None, :]).clip(0, int(n_y_seg) - 1)
-            x_expanded = (x_idx[:, None] + sx[None, :]).clip(0, int(n_x_seg) - 1)
-
-            grid[y_expanded.ravel(), x_expanded.ravel()] = 1
-
+        grid[y_idx, x_idx] = 1
         return grid
 
     def _save_grid(grid: np.ndarray, out_file: Path, plot_title: str):
@@ -837,17 +792,10 @@ def plot_trajectory_coverage_heatmap(
             origin="lower",
             aspect="auto",
             interpolation="nearest",
-            extent=[x_min, x_max, y_min, y_max],
         )
-        x_marks_cm = [15.3, 46.27, 73]
-        y_marks_cm = [15, 40, 65, 90, 110] 
-        xm_plot = [x_min + v/100.0 for v in x_marks_cm]
-        ym_plot = [y_min + v/100.0 for v in y_marks_cm]
-        X_marks, Y_marks = np.meshgrid(xm_plot, ym_plot)
-        ax.scatter(X_marks, Y_marks, marker='x', color='green', s=100, linewidth=2, label="Targets")
         ax.set_title(plot_title)
-        ax.set_xlabel("x (m)")
-        ax.set_ylabel("y (m)")
+        ax.set_xlabel("x segment")
+        ax.set_ylabel("y segment")
         cbar = fig.colorbar(im, ax=ax, shrink=0.85, ticks=[0, 1])
         cbar.set_label("visited (0/1)")
         fig.tight_layout()
@@ -873,11 +821,7 @@ def plot_trajectory_coverage_heatmap(
         else:
             output_path = Path(output_path)
 
-        cost_suffix = ""
-        if float(iter_value) in cost_map:
-            cost_suffix = f" (Cost: {cost_map[float(iter_value)]:.2f})"
-
-        plot_title = title or f"Trajectory coverage heatmap — iter {int(iter_value)}{cost_suffix}"
+        plot_title = title or f"Trajectory coverage heatmap — iter {int(iter_value)}"
         _save_grid(grid, output_path, plot_title)
         return grid, output_path
 
@@ -885,10 +829,10 @@ def plot_trajectory_coverage_heatmap(
     if iter_col in df.columns:
         # Decide output folder (always subfolder named traj_coverage_plots)
         if output_path is None:
-            out_dir = traj_path.parent / f"traj_coverage_plots_{n_x_seg}x{n_y_seg}-ywin{y_window}-xwin{x_window}"
+            out_dir = traj_path.parent / f"traj_coverage_plots_{n_x_seg}x{n_y_seg}"
         else:
             op = Path(output_path)
-            out_dir = (op if op.suffix == "" else op.parent) / f"traj_coverage_plots_{n_x_seg}x{n_y_seg}-ywin{y_window}-xwin{x_window}"
+            out_dir = (op if op.suffix == "" else op.parent) / f"traj_coverage_plots_{n_x_seg}x{n_y_seg}"
 
         out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -905,12 +849,7 @@ def plot_trajectory_coverage_heatmap(
 
             grid = _grid_from_points(df_it)
             out_file = out_dir / f"iter_{int(it):04d}.png"
-            
-            cost_suffix = ""
-            if float(it) in cost_map:
-                cost_suffix = f" (Cost: {cost_map[float(it)]:.2f})"
-
-            plot_title = title or f"Trajectory coverage — iter {int(it)}{cost_suffix}"
+            plot_title = title or f"Trajectory coverage — iter {int(it)}"
             _save_grid(grid, out_file, plot_title)
             results[int(it)] = out_file
 
@@ -930,16 +869,16 @@ def plot_trajectory_coverage_heatmap(
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 35  # number of recent iterations to summarize for feedback
+    feedback_window = 100  # number of recent iterations to summarize for feedback
     step_size = 50
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
     resample_rate = 20
     template_number = '1'  # which prompt template to use
     temp = ""
-    n_x_seg = 25
-    n_y_seg = 20
-    grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
+    n_x_seg = 10
+    n_y_seg = 10
+    grid_coverage_in_prompt = 0  # whether to include grid coverage info in LLM feedback
     grid_reward = 0 # whether to include grid-based reward in LLM feedback
     guided = 0  # whether to use guided trajectory optimization
     rt = run_type
@@ -981,7 +920,7 @@ if __name__ == "__main__":
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results-on-site/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results-on-site/logs/{save_results_file}/1/")
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
@@ -994,20 +933,36 @@ if __name__ == "__main__":
     
     print(f"Processing experiment folder: {root_dir}")
     # Aggregate across all runs in the experiment folder
-    plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
-    summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(1,16)]
-    # exp_num = 3
-    for exp_num in exp_nums:
-        print(f"Processing experiment run: {exp_num}")
-        cost_file = root_dir / f"{exp_num}/llm_iteration_log.csv"
-        dmp_traj_file = root_dir / f"{exp_num}/dmp_trajectory_feedback.csv"
-        ee_traj_file = root_dir / f"{exp_num}/ee_trajectory.csv"
-        plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-5)
-        plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
-        # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=2, x_window=0, cost_csv=cost_file)
-        # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+    pkl_file_path = root_dir / "llm_traj.pkl"
+    if pkl_file_path.exists():
+        with open(pkl_file_path, "rb") as f:
+            llm_traj_data = pickle.load(f)
+    x = []
+    y = []
+    for k in range(len(llm_traj_data)):
+        x.append(llm_traj_data[k][0])
+        y.append(llm_traj_data[k][1])
+    plt.plot(x, y)
+    plt.title("LLM trajectory")
+    plt.xlabel("X position")
+    plt.ylabel("Y position")
+    plt.grid(True)
+    plt.savefig(root_dir / 'llm_trajectory.png')
+    plt.show()
+    # plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
+    # summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
+    # exp_nums = [i for i in range(1,16)]
+    # # exp_num = 3
+    # for exp_num in exp_nums:
+    #     print(f"Processing experiment run: {exp_num}")
+    #     cost_file = root_dir / f"{exp_num}/llm_iteration_log.csv"
+    #     dmp_traj_file = root_dir / f"{exp_num}/dmp_trajectory_feedback.csv"
+    #     ee_traj_file = root_dir / f"{exp_num}/ee_trajectory.csv"
+    #     plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
+    #     plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
+    #     # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
+    #     grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues")
+    #     # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%
 # root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"
@@ -1033,79 +988,79 @@ if __name__ == "__main__":
 # | y:[0.00,0.60]  |                18 |               22 |              35 |
 
 # """
-feedback = """
--------------------------------------------------- Examples 1 --------------------------------------------------
-weights=[30.7007, 45.0419, 41.3128, 25.1138, -3.3737, -30.7171, -46.3281, -44.2434, -25.2592, 3.3731, -36.5398, -11.4793, 18.0264, 40.5108, 47.6163, 36.5397, 11.5062, -17.9223, -40.505, -47.6163]
-x_range=[0.3005, 0.8614], y_range=[-0.2915, 0.2752]
-Trajectory coverage (1=visited, 0=not visited):
-|                 |   x:[0.14,0.18] |   x:[0.18,0.22] |   x:[0.22,0.25] |   x:[0.25,0.29] |   x:[0.29,0.33] |   x:[0.33,0.36] |   x:[0.36,0.40] |   x:[0.40,0.44] |   x:[0.44,0.47] |   x:[0.47,0.51] |   x:[0.51,0.55] |   x:[0.55,0.58] |   x:[0.58,0.62] |   x:[0.62,0.65] |   x:[0.65,0.69] |   x:[0.69,0.73] |   x:[0.73,0.76] |   x:[0.76,0.80] |   x:[0.80,0.84] |   x:[0.84,0.87] |   x:[0.87,0.91] |   x:[0.91,0.95] |   x:[0.95,0.98] |   x:[0.98,1.02] |   x:[1.02,1.06] |
-|:----------------|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|
-| y:[-0.61,-0.55] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.55,-0.49] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.49,-0.43] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.43,-0.37] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.37,-0.30] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.30,-0.24] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.24,-0.18] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               0 |               0 |               0 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.18,-0.12] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               0 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.12,-0.06] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[-0.06,0.00]  |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.00,0.06]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.06,0.12]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.12,0.18]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.18,0.24]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.24,0.30]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.30,0.37]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.37,0.43]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.43,0.49]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.49,0.55]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
-| y:[0.55,0.61]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# feedback = """
+# -------------------------------------------------- Examples 1 --------------------------------------------------
+# weights=[30.7007, 45.0419, 41.3128, 25.1138, -3.3737, -30.7171, -46.3281, -44.2434, -25.2592, 3.3731, -36.5398, -11.4793, 18.0264, 40.5108, 47.6163, 36.5397, 11.5062, -17.9223, -40.505, -47.6163]
+# x_range=[0.3005, 0.8614], y_range=[-0.2915, 0.2752]
+# Trajectory coverage (1=visited, 0=not visited):
+# |                 |   x:[0.14,0.19] |   x:[0.19,0.23] |   x:[0.23,0.28] |   x:[0.28,0.33] |   x:[0.33,0.37] |   x:[0.37,0.42] |   x:[0.42,0.46] |   x:[0.46,0.51] |   x:[0.51,0.55] |   x:[0.55,0.60] |   x:[0.60,0.65] |   x:[0.65,0.69] |   x:[0.69,0.74] |   x:[0.74,0.78] |   x:[0.78,0.83] |   x:[0.83,0.87] |   x:[0.87,0.92] |   x:[0.92,0.97] |   x:[0.97,1.01] |   x:[1.01,1.06] |
+# |:----------------|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|----------------:|
+# | y:[-0.61,-0.55] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.55,-0.49] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.49,-0.43] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.43,-0.37] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.37,-0.30] |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.30,-0.24] |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.24,-0.18] |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |
+# | y:[-0.18,-0.12] |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |
+# | y:[-0.12,-0.06] |               0 |               0 |               0 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               0 |               0 |               0 |               0 |
+# | y:[-0.06,0.00]  |               0 |               0 |               0 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               0 |               0 |               0 |               0 |
+# | y:[0.00,0.06]   |               0 |               0 |               0 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |
+# | y:[0.06,0.12]   |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |
+# | y:[0.12,0.18]   |               0 |               0 |               0 |               0 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.18,0.24]   |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.24,0.30]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               1 |               1 |               1 |               1 |               1 |               1 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.30,0.37]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.37,0.43]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.43,0.49]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.49,0.55]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
+# | y:[0.55,0.61]   |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |               0 |
 
-f(weights)=67
-"""
-print(feedback)
-model = "gpt-oss-120b"
-enc = tiktoken.encoding_for_model(model)
-tokens = enc.encode(feedback)
-print(f"Resampled trajectory token count for model {model}: {len(tokens)}")
-# print(1e5//1365)
+# f(weights)=67
+# """
+# print(feedback)
+# model = "gpt-oss-120b"
+# enc = tiktoken.encoding_for_model(model)
+# tokens = enc.encode(feedback)
+# print(f"Resampled trajectory token count for model {model}: {len(tokens)}")
+# # print(1e5//1365)
 
+# # # %%
+# prompt = """You are good global RL policy optimizer, helping me find the global optimal policy in the following environment within (400 ) iterations:
+
+# # Environment: UR5 surface cleaning with a mop
+#     The environment (in MuJoCo) simulates a UR5 robot arm cleaning a surface with a mop mounted on its end-effector. The policy acts as a high-level 2D trajectory generator for the mop's movement over the surface to be cleaned in a defined XY workspace. The goal is to minimize the total cost associated with cleaning the surface, which includes the number of dust particles remaining on the surface after executing the cleaning trajectory. Defined by the function f(weights), the cost of the policy across the workplace segmented into a grid of 10 equidistant x-segments and 10 equidistant y-segments, illustrating the number of dust particles remaining in each segment.
+
+# # Regarding the policy and weights:
+#     policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs).
+#     There are 10 basis functions per dimension, resulting in a total of 20 weights.
+#     Weight values should be floats, and can be both positive and negative.
+#     The policy defines the 2D trajectory in the XY workspace.
+#     The generated 2D trajectory must strictly stay within the defined XY workspace limits.
+#     The cost f(weights) is provided as a table with rows representing y-segments and columns representing x-segments.
+
+# # Here's how we will interact :
+#     1. I will provide you max steps (400) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
+#     2. You will provide the response in exact following format:
+#         * Line 1: a new set of 20 float weights as an array, aiming to minimize the functions value f(weights).
+#         * Line 2: details explanation of why you chose the weights.
+#     3. I will then provide the function's f(weights) at that point and the current iteration.
+#     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+
+# # Remember :
+#     1. **XY workspace limits: x ∈ [0.143, 1.057], y ∈ [-0.610, 0.610]. Any proposed weights must keep the trajectory strictly within these bounds.**
+#     2. **The global optimum should be around 0.0.** If you are higher than that, this is a local optimum. You should explore instead of exploiting.
+#     3. Search both the positive and the negative values. **During exploration, use search step size of 50**
+
+# # Guidance:
+#     The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous.
+
+# Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
+# """
+# prompt_end = """Now you are at iteration 1 out of 400. Please provide the results in the indicated format."""
+# full_prompt = prompt + "\n" + 30 * feedback + "\n" + prompt_end
+# tokens_prompt = enc.encode(full_prompt)
+# print(f"Prompt tokens length: {len(tokens_prompt)}")
+# print(f"total hist for context window 10k: {1e5//(len(tokens) + len(tokens_prompt))}")
 # # %%
-prompt = """You are good global RL policy optimizer, helping me find the global optimal policy in the following environment within (400 ) iterations:
-
-# Environment: UR5 surface cleaning with a mop
-    The environment (in MuJoCo) simulates a UR5 robot arm cleaning a surface with a mop mounted on its end-effector. The policy acts as a high-level 2D trajectory generator for the mop's movement over the surface to be cleaned in a defined XY workspace. The goal is to minimize the total cost associated with cleaning the surface, which includes the number of dust particles remaining on the surface after executing the cleaning trajectory. Defined by the function f(weights), the cost of the policy across the workplace segmented into a grid of 10 equidistant x-segments and 10 equidistant y-segments, illustrating the number of dust particles remaining in each segment.
-
-# Regarding the policy and weights:
-    policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs).
-    There are 10 basis functions per dimension, resulting in a total of 20 weights.
-    Weight values should be floats, and can be both positive and negative.
-    The policy defines the 2D trajectory in the XY workspace.
-    The generated 2D trajectory must strictly stay within the defined XY workspace limits.
-    The cost f(weights) is provided as a table with rows representing y-segments and columns representing x-segments.
-
-# Here's how we will interact :
-    1. I will provide you max steps (400) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
-    2. You will provide the response in exact following format:
-        * Line 1: a new set of 20 float weights as an array, aiming to minimize the functions value f(weights).
-        * Line 2: details explanation of why you chose the weights.
-    3. I will then provide the function's f(weights) at that point and the current iteration.
-    4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
-
-# Remember :
-    1. **XY workspace limits: x ∈ [0.143, 1.057], y ∈ [-0.610, 0.610]. Any proposed weights must keep the trajectory strictly within these bounds.**
-    2. **The global optimum should be around 0.0.** If you are higher than that, this is a local optimum. You should explore instead of exploiting.
-    3. Search both the positive and the negative values. **During exploration, use search step size of 50**
-
-# Guidance:
-    The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion should be along the x-axis (sweeping up and down the y-axis), smooth, and continuous.
-
-Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
-"""
-prompt_end = """Now you are at iteration 1 out of 400. Please provide the results in the indicated format."""
-full_prompt = prompt + "\n" + 35 * feedback + "\n" + prompt_end
-tokens_prompt = enc.encode(full_prompt)
-print(f"Prompt tokens length: {len(tokens_prompt)}")
-print(f"total hist for context window 10k: {1e5//(len(tokens) + len(tokens_prompt))}")
-# %%
 

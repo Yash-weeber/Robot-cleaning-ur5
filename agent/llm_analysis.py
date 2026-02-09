@@ -120,12 +120,11 @@ def load_iteration_log(csv_path, n_x_seg, n_y_seg):
             return {}
         log_data = {}
         for row in np.atleast_1d(data):
-            it = int(row["iter"])
-            cells = [int(row[f"cell{i}"]) for i in range(n_x_seg * n_y_seg)]
+            it = int(row["iter"]) # "cells": cells,
+            # cells = [int(row[f"cell{i}"]) for i in range(n_x_seg * n_y_seg)]
             log_data[it] = {
                 "traj_waypoints": int(row["traj_waypoints"]),
-                "total_balls": int(row["total_balls"]),
-                "cells": cells,
+                "total_balls": round(row["total_balls"],1),
             }
         return log_data
     except Exception as e:
@@ -168,6 +167,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     grid_coverage_in_prompt = config['llm_settings'].get('grid_coverage_in_prompt', False)
     grid_reward_enabled = config['llm_settings'].get('grid_reward', False)
     resample_rate = config['llm_settings'].get('resample_rate', 30)
+    y_window = config['llm_settings'].get('y_window', 0)
+    x_window = config['llm_settings'].get('x_window', 0)
 
     # Grid parameters for labeling markdown tables
     n_x_seg = config['dmp_params']['num_x_segments']
@@ -183,17 +184,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
         if df_points is None or df_points.empty:
             return np.zeros((n_y_seg, n_x_seg), dtype=int)
 
-        xs = pd.to_numeric(df_points["x"], errors="coerce").to_numpy(dtype=float)
-        ys = pd.to_numeric(df_points["y"], errors="coerce").to_numpy(dtype=float)
-
-        valid = ~np.isnan(xs) & ~np.isnan(ys)
-        xs, ys = xs[valid], ys[valid]
-        if xs.size == 0:
-            return np.zeros((n_y_seg, n_x_seg), dtype=int)
-
-        # Bin indices in [0..n-1]
-        x_idx = np.digitize(xs, x_edges, right=False) - 1
-        y_idx = np.digitize(ys, y_edges, right=False) - 1
+        x_idx = np.digitize(df_points["x"].to_numpy(dtype=float), x_edges, right=False) - 1
+        y_idx = np.digitize(df_points["y"].to_numpy(dtype=float), y_edges, right=False) - 1
 
         # Clamp points exactly at max edge into the last bin
         x_idx = np.where(x_idx == n_x_seg, n_x_seg - 1, x_idx)
@@ -203,8 +195,36 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
         x_idx = x_idx[in_bounds]
         y_idx = y_idx[in_bounds]
 
-        grid = np.zeros((n_y_seg, n_x_seg), dtype=int)
-        grid[y_idx, x_idx] = 1
+        grid = np.zeros((int(n_y_seg), int(n_x_seg)), dtype=int)
+
+        yw = int(y_window)
+        if yw < 0:
+            raise ValueError("y_window must be >= 0")
+
+        xw = int(x_window)
+        if xw < 0:
+            raise ValueError("x_window must be >= 0")
+
+        if x_idx.size == 0:
+            return grid
+
+        if yw == 0 and xw == 0:
+            grid[y_idx, x_idx] = 1
+        else:
+            y_shifts = np.arange(-yw, yw + 1, dtype=int)
+            x_shifts = np.arange(-xw, xw + 1, dtype=int)
+
+            # create meshgrid of shifts
+            sy, sx = np.meshgrid(y_shifts, x_shifts, indexing='ij')
+            sy = sy.ravel()
+            sx = sx.ravel()
+
+            # Broadcast to shape (N, K)
+            y_expanded = (y_idx[:, None] + sy[None, :]).clip(0, int(n_y_seg) - 1)
+            x_expanded = (x_idx[:, None] + sx[None, :]).clip(0, int(n_x_seg) - 1)
+
+            grid[y_expanded.ravel(), x_expanded.ravel()] = 1
+
         return grid
 
     feedback_text = ""
@@ -213,7 +233,7 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
 
     if w_df is not None and not w_df.empty:
         # Get recent executed iterations
-        executed_df = w_df[(w_df['tag'] == 'executed') & (w_df['iter'] < iter_idx)].copy()
+        executed_df = w_df[(w_df['tag'] == 'proposed') & (w_df['iter'] < iter_idx)].copy()
         recent = executed_df.sort_values(by='iter', ascending=False).head(feedback_window)
 
         for _, row in recent.sort_values(by='iter').iterrows():
@@ -239,7 +259,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
                 #     bounds_info += " (FAILED)"
 
             # Construct iteration block with exact separators
-            iter_label = f" Examples {it_num + n_warmup} " if it_num < 1 else f" Iteration {it_num} "
+            # iter_label = f" Examples {it_num + n_warmup} " if it_num < 1 else f" Iteration {it_num} "
+            iter_label = f" Example {-it_num} " if it_num < 1 else f" Iteration {it_num} "
             separator = "-" * 50
             feedback_text += f"{separator}{iter_label}{separator}\n"
             feedback_text += f"weights={json.dumps([round(w, 4) for w in weights])}\n{bounds_info}\n"
