@@ -168,7 +168,7 @@ def make_trajectories_gif(
         raise ValueError("No iterations found in dmp_trajectory_csv.")
     if stride is None or stride < 1:
         raise ValueError("stride must be >= 1.")
-    iters = iters[::stride]
+    iters = iters[::stride][:-1]
 
     p = Path(dmp_trajectory_csv).resolve()
     parent_folder = p.parent
@@ -245,7 +245,7 @@ def make_trajectories_gif(
 
             title = f"Iteration {it}"
             if total_balls is not None:
-                title += f" - total_balls={total_balls}"
+                title += f" - total_balls={round(total_balls,1) if total_balls is not None else 'N/A'}"
             ax.set_title(title)
 
             ax.set_xlabel("X Position")
@@ -704,7 +704,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
         plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP traj', color='red' if dmp_traj_data['x'].lt(x_min).any() or dmp_traj_data['x'].gt(x_max).any() or dmp_traj_data['y'].lt(y_min).any() or dmp_traj_data['y'].gt(y_max).any() else 'blue')
         if ee_traj_data is not None:
             plt.plot(ee_traj_data['x'], ee_traj_data['y'], linestyle='--', label='EE traj', color='orange' if ee_traj_data['x'].lt(x_min).any() or ee_traj_data['x'].gt(x_max).any() or ee_traj_data['y'].lt(y_min).any() or ee_traj_data['y'].gt(y_max).any() else 'green')
-        plt.title(f'Iteration {it} - total_balls={total_balls}')
+        plt.title(f'Iteration {it} - total_balls={round(total_balls,1) if total_balls is not None else "N/A"}')
         #total_balls={total_balls}', color='red' if dmp_traj_data['x'].lt(-1.0).any() or dmp_traj_data['x'].gt(1.0).any() or dmp_traj_data['y'].lt(-0.6).any() or dmp_traj_data['y'].gt(0.6).any() else 'blue')
     
         # plt.title('Trajectories Over Iterations')
@@ -848,8 +848,8 @@ def plot_trajectory_coverage_heatmap(
         ax.set_title(plot_title)
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
-        cbar = fig.colorbar(im, ax=ax, shrink=0.85, ticks=[0, 1])
-        cbar.set_label("visited (0/1)")
+        # cbar = fig.colorbar(im, ax=ax, shrink=0.85, ticks=[0, 1])
+        # cbar.set_label("visited (0/1)")
         fig.tight_layout()
         fig.savefig(out_file, dpi=150)
         if show:
@@ -930,7 +930,7 @@ def plot_trajectory_coverage_heatmap(
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 35  # number of recent iterations to summarize for feedback
+    feedback_window = 100  # number of recent iterations to summarize for feedback
     step_size = 50
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
@@ -939,7 +939,7 @@ if __name__ == "__main__":
     temp = ""
     n_x_seg = 25
     n_y_seg = 20
-    grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
+    grid_coverage_in_prompt = 0  # whether to include grid coverage info in LLM feedback
     grid_reward = 0 # whether to include grid-based reward in LLM feedback
     guided = 0  # whether to use guided trajectory optimization
     rt = run_type
@@ -1007,7 +1007,7 @@ if __name__ == "__main__":
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
         grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=2, x_window=0, cost_csv=cost_file)
-        # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+        make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%
 # root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"
