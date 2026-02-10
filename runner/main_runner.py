@@ -68,7 +68,9 @@ class EnhancedDMPController:
         self.y_min = self.ws_center[1] - ws_length / 2.0
         self.y_max = self.ws_center[1] + ws_length / 2.0
         self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
-
+        self.kp = [3000, 3000, 1500, 800, 500, 500]
+        self.kd = [150, 150, 80, 40, 20, 20]
+        self.set_joint_pid_gains(self.kp, self.kd)
         self.reset_robot_to_home()
 
     def reset_robot_to_home(self):
@@ -81,6 +83,33 @@ class EnhancedDMPController:
         self.viewer.draw()
         return True
 
+    def set_joint_pid_gains(self, kp_values, kd_values):
+        """
+        Set kp and kd for each joint actuator in MuJoCo.
+        kp_values and kd_values should be lists/arrays of same length as joint_names.
+        """
+        for i, jn in enumerate(self.joint_names):
+            # Get joint ID and DOF ID
+            joint_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_JOINT, jn)
+            dof_id = self.model.jnt_dofadr[joint_id]
+
+            # Find actuator ID by checking which joint it controls
+            actuator_id = -1
+            for aid in range(self.model.nu):
+                # trnid[aid, 0] stores the joint index for the actuator
+                if self.model.actuator_trnid[aid, 0] == joint_id:
+                    actuator_id = aid
+                    break
+            
+            if actuator_id != -1:
+                # Set kp (proportional gain)
+                self.model.actuator_gainprm[actuator_id, 0] = kp_values[i]
+                # Set bias for position servo (standard MuJoCo position actuator formula)
+                self.model.actuator_biasprm[actuator_id, 1] = -kp_values[i] 
+            else:
+                print(f"Warning: No actuator found for joint '{jn}'")
+            self.model.dof_damping[dof_id] = kd_values[i]
+    
     def hard_reset_from_home(self, redraw=True):
 
         # 1) Restore full snapshot from the copy created in __init__
@@ -166,7 +195,7 @@ class EnhancedDMPController:
            
             ext_f = avoid_obstacles(
                 self.dmp.y, self.dmp.dy, self.dmp.goal,
-                rect_d0=0.05, rect_eta=25.0, 
+                rect_d0_x=0.14, rect_d0_y=0.06, rect_eta=0.2, 
                 obs_d0=0.1, obs_eta=25.0, max_force=220.0
             )
             y, _, _ = self.dmp.step(tau=2.0, external_force=ext_f)

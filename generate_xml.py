@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # Simulation parameters
     num_balls = 500  # Number of balls to generate
     radius = 0.003  # Ball radius (meters)
-    mass = 0.025    # Ball mass (kg)
+    mass = 0.0025    # Ball mass (kg)
     inertia = 2/5 * mass * radius**2  # Sphere inertia formula
     # inertia = 3e-3  # Approximate inertia value for small spheres
     radii = [radius] * num_balls
@@ -93,8 +93,8 @@ if __name__ == "__main__":
     y_pos_center = ws_center_y
 
     # Exclusion rectangle dimensions (centered in x/y range)
-    swiffer_head_length = 0.3  # x direction
-    swiffer_head_width = 0.4    # y direction
+    swiffer_head_length = 0.12  # x direction
+    swiffer_head_width = 0.28    # y direction
 
     # Generate random positions, excluding the rectangle
     positions = []
