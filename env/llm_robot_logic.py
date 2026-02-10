@@ -40,11 +40,12 @@ def get_dmp_step_with_obstacles(dmp):
         tau=2.0,
         external_force=avoid_obstacles(
             dmp.y, dmp.dy, dmp.goal,
-            rect_d0=0.05,
-            rect_eta=25.0,
+            rect_d0_x=0.06,
+            rect_d0_y=0.14,
+            rect_eta=30.0,
             obs_d0=0.1,
-            obs_eta=25.0,
-            max_force=220.0
+            obs_eta=30.0,
+            max_force=275.0
         )
     )
     return y
@@ -56,11 +57,17 @@ def log_iteration_data(iter_idx, grid_mat, total_balls, traj_len, out_csv):
     import os
     import time
 
-    flat = list(map(int, grid_mat.flatten()))
+    flat = list(map(int, grid_mat.flatten())) if grid_mat is not None else ''
     file_exists = os.path.exists(out_csv)
     with open(out_csv, "a", newline="") as f:
         w = csv.writer(f)
         if not file_exists:
-            w.writerow(["iter", "timestamp", "traj_waypoints", "total_balls"] +
+            if grid_mat is not None:
+                w.writerow(["iter", "timestamp", "traj_waypoints", "total_balls"] +
                        [f"cell{i}" for i in range(len(flat))])
-        w.writerow([iter_idx, time.strftime("%Y-%m-%d %H:%M:%S"), traj_len, total_balls] + flat)
+            else:
+                w.writerow(["iter", "timestamp", "traj_waypoints", "total_balls"])
+        if grid_mat is None:
+            w.writerow([iter_idx, time.strftime("%Y-%m-%d %H:%M:%S"), traj_len, total_balls])
+        else:
+            w.writerow([iter_idx, time.strftime("%Y-%m-%d %H:%M:%S"), traj_len, total_balls] + flat)

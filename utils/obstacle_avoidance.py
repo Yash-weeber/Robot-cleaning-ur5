@@ -26,7 +26,7 @@ def _project_into_rect(y):
     return np.array([np.clip(y[0], XMIN, XMAX), np.clip(y[1], YMIN, YMAX)], dtype=float)
 
 
-def _keep_in_rect_force(y, *, d0=0.10, eta=0.002, k_out=200.0):
+def _keep_in_rect_force(y, *, d0_x=0.14, d0_y=0.06, eta=0.002, k_out=200.0):
     """
     Wall-based keep-in force for an axis-aligned rectangle.
     - Inside but within d0 of a wall: smooth repulsion away from the wall.
@@ -41,34 +41,34 @@ def _keep_in_rect_force(y, *, d0=0.10, eta=0.002, k_out=200.0):
         p[0] += k_out * (XMIN - y[0])
     else:
         d = y[0] - XMIN
-        if d < d0:
+        if d < d0_x:
             dd = d + eps
-            p[0] += eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+            p[0] += eta * (1.0 / dd - 1.0 / d0_x) * (1.0 / (dd * dd))
 
     if y[0] > XMAX:
         p[0] -= k_out * (y[0] - XMAX)
     else:
         d = XMAX - y[0]
-        if d < d0:
+        if d < d0_x:
             dd = d + eps
-            p[0] -= eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+            p[0] -= eta * (1.0 / dd - 1.0 / d0_x) * (1.0 / (dd * dd))
 
     # Y walls
     if y[1] < YMIN:
         p[1] += k_out * (YMIN - y[1])
     else:
         d = y[1] - YMIN
-        if d < d0:
+        if d < d0_y:
             dd = d + eps
-            p[1] += eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+            p[1] += eta * (1.0 / dd - 1.0 / d0_y) * (1.0 / (dd * dd))
 
     if y[1] > YMAX:
         p[1] -= k_out * (y[1] - YMAX)
     else:
         d = YMAX - y[1]
-        if d < d0:
+        if d < d0_y:
             dd = d + eps
-            p[1] -= eta * (1.0 / dd - 1.0 / d0) * (1.0 / (dd * dd))
+            p[1] -= eta * (1.0 / dd - 1.0 / d0_y) * (1.0 / (dd * dd))
 
     return p
 
@@ -105,7 +105,8 @@ def avoid_obstacles(
     goal,
     *,
     # keep-in rectangle params
-    rect_d0=0.10,
+    rect_d0_x=0.14,
+    rect_d0_y=0.06,
     rect_eta=0.2,
     rect_k_out=200.0,
     # internal obstacle params
@@ -122,7 +123,7 @@ def avoid_obstacles(
     y = np.asarray(y, dtype=float).reshape(2,)
     p = np.zeros(2, dtype=float)
 
-    p += _keep_in_rect_force(y, d0=rect_d0, eta=rect_eta, k_out=rect_k_out)
+    p += _keep_in_rect_force(y, d0_x=rect_d0_x, d0_y=rect_d0_y, eta=rect_eta, k_out=rect_k_out)
     p += _repulsive_point_obstacles_force(y, INTERNAL_OBSTACLES, d0=obs_d0, eta=obs_eta)
 
     # Clamp for stability
