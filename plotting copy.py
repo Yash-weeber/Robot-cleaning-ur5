@@ -25,36 +25,6 @@ ws_length = config["simulation"]["ws_length"]
 y_min, y_max = ws_center[1] - ws_length / 2, ws_center[1] + ws_length / 2
 x_min, x_max = ws_center[0] - ws_width / 2, ws_center[0] + ws_width / 2
 
-def plot_weights_history_heatmap(weights_csv, n_bfs, output_path=None):
-    df = pd.read_csv(weights_csv)
-    weight_cols = [f"w{i}" for i in range(n_bfs)]
-    if not all(c in df.columns for c in weight_cols):
-        raise ValueError(f"Expected weight columns {weight_cols} not all found in {weights_csv}")
-    df = df[df["iter"] >= 1].copy()  # filter out any non-iteration rows (e.g., metadata)
-    df = df[df["tag"] == "executed"].copy()  # keep only executed iterations
-
-    df["iter"] = pd.to_numeric(df["iter"], errors="coerce")
-    for c in weight_cols:
-        df[c] = pd.to_numeric(df[c], errors="coerce")
-    df = df.dropna(subset=["iter"] + weight_cols)
-    if df.empty:
-        raise ValueError(f"No valid rows found in {weights_csv} after parsing.")
-
-    weights_matrix = df[weight_cols].to_numpy()  # shape (num_iters, n_bfs)
-    plt.figure(figsize=(10, 6))
-    im = plt.imshow(weights_matrix.T, aspect="auto", cmap="viridis")
-    plt.colorbar(im, label="Weight Value")
-    plt.title("DMP Weights History (executed iterations)")
-    plt.ylabel("Basis Function Index")
-    plt.xlabel("Iteration")
-
-    if output_path is not None:
-        plt.savefig(output_path, dpi=150)
-        print(f"Saved weights history plot to: {output_path}")
-    else:
-        plt.show()
-    plt.close()
-
 def plot_grid_reward_heatmaps(
     iter_log_csv,
     n_x_seg,
@@ -1011,7 +981,7 @@ if __name__ == "__main__":
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results3/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
@@ -1033,13 +1003,10 @@ if __name__ == "__main__":
         cost_file = root_dir / f"{exp_num}/llm_iteration_log.csv"
         dmp_traj_file = root_dir / f"{exp_num}/dmp_trajectory_feedback.csv"
         ee_traj_file = root_dir / f"{exp_num}/ee_trajectory.csv"
-        weights_csv = root_dir / f"{exp_num}/weights_history.csv"
-        weights_heatmap_file = root_dir / f"{exp_num}/weights_heatmap.png"
         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
         grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file)
-        plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file)
         # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%

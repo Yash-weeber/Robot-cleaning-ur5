@@ -1,8 +1,9 @@
 *.pyc
 *.pyc
 /pydmps/__pycache__
-keys.env
+/keys.env
 *.png
 *.gif
 /Results/*
 /sessions/errors/*
+*.env

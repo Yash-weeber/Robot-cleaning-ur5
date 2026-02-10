@@ -145,9 +145,14 @@ def run_llm_optimization(config):
 
             try:
                 # Use large token limit for coordinate tables
-                response = llm.call_ollama(prompt, token_limit=118000)
+                if config['llm_settings']['llm_model'].startswith("ollama"):
+                    response = llm.call_ollama(prompt, token_limit=118000)
+                elif config['llm_settings']['llm_model'].startswith("gemini"):
+                    response = llm.call_gemini(prompt)
+                else:
+                    raise ValueError(f"Unsupported LLM model: {config['llm_settings']['llm_model']}")
                 w_next = parse_ollama_weights(response, n_bfs)
-                save_dialog(config['logs']['dialog_dir'], it + 1, prompt, response)
+                # save_dialog(config['logs']['dialog_dir'], it + 1, prompt, response)
             except Exception as e:
                 print(f"LLM Error at iteration {it}: {e}. Reusing current weights.")
                 w_next = w2.copy()

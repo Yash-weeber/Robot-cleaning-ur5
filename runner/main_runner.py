@@ -68,9 +68,9 @@ class EnhancedDMPController:
         self.y_min = self.ws_center[1] - ws_length / 2.0
         self.y_max = self.ws_center[1] + ws_length / 2.0
         self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
-        self.kp = [3000, 3000, 1500, 800, 500, 500]
+        self.kp = [300, 300, 150, 80, 50, 50]
         self.kd = [150, 150, 80, 40, 20, 20]
-        self.set_joint_pid_gains(self.kp, self.kd)
+        # self.set_joint_pid_gains(self.kp, self.kd)
         self.reset_robot_to_home()
 
     def reset_robot_to_home(self):
