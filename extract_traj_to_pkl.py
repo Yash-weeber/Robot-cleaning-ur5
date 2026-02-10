@@ -98,20 +98,25 @@ if __name__ == "__main__":
     output_pkl_path = root_dir / f"dmp_trajectory_feedback_iter_{iteration}.pkl"
     extract_traj_to_pkl(iteration, traj_csv_path, output_pkl_path)
 # %%
-# output_pkl_path = "centroids_sawtooth.pkl"
+output_pkl_path = "llm_traj-400.pkl"
 with open(output_pkl_path, 'rb') as f:
     data = pickle.load(f)
 x = []
 y = []
 for k in range(len(data)):
-    x.append(data[k][1])
-    y.append(data[k][0])
+    x.append(data[k][0])
+    y.append(data[k][1])
 # print(len(data['x_traj']), len(data['y_traj']))
 # print(data['x_traj'])
 # %%
 # plt.plot(data['x_traj'], data['y_traj'])
-plt.plot(x, y)
+plt.plot([-yi for yi in y], [xi for xi in x])
+plt.scatter(-y[0], x[0], color='red', label='Start')
+plt.scatter(-y[-1], x[-1], color='green', label='End')
+plt.title("Extracted Trajectory from DMP")
 plt.show()
+
+
 # %%
 SEND_UDP = True
 UDP_HOST = "169.254.169.102"   # change to receiver IP
