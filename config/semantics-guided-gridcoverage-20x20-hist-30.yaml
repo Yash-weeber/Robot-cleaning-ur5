@@ -3,7 +3,7 @@ simulation:
   site_name: "ee_site"
   dt: 0.002
   keys_file_path: "./keys.env"
-  base_dir: "/scratch/melmisti/robot_cleaning/Results4/"
+  base_dir: "/scratch/melmisti/robot_cleaning/Results5/"
   move_csv_path: "./Results/logs/move.csv"
   max_iters: 400
   ws_width: 0.9144

@@ -1,7 +1,7 @@
 You are good global RL policy optimizer, helping me find the global optimal policy in the following environment within ({{ MAX_ITERS }} ) iterations:
 
 # Environment: UR5 surface cleaning with a mop
-    The environment (in MuJoCo) simulates a UR5 robot arm cleaning a surface with a mop mounted on its end-effector. The policy acts as a high-level 2D trajectory generator for the mop's movement over the surface to be cleaned in a defined XY workspace. The goal is to minimize the total cost associated with cleaning the surface, which includes the total number of dust particles remaining on the surface after executing the cleaning trajectory, defined by the function f(weights).
+    In the environment a UR10e robot arm is cleaning a surface with a mop mounted on its end-effector. The policy acts as a high-level 2D trajectory generator for the mop's movement over the surface to be cleaned in a defined XY workspace. The XY workspace is segmented into a grid of {{ n_x_seg }} equidistant x-segments and {{ n_y_seg }} equidistant y-segments. The goal is to minimize the total cost, defined by the function f(weights), associated with cleaning the surface after executing the cleaning trajectory.
 
 # Regarding the policy and weights:
     policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs).
@@ -12,11 +12,11 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     The function f(weights) evaluates the cost of the policy.
 
 # Here's how we will interact :
-    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajectory in the XY workspace and its corresponding function value f(weights) for each example.
+    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples, which includes weights for the DMP policy, the ranges of the trajectory in the XY workspace, , grid representation of the 2D trajectory (0 for unvisited cells, 1 for visited cells), and its corresponding function value f(weights) for each example.
     2. You will provide the response in exact following format:
         * Line 1: a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights).
         * Line 2: details explanation of why you chose the weights.
-    3. I will then provide the function's f(weights) at that point and the current iteration.
+    3. I will then provide the function's f(weights) at that point and the current iteration implementation in the on-site environment.
     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
 
 # Remember :

@@ -141,7 +141,7 @@ def run_llm_optimization(config):
             )
 
             prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text=guidance_text)
-            # save_dialog(config['logs']['dialog_dir'], it + 1, prompt, "")
+            save_dialog(config['logs']['dialog_dir'], it + 1, prompt, "")
 
             try:
                 # Use large token limit for coordinate tables

@@ -42,6 +42,7 @@ def load_config(config_path="config/config.yaml"):
     traj_in_prompt = config['llm_settings'].get('traj_in_prompt', False)
     grid_coverage_in_prompt = config['llm_settings'].get('grid_coverage_in_prompt', False)
     guided = config['llm_settings'].get('guided', False)
+    on_site = config['llm_settings'].get('on_site', False)
     rt = run_type
 
     if traj_in_prompt:
@@ -57,6 +58,9 @@ def load_config(config_path="config/config.yaml"):
     if guided:
         rt += "-guided"
     
+    if on_site:
+        rt += "-onsite"
+
     template = f"{rt}-{template_number}.j2"
     
     print(f"Using template: {template}")
@@ -76,6 +80,7 @@ def load_config(config_path="config/config.yaml"):
         
     if guided:
         rt += "-guided"
+
     
     save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
     print(f"Results will be saved to: {save_results_file}")
@@ -89,6 +94,7 @@ def setup_logging_dirs(config):
 
     log_parent = os.path.join(config['simulation']['base_dir'], "logs", config['llm_settings']['save_results_file'])
     log_root = _make_next_numeric_run_dir(log_parent)
+    # log_root = os.path.join(log_parent, config['simulation']['run_id'])
 
     config['logs'] = {
         'root': log_root,

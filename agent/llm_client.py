@@ -44,7 +44,7 @@ class LLMInterface:
             xmax=bounds["xmax"],
             ymin=bounds["ymin"],
             ymax=bounds["ymax"],
-            optimum=0.0,
+            optimum=20.0,
             step_size=self.config['llm_settings'].get('step_size', 100),
             feedback_text=feedback_text,
             iter_idx=iter_idx,
