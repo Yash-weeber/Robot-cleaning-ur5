@@ -93,8 +93,8 @@ def load_config(config_path="config/config.yaml"):
 def setup_logging_dirs(config):
 
     log_parent = os.path.join(config['simulation']['base_dir'], "logs", config['llm_settings']['save_results_file'])
-    # log_root = _make_next_numeric_run_dir(log_parent)
-    log_root = os.path.join(log_parent, config['simulation']['run_id'])
+    log_root = _make_next_numeric_run_dir(log_parent)
+    # log_root = os.path.join(log_parent, config['simulation']['run_id'])
 
     config['logs'] = {
         'root': log_root,

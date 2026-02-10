@@ -930,25 +930,25 @@ def plot_trajectory_coverage_heatmap(
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 100  # number of recent iterations to summarize for feedback
+    feedback_window = 30  # number of recent iterations to summarize for feedback
     step_size = 50
     run_type = "semantics-RL-optimizer"
     traj_in_prompt = False
     resample_rate = 20
     template_number = '1'  # which prompt template to use
     temp = ""
-    n_x_seg = 25
+    n_x_seg = 20
     n_y_seg = 20
-    grid_coverage_in_prompt = 0  # whether to include grid coverage info in LLM feedback
+    grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
     grid_reward = 0 # whether to include grid-based reward in LLM feedback
-    guided = 0  # whether to use guided trajectory optimization
+    guided = 1 # whether to use guided trajectory optimization
     rt = run_type
 
     if traj_in_prompt:
         rt += "-traj"
     
     if grid_coverage_in_prompt:
-        rt += f"-gridcov"
+        rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
 
     if grid_reward:
         rt += "-gridreward"
@@ -981,7 +981,7 @@ if __name__ == "__main__":
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results-on-site/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
@@ -1006,7 +1006,7 @@ if __name__ == "__main__":
         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-5)
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=2, x_window=0, cost_csv=cost_file)
+        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file)
         make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%
