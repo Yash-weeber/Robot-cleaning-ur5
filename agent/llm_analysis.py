@@ -229,7 +229,18 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
 
     feedback_text = ""
 
-    guidance_text = "The optimal policy must result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion must be along the y-axis (sweeping side to side along the x-axis), smooth, and continuous. The optimal policy must aim to reach the global optimum and cover as much as possible of the workspace." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+    # guidance_text = "The optimal policy must result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion must be along the y-axis (sweeping side to side along the x-axis), smooth, and continuous. The optimal policy must aim to reach the global optimum and cover as much as possible of the workspace." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+    
+    # guidance_text = """The optimal policy must Generate a smooth, continuous sinusoidal trajectory that fully covers the workspace. The motion should progress along the y-axis while sweeping side-to-side in the x-axis with a sinusoidal pattern. The trajectory must remain strictly within workspace boundaries and should maximize area coverage while avoiding local optima.""" if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
+    guidance_text = """
+    The optimal policy should generate a boundary-safe sinusoidal sweep of the workspace:
+        1. **Primary motion direction:** The trajectory should progress along the x-axis.
+        2. **Sweeping behavior:** The policy must perform a sinusoidal oscillation in the y-axis while moving forward in x.
+        3. **Smoothness:** The y-position should follow a smooth sine-wave pattern.
+        4. **Workspace safety:** The entire trajectory must remain strictly within workspace boundaries.
+        5. **Coverage objective:** The policy should maximize workspace coverage by sweeping across the full width of the workspace on each cycle.
+        6. **Global optimality:** The policy must avoid local oscillatory patterns or partial-coverage behaviors.
+    """
 
     if w_df is not None and not w_df.empty:
         # Get recent executed iterations

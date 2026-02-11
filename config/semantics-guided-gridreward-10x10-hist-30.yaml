@@ -38,8 +38,7 @@ animation:
   fps: 75
 
 llm_settings:
-  gemini_model: "gemini-2.5-flash"
-  ollama_model: "gpt-oss:120b"
+  llm_model: "gpt-oss:120b"
   history_window: 25
   trajectory_history_window: 40
   feedback_window: 30

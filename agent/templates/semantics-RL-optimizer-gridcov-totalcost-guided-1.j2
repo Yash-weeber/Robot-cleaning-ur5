@@ -23,9 +23,10 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     1. **XY workspace limits: x ∈ [{{ "%.3f"|format(xmin) }}, {{ "%.3f"|format(xmax) }}], y ∈ [{{ "%.3f"|format(ymin) }}, {{ "%.3f"|format(ymax) }}]. Any proposed weights must keep the trajectory strictly within these bounds.**
     2. **The global optimum should be around {{ optimum }}.** If you are higher than that, this is a local optimum. You should explore instead of exploiting.
     3. Search both the positive and the negative values. **During exploration, use search step size of {{ step_size }}**
+    4. The trajectory and policy obtained must follow the provided guidance
 
 # Guidance:
-    {{ guidance_text }}
+    {% include guidance_text %}
 
 Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
 {{ feedback_text }}

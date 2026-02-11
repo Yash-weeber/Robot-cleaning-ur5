@@ -977,7 +977,12 @@ if __name__ == "__main__":
     if guided:
         rt += "-guided"
     
-    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
+    if guided:
+        suffix = f"-sinusoid-y"
+    else:
+        suffix = ""
+    
+    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}" 
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")

@@ -80,9 +80,12 @@ def load_config(config_path="config/config.yaml"):
         
     if guided:
         rt += "-guided"
+        suffix = f"-{config['llm_settings']['guidance_file'].split('/')[-1].split('.')[0]}"
+    else:
+        suffix = ""
 
     
-    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
+    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}" 
     print(f"Results will be saved to: {save_results_file}")
 
     config['llm_settings']['save_results_file'] = save_results_file

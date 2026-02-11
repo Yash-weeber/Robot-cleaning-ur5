@@ -1,0 +1,7 @@
+    The optimal policy must generate a boundary-safe sinusoidal sweep of the workspace:
+        1. **Primary motion direction:** The trajectory must progress along the y-axis.
+        2. **Sweeping behavior:** The policy must perform a sinusoidal oscillation in the x-axis while moving forward in y.
+        3. **Smoothness:** The x-position must follow a smooth sine-wave pattern.
+        4. **Workspace safety:** The entire trajectory must remain strictly within workspace boundaries.
+        5. **Coverage objective:** The policy must maximize workspace coverage by sweeping across the full width of the workspace on each cycle.
+        6. **Global optimality:** The policy must avoid local oscillatory patterns or partial-coverage behaviors.

@@ -50,14 +50,14 @@ class LLMInterface:
             iter_idx=iter_idx,
             n_x_seg=self.config['dmp_params']['num_x_segments'],
             n_y_seg=self.config['dmp_params']['num_y_segments'],
-            guidance_text=guidance_text
+            guidance_text=self.config['llm_settings'].get('guidance_file', "")
         )
 
     def call_ollama(self, prompt, token_limit=100000):
 
         try:
             response = ollama.chat(
-                model=self.config['llm_settings']['ollama_model'],
+                model=self.config['llm_settings']['llm_model'],
                 messages=[{"role": "user", "content": prompt}],
                 options={'num_ctx': token_limit}  # Mapping token_limit to Ollama's parameter
             )
@@ -96,7 +96,7 @@ class LLMInterface:
                 for attempt in range(max_retries_per_key):
                     try:
                         resp = client.models.generate_content(
-                            model=self.config['llm_settings']['gemini_model'],
+                            model=self.config['llm_settings']['llm_model'],
                             contents=prompt
                         )
                         text = getattr(resp, "text", None) or str(resp)

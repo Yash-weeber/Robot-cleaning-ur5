@@ -41,7 +41,7 @@ def plot_weights_history_heatmap(weights_csv, n_bfs, output_path=None):
         raise ValueError(f"No valid rows found in {weights_csv} after parsing.")
 
     weights_matrix = df[weight_cols].to_numpy()  # shape (num_iters, n_bfs)
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(20, 6))
     im = plt.imshow(weights_matrix.T, aspect="auto", cmap="viridis")
     plt.colorbar(im, label="Weight Value")
     plt.title("DMP Weights History (executed iterations)")
@@ -661,7 +661,8 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
     plt.xlabel('Iteration')
     plt.ylabel('Cost')
     plt.grid(True)
-    plt.legend()
+    plt.xlim(df['iter'].min(), df['iter'].max())
+    # plt.legend()
     plt.savefig(cost_plots_dir / figure_name)
     if show:
         plt.show()
@@ -1007,11 +1008,17 @@ if __name__ == "__main__":
     if guided:
         rt += "-guided"
     
-    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
+    if guided:
+        suffix = f"-sinusoid-x"
+    else:
+        suffix = ""
+    
+    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}" 
+    
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results3/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
@@ -1038,9 +1045,9 @@ if __name__ == "__main__":
         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file)
+        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=2, x_window=0, cost_csv=cost_file)
         plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file)
-        # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+        make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 # %%
 # root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"
