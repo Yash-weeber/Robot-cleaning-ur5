@@ -25,7 +25,7 @@ from agent.interfaces import DrawingInterface, RealTimeMouseControl
 from utils.draw_shapes import infinity_trajectory
 from utils.obstacle_avoidance import avoid_obstacles
 
-
+# This is the master class that controls the entire robot simulation
 class EnhancedDMPController:
     def __init__(self, config):
         # Configuration setup
@@ -47,13 +47,14 @@ class EnhancedDMPController:
         # Load model and data
         self.model = mujoco.MjModel.from_xml_path(self.xml_path)
         self.data = mujoco.MjData(self.model)
-
+        # Identify the exact part of the robot arm we want to move (the end-effector)
         self.site_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, self.site_name)
         if self.site_id == -1:
             raise RuntimeError(f"Site '{self.site_name}' not found in model")
 
         # Initialize viewer
         self.viewer = ViewerAdapter(self.model, self.data)
+        # Save a "snapshot" of the world so we can reset it perfectly later
         self._qpos0 = self.data.qpos.copy()
         self._qvel0 = self.data.qvel.copy()
         self._act0 = self.data.act.copy() if hasattr(self.data, "act") else None
@@ -72,7 +73,7 @@ class EnhancedDMPController:
         self.reset_robot_to_home()
 
     def reset_robot_to_home(self):
-
+        # Move the arm back to its predefined starting pose
         set_joint_positions(self.model, self.data, self.joint_names, self.home_positions)
         _clamp_limits(self.model, self.data.qpos, self.joint_names)
         mujoco.mj_forward(self.model, self.data)
@@ -104,12 +105,12 @@ class EnhancedDMPController:
         if redraw and self.viewer:
             self.viewer.draw()
     def move_to_3d_position(self, target_xy, animate=True):
-        # Exact copy of 3D move logic
+        # Command the robot to go to a specific (X, Y) spot on the table at a fixed height
         target_3d = np.array([target_xy[0], target_xy[1], self.mop_z_height])
         print(f"Moving to 3D target: [{target_3d[0]:.3f}, {target_3d[1]:.3f}, {target_3d[2]:.3f}]")
 
         start_joints = get_joint_positions(self.model, self.data, self.joint_names)
-
+        # Figure out the joint math (IK) to reach that spot
         success, error = enhanced_ik_solver(
             self.model, self.data, self.site_id, target_3d, self.joint_names,
             step_clip=0.2, max_wp_step=0.03, max_iters_per_wp=300,
@@ -119,6 +120,7 @@ class EnhancedDMPController:
         )
 
         if success:
+            # If the math worked, show a smooth animation of the arm moving there
             print(f"IK Success! Position error: {error:.6f} m")
             if animate:
                 target_joints = get_joint_positions(self.model, self.data, self.joint_names)
@@ -158,6 +160,7 @@ class EnhancedDMPController:
                 trajectory = self.get_discrete_waypoints()
 
         if trajectory is None: return None
+        # Teach the robot the shape and calculate the forces needed to push it along that path
         self.dmp.imitate_path(trajectory.T)
         self.dmp.reset_state()
 
@@ -171,7 +174,7 @@ class EnhancedDMPController:
             )
             y, _, _ = self.dmp.step(tau=2.0, external_force=ext_f)
             task_traj.append(np.array([y[0], y[1], self.mop_z_height]))
-
+        # Translate that 3D path into a list of joint angles for the arm to follow
         joint_traj = []
         for target_3d in task_traj:
             success, _ = enhanced_ik_solver(self.model, self.data, self.site_id, target_3d, self.joint_names,
@@ -210,7 +213,7 @@ class EnhancedDMPController:
 
         print(f"Z-coordinate fixed at: { self.mop_z_height:.4f} m")
         if not GUI_AVAILABLE:
-            print("⚠️ Real-time mode requires a GUI. Skipping.")
+            print(" Real-time mode requires a GUI. Skipping.")
             return
 
         # Create mouse control interface
@@ -313,7 +316,7 @@ class EnhancedDMPController:
     def get_discrete_waypoints(self):
         
         if not GUI_AVAILABLE:
-            print("⚠️ Waypoint dialog requires a GUI.")
+            print(" Waypoint dialog requires a GUI.")
             return None
         root = tk.Tk()
         root.withdraw()

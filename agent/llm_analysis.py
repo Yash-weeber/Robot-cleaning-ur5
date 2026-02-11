@@ -3,12 +3,12 @@ import json
 import numpy as np
 import pandas as pd
 
-
+# This function reads the recorded path of the robot from a file
 def load_trajectory_history(csv_path, max_iters=20):
 
     if not os.path.exists(csv_path):
         return {}
-    try:
+    try:# Load the file and organize the coordinates by which attempt (iteration) they belong to
         data = np.genfromtxt(csv_path, delimiter=",", names=True, dtype=None, encoding="utf-8")
         if data.size == 0:
             return {}
@@ -23,6 +23,7 @@ def load_trajectory_history(csv_path, max_iters=20):
                 "x": float(row["x"]),
                 "y": float(row["y"])
             })
+            # Keep only the most recent attempts so we don't get overwhelmed by old data
         sorted_iters = sorted(trajectory_history.keys())
         if len(sorted_iters) > max_iters:
             sorted_iters = sorted_iters[-max_iters:]
@@ -31,7 +32,7 @@ def load_trajectory_history(csv_path, max_iters=20):
         print(f"Warning: Could not load trajectory history: {e}")
         return {}
 
-
+# This function checks for mistakes the robot made while trying to figure out its joint angles
 def load_ik_error_history(csv_path, max_iters=20):
 
     if not os.path.exists(csv_path):
@@ -60,7 +61,7 @@ def load_ik_error_history(csv_path, max_iters=20):
         print(f"Warning: Could not load IK error history: {e}")
         return {}
 
-
+# This summarizes the errors into simple stats like "average mistake" and "biggest mistake"
 def summarize_ik_errors(error_history):
 
     summary = {}
@@ -76,7 +77,7 @@ def summarize_ik_errors(error_history):
         }
     return summary
 
-
+# This function judges the path: Did it stay on the table? Was it smooth? How much area did it cover?
 def analyze_trajectory_performance(trajectory_data, bounds):
 
     if not trajectory_data:
@@ -87,14 +88,18 @@ def analyze_trajectory_performance(trajectory_data, bounds):
             continue
         xs = [p["x"] for p in traj_points]
         ys = [p["y"] for p in traj_points]
+        # Check if the robot stayed within the allowed boundaries
+
         x_in_bounds = all(bounds["xmin"] <= x <= bounds["xmax"] for x in xs)
         y_in_bounds = all(bounds["ymin"] <= y <= bounds["ymax"] for y in ys)
+        # Calculate how much of the table surface the robot actually reached
         x_range = max(xs) - min(xs)
         y_range = max(ys) - min(ys)
         bounds_width = bounds["xmax"] - bounds["xmin"]
         bounds_height = bounds["ymax"] - bounds["ymin"]
         x_range_covered = x_range / bounds_width if bounds_width > 0 else 0
         y_range_covered = y_range / bounds_height if bounds_height > 0 else 0
+        # Measure the total distance traveled vs the shortest possible path to check smoothness
         path_length = sum(np.sqrt((xs[i + 1] - xs[i]) ** 2 + (ys[i + 1] - ys[i]) ** 2)
                           for i in range(len(xs) - 1))
         direct_distance = np.sqrt((xs[-1] - xs[0]) ** 2 + (ys[-1] - ys[0]) ** 2)
@@ -109,7 +114,7 @@ def analyze_trajectory_performance(trajectory_data, bounds):
         }
     return analysis
 
-
+# This loads the general log to see how many balls were cleaned in each round
 def load_iteration_log(csv_path, n_x_seg, n_y_seg):
 
     if not os.path.exists(csv_path):
@@ -131,7 +136,7 @@ def load_iteration_log(csv_path, n_x_seg, n_y_seg):
         print(f"Warning: Could not load iteration log {csv_path}: {e}")
         return {}
 
-
+# Similar to the history loader, this grabs feedback on the path shape specifically
 def load_traj_feedback(csv_path):
 
     if not os.path.exists(csv_path):
@@ -154,13 +159,13 @@ def load_traj_feedback(csv_path):
     except Exception as e:
         print(f"Warning: Could not load trajectory feedback {csv_path}: {e}")
         return {}
-
+# This is the "brain" of the feedback system. It takes all the data and writes a "report card" for the AI.
 def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_traj_df, config, bounds):
 
     STRICT_X_MIN, STRICT_X_MAX = bounds['xmin'], bounds['xmax']
     STRICT_Y_MIN, STRICT_Y_MAX = bounds['ymin'], bounds['ymax']
     guided = config['llm_settings'].get('guided', False)
-
+    # Check settings for what information should be included in the  prompt
     n_warmup = config['llm_settings']['n_warmup']
     feedback_window = config['llm_settings']['feedback_window']
     traj_in_prompt = config['llm_settings']['traj_in_prompt']
@@ -175,7 +180,8 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     n_y_seg = config['dmp_params']['num_y_segments']
     x_edges = np.linspace(bounds['xmin'], bounds['xmax'], n_x_seg + 1)
     y_edges = np.linspace(bounds['ymin'], bounds['ymax'], n_y_seg + 1)
-    
+
+    # Internal tool to map exactly which parts of the table the robot touched
     def _trajectory_coverage_grid(df_points: pd.DataFrame) -> np.ndarray:
         """
         Returns a (n_y_seg, n_x_seg) binary grid where grid[y, x] == 1
@@ -228,7 +234,7 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
         return grid
 
     feedback_text = ""
-
+    # The "mission statement" sent to the LLM to tell it what kind of movement we want
     guidance_text = "The optimal policy must result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal sweeping motion must be along the y-axis (sweeping side to side along the x-axis), smooth, and continuous. The optimal policy must aim to reach the global optimum and cover as much as possible of the workspace." if not traj_in_prompt else "The policy should result in a sinusoidal trajectory that covers the workspace, while avoiding going out of bounds. The sinusoidal motion should sweep up and down the y-axis smoothly and continuously. Analyze the impact of each weight on the trajectory, then use the analysis to inform your weight adjustments."
 
     if w_df is not None and not w_df.empty:

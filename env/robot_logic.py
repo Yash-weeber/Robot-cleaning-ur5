@@ -2,7 +2,7 @@ import numpy as np
 import mujoco
 import math
 import time
-
+# This ensures the robot's joints don't bend further than they physically can
 def _clamp_limits(model, qpos, joint_names):
     for jn in joint_names:
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
@@ -10,7 +10,7 @@ def _clamp_limits(model, qpos, joint_names):
         if model.jnt_limited[jid]:
             lo, hi = model.jnt_range[jid]
             qpos[qadr] = np.clip(qpos[qadr], lo, hi)
-
+# Helper functions to tell the robot where to stand or ask where it is currently
 def set_joint_positions(model, data, joint_names, positions):
     for i, jn in enumerate(joint_names):
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
@@ -25,7 +25,7 @@ def get_joint_positions(model, data, joint_names):
         qadr = model.jnt_qposadr[jid]
         positions[i] = data.qpos[qadr]
     return positions
-
+# This breaks a long move into tiny "breadcrumbs" (waypoints) so the robot moves in a line
 def _interpolate_path(p0, p1, max_step=0.03):
     p0 = np.asarray(p0, float)
     p1 = np.asarray(p1, float)
@@ -39,10 +39,12 @@ def _interpolate_path(p0, p1, max_step=0.03):
     alphas = np.linspace(0.0, 1.0, n + 1)[1:]
     return [p0 * (1 - a) + p1 * a for a in alphas]
 
+# The "Brain": It calculates the math needed to move the arm to a target (3D Goal)
 def enhanced_ik_solver(model, data, site_id, goal_pos_3d, joint_names,
                        step_clip=0.2, max_wp_step=0.03, max_iters_per_wp=300,
                        lam_init=0.1, lam_inc=2.0, lam_dec=0.85,
                        tol=1e-3, print_every=60):
+    # Identify which parts of the robot we are allowed to move
     dof_cols = []
     for jn in joint_names:
         jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, jn)
@@ -55,6 +57,7 @@ def enhanced_ik_solver(model, data, site_id, goal_pos_3d, joint_names,
         _clamp_limits(model, data.qpos, joint_names)
         mujoco.mj_forward(model, data)
 
+    # Break the goal into small steps to make the math easier and more stable
     start = np.array(data.site_xpos[site_id])
     waypoints = _interpolate_path(start, goal_pos_3d, max_step=max_wp_step)
 
@@ -71,7 +74,7 @@ def enhanced_ik_solver(model, data, site_id, goal_pos_3d, joint_names,
             mujoco.mj_jacSite(model, data, Jp, Jr, site_id)
             J = Jp[:, dof_cols]
             e = wp - np.array(data.site_xpos[site_id])
-
+            # Calculate the change in joint angles needed
             A = J.T @ J + lam * np.eye(J.shape[1])
             b = J.T @ e
             try:
@@ -114,14 +117,14 @@ def enhanced_ik_solver(model, data, site_id, goal_pos_3d, joint_names,
         if prev_err >= tol:
             print(f"Waypoint {wpi} failed with error {prev_err:.6f} m")
             return False, prev_err
-
+    # Tell us if we reached the final goal or got stuck
     final_err = np.linalg.norm(goal_pos_3d - np.array(data.site_xpos[site_id]))
     return True, final_err
-
+# This makes the robot's movement look "human" by starting slow, speeding up, then ending slow
 def enhanced_interpolate(start_pos, end_pos, t):
     smooth_t = 6 * t ** 5 - 15 * t ** 4 + 10 * t ** 3
     return start_pos + smooth_t * (end_pos - start_pos)
-
+# The "Director": It creates the movie of the robot moving between two poses
 def animate_robot_movement(model, data, viewer, joint_names, start_joints, target_joints,
                            duration=2.0, fps=60):
 

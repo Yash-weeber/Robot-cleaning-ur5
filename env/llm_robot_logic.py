@@ -6,11 +6,12 @@ from utils.draw_shapes import (
 )
 from utils.obstacle_avoidance import avoid_obstacles
 
-
+# This function creates "practice routes" for the robot to follow during its first few tries
 def generate_warmup_trajectory(n_counter, config):
     ws_center = config["simulation"]["ws_center"]
     ws_width = config["simulation"]["ws_width"]
     ws_length = config["simulation"]["ws_length"]
+    # Pick a shape based on which warmup round we are on (0, 1, 2, or 3)
     if n_counter == 0:
         x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.35*ws_width, num_points=200, plot=False)
     elif n_counter == 1:
@@ -33,9 +34,10 @@ def generate_warmup_trajectory(n_counter, config):
 
     trajectory = np.hstack((np.array(ws_center).reshape(2, 1), trajectory)).T
     return trajectory
-
+# This function tells the robot how to move while pushing it away from obstacles
 def get_dmp_step_with_obstacles(dmp):
-
+    # Calculate the next position, but add an "external force" that acts like a magnet
+    # pushing the robot arm away from forbidden zones or objects
     y, _, _ = dmp.step(
         tau=2.0,
         external_force=avoid_obstacles(
@@ -50,7 +52,7 @@ def get_dmp_step_with_obstacles(dmp):
     )
     return y
 
-
+# This records the "scorecard" for the attempt, including how many balls were cleaned
 def log_iteration_data(iter_idx, grid_mat, total_balls, traj_len, out_csv):
 
     import csv
@@ -61,12 +63,15 @@ def log_iteration_data(iter_idx, grid_mat, total_balls, traj_len, out_csv):
     file_exists = os.path.exists(out_csv)
     with open(out_csv, "a", newline="") as f:
         w = csv.writer(f)
+        # If this is the first time writing to this file, add the titles (header)
         if not file_exists:
             if grid_mat is not None:
                 w.writerow(["iter", "timestamp", "traj_waypoints", "total_balls"] +
                        [f"cell{i}" for i in range(len(flat))])
             else:
                 w.writerow(["iter", "timestamp", "traj_waypoints", "total_balls"])
+                # Save the current iteration's results and the time it happened
+
         if grid_mat is None:
             w.writerow([iter_idx, time.strftime("%Y-%m-%d %H:%M:%S"), traj_len, total_balls])
         else:

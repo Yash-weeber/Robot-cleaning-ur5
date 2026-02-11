@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+# Try to load external tools for movement; if they aren't there, use our own version
 try:
     from .pydmps.dmp_discrete import DMPs_discrete
     from .pydmps.dmp_rhythmic import DMPs_rhythmic
@@ -11,6 +11,7 @@ except ImportError:
 
 class SimpleDMP:
     def __init__(self, n_dmps, n_bfs=50, dt=0.01, y0=None, goal=None):
+        # Set up the basic settings like timing and how many parts the robot has
         self.n_dmps = n_dmps
         self.n_bfs = n_bfs
         self.dt = dt
@@ -36,6 +37,7 @@ class SimpleDMP:
             self.goal = np.array(goal)
 
     def reset_state(self):
+        # Put the robot back at the starting line
         self.x = 1.0
         self.y = np.zeros(self.n_dmps)
         self.dy = np.zeros(self.n_dmps)
@@ -52,6 +54,7 @@ class SimpleDMP:
         # Forcing function
         psi = np.exp(-self.widths * (self.x - self.centers) ** 2)
         psi_norm = psi / (psi.sum() + 1e-10)
+        # This calculates the "push" needed to stay on the right path
 
         f = np.dot(self.weights, psi_norm) * self.x * (self.goal_current - self.y0)
 
@@ -172,6 +175,7 @@ class SimpleRythmicDMP:
         phi_track = np.linspace(0, 2 * np.pi, n_points)
 
         # Calculate target accelerations
+
         dt = 1.0 / n_points
         velocity = np.gradient(path, axis=0) / dt
         acceleration = np.gradient(velocity, axis=0) / dt
@@ -182,6 +186,8 @@ class SimpleRythmicDMP:
             )
 
             # Regression to find weights
+            # Find the weights needed to recreate that specific rhythmic shape
+
             X = np.zeros((n_points, self.n_bfs))
             for i, phi in enumerate(phi_track):
                 psi = np.exp(-self.widths * np.cos(phi - self.centers))

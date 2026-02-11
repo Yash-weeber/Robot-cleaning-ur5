@@ -1,12 +1,12 @@
 import numpy as np
 import mujoco
 
-
+# This function counts how many balls are left in different sections of the table
 def count_balls_in_grid(model, data, x_min, x_max, y_min, y_max, num_x_segments, num_y_segments, num_balls):
     x_edges = np.linspace(x_min, x_max, num_x_segments + 1)
     y_edges = np.linspace(y_min, y_max, num_y_segments + 1)
     grid_counts = np.zeros((num_x_segments, num_y_segments), dtype=int)
-
+    # Find the current location of every ball in the simulation
     ball_names = [f"ball_{i + 1}" for i in range(num_balls)]
     ball_positions = []
     for name in ball_names:
@@ -17,7 +17,7 @@ def count_balls_in_grid(model, data, x_min, x_max, y_min, y_max, num_x_segments,
             if (x_min <= pos[0] <= x_max) and (y_min <= pos[1] <= y_max):
                 ball_positions.append(pos)
     ball_positions = np.array(ball_positions)
-
+    # For every ball on the table, figure out which specific grid square it's in
     for pos in ball_positions:
         x, y = pos
         # Find which grid cell (i, j) the ball is in

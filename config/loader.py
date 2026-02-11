@@ -2,11 +2,12 @@ import yaml
 import os
 import time
 
-
+# This helper function creates a new, numbered folder (like 1, 2, 3...) for each new run
 def _make_next_numeric_run_dir(parent_dir):
 
     os.makedirs(parent_dir, exist_ok=True)
     existing = []
+    # Look at the folders that already exist and find the highest number
     for name in os.listdir(parent_dir):
         full = os.path.join(parent_dir, name)
         if os.path.isdir(full) and name.isdigit():
@@ -22,7 +23,7 @@ def _make_next_numeric_run_dir(parent_dir):
         except FileExistsError:
             next_id += 1
 
-
+# This function reads your "config.yaml" file and prepares the experiment settings
 def load_config(config_path="config/config.yaml"):
 
     if not os.path.exists(config_path):
@@ -30,7 +31,7 @@ def load_config(config_path="config/config.yaml"):
 
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
-
+    # Pull out all the specific settings like grid size, AI model type, and feedback style
     template_number = config['simulation'].get('template_number', 1)
     grid_reward = config['llm_settings'].get('grid_reward', False)
     resample_rate = config['llm_settings'].get('resample_rate', 30)
@@ -44,7 +45,8 @@ def load_config(config_path="config/config.yaml"):
     guided = config['llm_settings'].get('guided', False)
     on_site = config['llm_settings'].get('on_site', False)
     rt = run_type
-
+    # This section automatically builds a long name for the results file based on your settings
+    # This helps you know exactly what settings were used just by looking at the folder name
     if traj_in_prompt:
         rt += "-traj"
     
@@ -60,6 +62,7 @@ def load_config(config_path="config/config.yaml"):
     
     if on_site:
         rt += "-onsite"
+    # Pick the right "letter template" (Jinja2) for the AI based on these settings
 
     template = f"{rt}-{template_number}.j2"
     
@@ -81,7 +84,7 @@ def load_config(config_path="config/config.yaml"):
     if guided:
         rt += "-guided"
 
-    
+    # Pick the right "letter template" (Jinja2) for the AI based on these settings
     save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
     print(f"Results will be saved to: {save_results_file}")
 
@@ -89,13 +92,13 @@ def load_config(config_path="config/config.yaml"):
     config['llm_settings']['template'] = template
 
     return config
-
+# This sets up the actual file paths where the robot will write its "diary"
 def setup_logging_dirs(config):
 
     log_parent = os.path.join(config['simulation']['base_dir'], "logs", config['llm_settings']['save_results_file'])
     log_root = _make_next_numeric_run_dir(log_parent)
     # log_root = os.path.join(log_parent, config['simulation']['run_id'])
-
+    # Create a list of specific paths for every piece of data we want to save
     config['logs'] = {
         'root': log_root,
         'move_csv': os.path.join(log_root, "move.csv"),

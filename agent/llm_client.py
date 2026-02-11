@@ -5,10 +5,10 @@ import threading
 import ollama
 from google import genai
 from jinja2 import Environment, FileSystemLoader
-
+# A "lock" to make sure different parts of the code don't try to change the API key at the exact same time
 _call_gemini_lock = threading.Lock()
 
-
+# This class handles talking to the AI models
 class LLMInterface:
     def __init__(self, config):
         self.config = config
@@ -20,7 +20,7 @@ class LLMInterface:
             trim_blocks=True,
             lstrip_blocks=True,
         )
-
+        # Keep track of which API key we are currently using
         if not hasattr(self, "_active_idx"):
             self._active_idx = 0
 
@@ -54,7 +54,7 @@ class LLMInterface:
         )
 
     def call_ollama(self, prompt, token_limit=100000):
-
+        # Send the prompt to Ollama (the AI running locally on your computer)
         try:
             response = ollama.chat(
                 model=self.config['llm_settings']['ollama_model'],
@@ -71,7 +71,7 @@ class LLMInterface:
             "GOOGLE_API_KEY_1", "GOOGLE_API_KEY_2", "GOOGLE_API_KEY_6",
             "GOOGLE_API_KEY_3", "GOOGLE_API_KEY_4", "GOOGLE_API_KEY_5"
         ]
-
+        # Settings for how long to wait if Gemini tells us to "slow down"
         max_retries_per_key = 7
         base_wait_time = 4
         backoff_factor = 2
@@ -116,5 +116,5 @@ class LLMInterface:
             except Exception as e:
                 last_error = e
                 continue
-
+        # If every single key fails, stop the program and report the error
         raise RuntimeError(f"All Gemini API keys failed. Last error: {last_error}")

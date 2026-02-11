@@ -8,14 +8,15 @@ import numpy as np
 import pandas as pd
 
 def parse_weights_text(path):
-
+    # This looks through a text file and pulls out any numbers it finds (the weights)
     with open(path, "r", encoding="utf-8") as f:
         txt = f.read()
     nums = re.findall(r"[-+]?\d*\.?\d+", txt)
     if not nums:
         raise ValueError(f"No numeric weights found in {path}")
     return np.array([float(x) for x in nums], dtype=float)
-
+# This reshapes a long list of numbers into a 2-row table that the robot understands
+# If the AI gives too many or too few numbers, this "stretches" or "shrinks" them to fit
 def row_to_2x50(arr, n_bfs):
 
     a = np.asarray(arr, dtype=float).flatten()
@@ -24,25 +25,25 @@ def row_to_2x50(arr, n_bfs):
 
     cur_n_bfs = a.size // 2
     w2 = a.reshape(2, cur_n_bfs)
-
+    # If the size is already perfect, just return it
     if cur_n_bfs == n_bfs:
         return w2
-
+    # Otherwise, use math to resize the data so it matches the robot's "n_bfs" setting
     src_x = np.linspace(0.0, 1.0, cur_n_bfs)
     dst_x = np.linspace(0.0, 1.0, n_bfs)
     w_resized = np.empty((2, n_bfs), dtype=float)
     for d in range(2):
         w_resized[d] = np.interp(dst_x, src_x, w2[d])
     return w_resized
-
+# Saves the robot weights into a standard CSV file
 def write_weights_csv(path, w2):
-    """Exact copy of original write_weights_csv."""
+
     row = w2.reshape(-1)
     with open(path, "w", newline="") as f:
         csv.writer(f).writerow(list(row))
-
+# Reads weights from a CSV and ensures they aren't corrupted or the wrong size
 def read_weights_csv(path, n_bfs):
-    """Exact copy of original read_weights_csv with warning and trimming logic."""
+
     with open(path, "r", encoding="utf-8") as f:
         txt = f.read()
     nums = re.findall(r"[-+]?(?:\d*\.\d+|\d+)", txt)
@@ -61,9 +62,9 @@ def read_weights_csv(path, n_bfs):
         vals = vals[:need]
 
     return row_to_2x50(vals, n_bfs)
-
+# Loads a recorded movement file so the robot can study it
 def read_move_csv(path):
-    """Exact copy of original read_move_csv with fallback logic."""
+
     try:
         data = np.genfromtxt(path, delimiter=",", names=True, dtype=float)
         if data.dtype.names and {"x", "y"}.issubset(data.dtype.names):
@@ -78,7 +79,7 @@ def read_move_csv(path):
     return xy[:, :2].astype(float)
 
 def save_trajectory_data(iter_idx, task_trajectory, csv_path):
-    """Exact copy of original save_trajectory_data."""
+    # Records exactly where the robot went during an attempt to help the AI learn
     file_exists = os.path.exists(csv_path)
     with open(csv_path, "a", newline="") as f:
         w = csv.writer(f)
@@ -88,9 +89,9 @@ def save_trajectory_data(iter_idx, task_trajectory, csv_path):
         for step_idx, target in enumerate(task_trajectory):
             x, y = target[0], target[1]
             w.writerow([iter_idx, step_idx, float(x), float(y), timestamp])
-
+# Logs any mathematical "struggles" the robot had reaching a specific point
 def save_ik_error(iter_idx, step_idx, target_3d, error_val, csv_path):
-    """Exact copy of original save_ik_error."""
+
     file_exists = os.path.exists(csv_path)
     with open(csv_path, "a", newline="") as f:
         w = csv.writer(f)
@@ -98,13 +99,13 @@ def save_ik_error(iter_idx, step_idx, target_3d, error_val, csv_path):
             w.writerow(["iter", "step", "x", "y", "z", "error_m", "timestamp"])
         x, y, z = float(target_3d[0]), float(target_3d[1]), float(target_3d[2])
         w.writerow([int(iter_idx), int(step_idx), x, y, z, float(error_val), time.strftime("%Y-%m-%d %H-%M-%S")])
-
+# This cleans up the AI's response (removing extra words) to find just the new weights
 def parse_ollama_weights(out_text, n_bfs):
-    """Exact copy of original parse_ollama_weights with code-fence cleaning."""
+
     text = out_text.strip()
     if text.startswith("```"):
         text = re.sub(r"^```[^\n]*\n|\n```$", "", text, flags=re.MULTILINE).strip()
-    
+    # Extract just the part between <weights> tags if they exist
     text = text.split("<weights>")[1].split("</weights>")[0].strip() if "<weights>" in text and "</weights>" in text else text
     
     try:
@@ -118,17 +119,17 @@ def parse_ollama_weights(out_text, n_bfs):
     if len(nums) >= 2 * n_bfs:
         return row_to_2x50([float(x) for x in nums[:2 * n_bfs]], n_bfs)
     raise ValueError("Could not parse weights from LLM output")
-
+# Saves a copy of the "conversation" between the robot and the AI for you to read later
 def save_dialog(dialog_dir, iter_idx, prompt, response):
-    """Exact copy of original save_dialog."""
+
     pid = f"iter_{iter_idx:03d}_{uuid.uuid4().hex[:8]}"
     with open(os.path.join(dialog_dir, pid + "_prompt.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     with open(os.path.join(dialog_dir, pid + "_response.txt"), "w", encoding="utf-8") as f:
         f.write(response)
-
+# Adds the current set of weights to a master history file to track improvement over time
 def append_weight_history(csv_path, iter_idx, tag, w2, n_bfs):
-    """Exact copy of original append_weight_history."""
+
     flat = list(map(float, w2.reshape(-1)))
     file_exists = os.path.exists(csv_path)
     with open(csv_path, "a", newline="") as f:

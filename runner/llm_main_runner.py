@@ -23,7 +23,7 @@ from agent.llm_analysis import (
     load_trajectory_history, analyze_trajectory_performance,
     load_iteration_log, load_traj_feedback, build_llm_feedback
 )
-
+# This is the master function that runs the learning process
 def run_llm_optimization(config):
 
     # Initialize Controller and LLM Interface

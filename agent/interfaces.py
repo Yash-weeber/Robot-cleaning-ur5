@@ -7,7 +7,7 @@ except ImportError:
     messagebox = None
     TK_AVAILABLE = False
 import numpy as np
-
+# This tool lets you draw a shape on the screen that the robot will later try to copy
 class DrawingInterface:
     def __init__(self, width=400, height=300, title="Draw Trajectory"):
         if not TK_AVAILABLE:
@@ -108,7 +108,7 @@ class DrawingInterface:
         if self.completed and len(self.trajectory) > 1:
             return np.array(self.trajectory)
         return None
-
+# This tool lets you control the robot "live" by moving your mouse around a box
 class RealTimeMouseControl:
     def __init__(self, width=600, height=600):
         if not TK_AVAILABLE:
