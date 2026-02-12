@@ -1,0 +1,20 @@
+
+python3.11 -m pip install --user --pre torch \
+  --index-url https://download.pytorch.org/whl/nightly/cu124
+
+
+python3.11 -m pip install --user --pre torchvision \
+  --index-url https://download.pytorch.org/whl/nightly/cu124 \
+  --no-deps
+
+
+python3.11 -m pip install --user --pre torchaudio \
+  --index-url https://download.pytorch.org/whl/nightly/cu124 \
+  --no-deps
+  
+
+  python3.11 -m pip install --user --pre vllm \
+  --extra-index-url https://wheels.vllm.ai/gpt-oss/ \
+  --no-deps
+
+  python3.11 -m pip install --user https://vllm-wheels.s3.us-west-2.amazonaws.com/nightly/vllm-1.0.0.dev-cp38-abi3-manylinux1_x86_64.whl
