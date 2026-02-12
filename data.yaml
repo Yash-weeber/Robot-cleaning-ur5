@@ -1,0 +1,5 @@
+names:
+  0: yellow_bead
+path: /home/yrakesh1/Robot-cleaning-ur5/dataset
+train: images/train
+val: images/val

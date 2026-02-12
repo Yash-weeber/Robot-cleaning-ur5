@@ -1,2 +1,0 @@
-[80.0, 120.0, 100.0, 60.0, -40.0, -80.0, -100.0, -90.0, -10.0, 30.0, 20.0, 50.0, 70.0, 60.0, 40.0, 0.0, -30.0, -10.0, -5.0, 10.0]
-The above weights keep the generated trajectory well inside the allowed workspace (x ∈ [−0.8, 0.8], y ∈ [−0.5, 0.5]) while exploring a broader region of the parameter space than the initial unit‑vector guess. By using a balanced set of positive and negative basis‑function coefficients with moderate magnitudes, the DMP is expected to produce smoother motions and a lower cost f, moving the optimization toward the global optimum near 0.0.

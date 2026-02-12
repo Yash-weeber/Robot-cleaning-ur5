@@ -1,1 +1,0 @@
-grid_distribution=[17, 24, 32, 38, 14, 23]
