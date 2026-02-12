@@ -9,7 +9,9 @@ class ViewerAdapter:
         self.viewer = None
         
         # Guard: Check if a display (monitor) is actually available
-        has_display = "DISPLAY" in os.environ
+        # has_display = "DISPLAY" in os.environ
+        has_display = False
+        # has_display = True # Force display for testing purposes
 
         if has_display:
             # 1. Try DeepMind's built-in passive viewer (MuJoCo >= 3.1)
