@@ -10,6 +10,7 @@ simulation:
   ws_length: 1.2192
   ws_center: [0.6, 0.0]
   run_id: "1"
+  optimum: 20.0
 
 robot:
   joint_names: ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]

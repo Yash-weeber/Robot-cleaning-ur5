@@ -728,9 +728,9 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
 
         plt.plot(x_bounds, y_bounds, linestyle=':', color='black', label='Workspace Boundary')
 
-        for obs in INTERNAL_OBSTACLES:
-            plt.plot(obs[0], obs[1], marker='o', color='gray', markersize=8, label='Internal Obstacle' if 'Internal Obstacle' not in plt.gca().get_legend_handles_labels()[1] else "")
-            circle_trajectory(center=(obs[0], obs[1]), radius=0.05, num_points=100, plot=True, color='gray', linestyle='-')
+        # for obs in INTERNAL_OBSTACLES:
+        #     plt.plot(obs[0], obs[1], marker='o', color='gray', markersize=8, label='Internal Obstacle' if 'Internal Obstacle' not in plt.gca().get_legend_handles_labels()[1] else "")
+        #     circle_trajectory(center=(obs[0], obs[1]), radius=0.05, num_points=100, plot=True, color='gray', linestyle='-')
 
         plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP traj', color='red' if dmp_traj_data['x'].lt(x_min).any() or dmp_traj_data['x'].gt(x_max).any() or dmp_traj_data['y'].lt(y_min).any() or dmp_traj_data['y'].gt(y_max).any() else 'blue')
         if ee_traj_data is not None:
@@ -1009,7 +1009,7 @@ if __name__ == "__main__":
         rt += "-guided"
     
     if guided:
-        suffix = f"-sinusoid-x"
+        suffix = f"-infinity-x"
     else:
         suffix = ""
     
