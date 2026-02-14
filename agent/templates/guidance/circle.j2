@@ -1,0 +1,10 @@
+    The following trajectory-shape guidance takes **absolute precedence** over optimizing the objective function.
+    The policy **must satisfy this guidance first**, and only then optimize the objective.
+        The desired policy must generate a boundary-safe vertically oriented circular trajectory oriented along the y-axis:
+            1. **Primary motion direction:** The trajectory should be centered along the y-axis, forming a single continuous circular loop.
+            2. **Circular-shape behavior:** The policy must produce one complete, smooth circle, returning to its starting point without discontinuities or breaks.
+            3. **Smoothness:** The trajectory must maintain continuous curvature, with no abrupt changes in direction, velocity, or acceleration.
+            4. **Workspace safety:** The entire circular path must remain strictly within workspace boundaries. The radius must be chosen so the agent never goes out of bounds.
+            5. **Coverage objective:** The policy should maximize coverage within the circular region, sweeping evenly around the loop.
+            6. **Global optimality:** The policy must avoid partial arcs, spirals, or local oscillatory patterns. It should converge to a single, clean, globally optimal circular trajectory centered along the y-axis.
+

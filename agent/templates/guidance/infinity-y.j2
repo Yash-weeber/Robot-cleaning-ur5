@@ -1,0 +1,10 @@
+    The following trajectory-shape guidance takes **absolute precedence** over optimizing the objective function.
+    The policy **must satisfy this guidance first**, and only then optimize the objective.
+        The desired policy must generate a boundary-safe vertically oriented infinity-shaped trajectory oriented along the y-axis:
+            1. **Primary motion direction:** The trajectory must extend along the y-axis.
+            2. **Infinity-shape behavior:** The policy must produce a single continuous infinity loop, where the trajectory crosses through the center of the workspace and traces two symmetric lobes.
+            3. **Smoothness:**The entire trajectory must be smooth and continuous, with no abrupt changes in direction, velocity, or curvature.
+            4. **Workspace safety:** The full infinity shape must remain strictly within workspace boundaries. The loop size, curvature, and lobe width must be chosen so the agent never goes out of bounds.
+            5. **Coverage objective:** The policy must maximize workspace coverage by sweeping across both sides of the workspace as it traces the two lobes of the infinity shape.
+            6. **Global optimality:** The policy must avoid degenerate loops, partial lobes, or local oscillatory patterns. It must converge to a single, clean, globally optimal infinity trajectory centered in the workspace.
+

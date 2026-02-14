@@ -1009,7 +1009,7 @@ if __name__ == "__main__":
         rt += "-guided"
     
     if guided:
-        suffix = f"-infinity-x"
+        suffix = f"-infinity-y"
     else:
         suffix = ""
     
@@ -1045,9 +1045,28 @@ if __name__ == "__main__":
         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=2, x_window=0, cost_csv=cost_file)
+        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file)
         plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file)
         make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+
+
+#%%
+rewards_log = "llm_iteration_log.csv"
+exp2 = Path("/scratch/melmisti/robot_cleaning/Results-on-site/logs/semantics-RL-optimizer-gridcov-25x20-totalcost-stepsize-50-hist-35-walled-1/1/")
+exp1 = Path("/scratch/melmisti/robot_cleaning/Results-on-site/logs/semantics-RL-optimizer-totalcost-stepsize-50-hist-100-walled-1/1/")
+df_r1 = pd.read_csv(exp1 / rewards_log)
+df_r2 = pd.read_csv(exp2 / rewards_log)
+plt.figure(figsize=(10, 6))
+plt.plot(df_r1['iter'], df_r1['total_balls'], marker='o', label='Exp 1: no grid coverage in prompt')
+plt.plot(df_r2['iter'], df_r2['total_balls'], marker='o', label='Exp 2: grid coverage in prompt')
+plt.xlabel('Iteration')
+plt.ylabel('Cost')
+plt.grid(True)
+plt.xlim(min(df_r1['iter'].min(), df_r2['iter'].min()), max(df_r1['iter'].max(), df_r2['iter'].max()))
+plt.title('Comparison of Cost Histories')
+plt.legend()
+plt.savefig(exp1.parent.parent / "cost_history_comparison.pdf")
+plt.show()
 
 # %%
 # root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"

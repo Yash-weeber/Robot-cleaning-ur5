@@ -49,7 +49,7 @@ llm_settings:
   grid_reward: False
   grid_coverage_in_prompt: True
   guided: True
-  guidance_file: guidance/infinity-x.j2
+  guidance_file: guidance/infinity-y.j2
   run_type: "semantics-RL-optimizer"
   template_number: 1
   resample_rate: 20
