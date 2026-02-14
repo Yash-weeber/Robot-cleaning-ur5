@@ -1,0 +1,64 @@
+simulation:
+  xml_path: "ballmove.xml"
+  site_name: "ee_site"
+  dt: 0.002
+  keys_file_path: "./keys.env"
+  base_dir: "/scratch/melmisti/robot_cleaning/Results5/"
+  move_csv_path: "./Results/logs/move.csv"
+  max_iters: 400
+  ws_width: 0.9144
+  ws_length: 1.2192
+  ws_center: [0.6, 0.0]
+  optimum: 0.0
+
+robot:
+  joint_names:
+    ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
+  home_joint_positions: [1.63, -1.51, -1.89, -0.88, 1.76, 0.0]
+  mop_z_height: 0.49
+
+ik_params:
+  init_lambda: 0.15
+  tol: 0.001
+  step_clip: 0.2
+  max_wp_step: 0.03
+  max_iters_per_wp: 300
+  print_every: 60
+  ik_max_iters: 50
+
+dmp_params:
+  n_bfs: 10
+  num_balls: 500
+  num_x_segments: 20
+  num_y_segments: 20
+  random_scale: 10.0
+  deci_build: 2
+
+animation:
+  duration: 4.0
+  fps: 75
+
+llm_settings:
+  llm_model: "gpt-oss:120b"
+  history_window: 25
+  trajectory_history_window: 40
+  feedback_window: 30
+  n_warmup: 5
+  draw_warmup_trajectories: False
+  seed_number: 42
+  traj_in_prompt: False
+  grid_reward: False
+  grid_coverage_in_prompt: True
+  guided: True
+  guidance_file: guidance/circle.j2
+  run_type: "semantics-RL-optimizer"
+  template_number: 1
+  resample_rate: 20
+  step_size: 50
+
+obstacle_params:
+  rect_d0: 0.05
+  rect_eta: 25.0
+  obs_d0: 0.1
+  obs_eta: 25.0
+  max_force: 220.0

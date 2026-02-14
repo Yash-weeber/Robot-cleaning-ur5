@@ -30,7 +30,7 @@ def plot_weights_history_heatmap(weights_csv, n_bfs, output_path=None):
     weight_cols = [f"w{i}" for i in range(n_bfs)]
     if not all(c in df.columns for c in weight_cols):
         raise ValueError(f"Expected weight columns {weight_cols} not all found in {weights_csv}")
-    df = df[df["iter"] >= 1].copy()  # filter out any non-iteration rows (e.g., metadata)
+    # df = df[df["iter"] >= 1].copy()  # filter out any non-iteration rows (e.g., metadata)
     df = df[df["tag"] == "executed"].copy()  # keep only executed iterations
 
     df["iter"] = pd.to_numeric(df["iter"], errors="coerce")
@@ -1009,7 +1009,8 @@ if __name__ == "__main__":
         rt += "-guided"
     
     if guided:
-        suffix = f"-infinity-y"
+        # suffix = f"-infinity-y"
+        suffix = f"-circle"
     else:
         suffix = ""
     
