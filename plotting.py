@@ -961,18 +961,41 @@ def plot_trajectory_coverage_heatmap(
 
 #%%
 if __name__ == "__main__":
-    feedback_window = 30  # number of recent iterations to summarize for feedback
-    step_size = 50
-    run_type = "semantics-RL-optimizer"
-    traj_in_prompt = False
-    resample_rate = 20
-    template_number = '1'  # which prompt template to use
-    temp = ""
-    n_x_seg = 20
-    n_y_seg = 20
-    grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
-    grid_reward = 0 # whether to include grid-based reward in LLM feedback
-    guided = 1 # whether to use guided trajectory optimization
+    # feedback_window = 30  # number of recent iterations to summarize for feedback
+    # step_size = 50
+    # run_type = "semantics-RL-optimizer"
+    # traj_in_prompt = False
+    # resample_rate = 20
+    # n_warmup = 5
+    # template_number = '1'  # which prompt template to use
+    # temp = ""
+    # n_x_seg = 20
+    # n_y_seg = 20
+    # grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
+    # grid_reward = 0 # whether to include grid-based reward in LLM feedback
+    # guided = 1 # whether to use guided trajectory optimization
+    # Load parameters from config file
+    config_path = Path("./config/")
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
+    config_gile = config_path / "num-optimizer-hist-100.yaml"
+    plot_config = load_config(config_file)
+    # print(f"Loaded plot configuration from YAML: {plot_config}")
+    feedback_window = plot_config["llm_settings"]["feedback_window"]
+    step_size = plot_config["llm_settings"]["step_size"]
+    run_type = plot_config["llm_settings"]["run_type"]
+    traj_in_prompt = plot_config["llm_settings"]["traj_in_prompt"]
+    resample_rate = plot_config["llm_settings"]["resample_rate"]
+    n_warmup = plot_config["llm_settings"]["n_warmup"]
+    template_number = plot_config["llm_settings"]["template_number"]
+    n_x_seg = plot_config["dmp_params"]["num_x_segments"]
+    n_y_seg = plot_config["dmp_params"]["num_y_segments"]
+    grid_coverage_in_prompt = plot_config["llm_settings"]["grid_coverage_in_prompt"]
+    grid_reward = plot_config["llm_settings"]["grid_reward"]
+    guided = plot_config["llm_settings"]["guided"]
+    # exp_nums = plot_config["exp_nums"]
+    
     rt = run_type
 
     if traj_in_prompt:
@@ -1010,7 +1033,8 @@ if __name__ == "__main__":
     
     if guided:
         # suffix = f"-infinity-y"
-        suffix = f"-circle"
+        # suffix = f"-circle"
+        suffix = f"-{plot_config['llm_settings']['guidance_file'].split('/')[-1].split('.')[0]}"
     else:
         suffix = ""
     
@@ -1019,7 +1043,8 @@ if __name__ == "__main__":
     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/n_warmup-{n_warmup}/logs/{save_results_file}/")
+    # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
@@ -1048,7 +1073,7 @@ if __name__ == "__main__":
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
         grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file)
         plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file)
-        make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+        # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 
 #%%
