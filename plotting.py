@@ -735,7 +735,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
         plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP traj', color='red' if dmp_traj_data['x'].lt(x_min).any() or dmp_traj_data['x'].gt(x_max).any() or dmp_traj_data['y'].lt(y_min).any() or dmp_traj_data['y'].gt(y_max).any() else 'blue')
         if ee_traj_data is not None:
             plt.plot(ee_traj_data['x'], ee_traj_data['y'], linestyle='--', label='EE traj', color='orange' if ee_traj_data['x'].lt(x_min).any() or ee_traj_data['x'].gt(x_max).any() or ee_traj_data['y'].lt(y_min).any() or ee_traj_data['y'].gt(y_max).any() else 'green')
-        plt.title(f'Iteration {it} - total_balls={round(total_balls,1) if total_balls is not None else "N/A"}')
+        plt.title(f'Iteration {it} - Cost={round(total_balls,1) if total_balls is not None else "N/A"}')
         #total_balls={total_balls}', color='red' if dmp_traj_data['x'].lt(-1.0).any() or dmp_traj_data['x'].gt(1.0).any() or dmp_traj_data['y'].lt(-0.6).any() or dmp_traj_data['y'].gt(0.6).any() else 'blue')
     
         # plt.title('Trajectories Over Iterations')
@@ -976,10 +976,11 @@ if __name__ == "__main__":
     # guided = 1 # whether to use guided trajectory optimization
     # Load parameters from config file
     config_path = Path("./config/")
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
-    config_gile = config_path / "num-optimizer-hist-100.yaml"
+    config_file = config_path / "num-optimizer-hist-100.yaml"
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
     feedback_window = plot_config["llm_settings"]["feedback_window"]

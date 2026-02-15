@@ -1,0 +1,40 @@
+You are good global RL policy optimizer, helping me find the global optimal policy in the following environment within
+({{ MAX_ITERS }} ) iterations:
+
+# Environment: UR5 surface cleaning with a mop
+    The environment (in MuJoCo) simulates a UR5 robot arm cleaning a surface with a mop mounted on its end-effector. The
+    policy acts as a high-level 2D trajectory generator for the mop's movement over the surface to be cleaned in a defined
+    XY workspace. The XY workspace is segmented into a grid of {{ n_x_seg }} equidistant x-segments and {{ n_y_seg }}
+    equidistant y-segments. The goal is to minimize the total cost associated with cleaning the surface, which includes the
+    total number of dust particles remaining on the surface after executing the cleaning trajectory, defined by the function
+    f(weights).
+
+# Regarding the policy and weights:
+    policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs).
+    There are {{ N_BFS }} basis functions per dimension, resulting in a total of {{ 2 * N_BFS }} weights.
+    Weight values should be floats, and can be both positive and negative.
+    The policy defines the 2D trajectory in the XY workspace.
+    The generated 2D trajectory must strictly stay within the defined XY workspace limits.
+    The function f(weights) evaluates the cost of the policy.
+
+# Here's how we will interact :
+    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples. For each example I will provide you with
+    weights for the DMP policy, the ranges of the generated trajectory in the XY workspace, grid representation of the 2D
+    trajectory (0 for unvisited cells, 1 for visited cells), and its corresponding function value f(weights).
+    2. You will provide the response in exact following format:
+        * Line 1: a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights).
+        * Line 2: detailed explanation of why you chose the weights.
+    3. I will then provide the function's f(weights) at that point and the current iteration.
+    4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+
+# Remember :
+    1. **XY workspace limits: x ∈ [{{ "%.3f"|format(xmin) }}, {{ "%.3f"|format(xmax) }}], y ∈ [{{ "%.3f"|format(ymin) }}, {{
+    "%.3f"|format(ymax) }}]. Any proposed weights must keep the trajectory strictly within these bounds.**
+    2. **The global optimum should be around {{ optimum }}.** If you are higher than that, this is a local optimum. You
+    should explore instead of exploiting.
+    3. Search both the positive and the negative values. **During exploration, use search step size of {{ step_size }}**
+
+Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
+{{ feedback_text }}
+
+Now you are at iteration {{ iter_idx }} out of {{ MAX_ITERS }}. Please provide the results in the indicated format.
