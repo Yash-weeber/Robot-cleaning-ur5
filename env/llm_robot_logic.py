@@ -45,7 +45,7 @@ def get_dmp_step_with_obstacles(dmp):
             rect_eta=30.0,
             obs_d0=0.1,
             obs_eta=30.0,
-            max_force=275.0
+            max_force=220.0
         )
     )
     return y

@@ -226,24 +226,24 @@ def make_trajectories_gif(
 
             ax.plot(x_bounds, y_bounds, linestyle=":", color="black", label="Workspace Boundary")
 
-            for obs in INTERNAL_OBSTACLES:
-                existing_labels = ax.get_legend_handles_labels()[1]
-                ax.plot(
-                    obs[0],
-                    obs[1],
-                    marker="o",
-                    color="gray",
-                    markersize=8,
-                    label="Internal Obstacle" if "Internal Obstacle" not in existing_labels else "",
-                )
-                circle_trajectory(
-                    center=(obs[0], obs[1]),
-                    radius=0.05,
-                    num_points=100,
-                    plot=True,
-                    color="gray",
-                    linestyle="-",
-                )
+            # for obs in INTERNAL_OBSTACLES:
+            #     existing_labels = ax.get_legend_handles_labels()[1]
+            #     ax.plot(
+            #         obs[0],
+            #         obs[1],
+            #         marker="o",
+            #         color="gray",
+            #         markersize=8,
+            #         label="Internal Obstacle" if "Internal Obstacle" not in existing_labels else "",
+            #     )
+            #     circle_trajectory(
+            #         center=(obs[0], obs[1]),
+            #         radius=0.05,
+            #         num_points=100,
+            #         plot=True,
+            #         color="gray",
+            #         linestyle="-",
+            #     )
 
             dmp_oob = (
                 dmp_traj_data["x"].lt(x_min).any()
@@ -258,24 +258,24 @@ def make_trajectories_gif(
                 color="red" if dmp_oob else "blue",
             )
 
-            if ee_traj_data is not None and not ee_traj_data.empty:
-                ee_oob = (
-                    ee_traj_data["x"].lt(x_min).any()
-                    or ee_traj_data["x"].gt(x_max).any()
-                    or ee_traj_data["y"].lt(y_min).any()
-                    or ee_traj_data["y"].gt(y_max).any()
-                )
-                ax.plot(
-                    ee_traj_data["x"],
-                    ee_traj_data["y"],
-                    linestyle="--",
-                    label="EE traj",
-                    color="orange" if ee_oob else "green",
-                )
+            # if ee_traj_data is not None and not ee_traj_data.empty:
+            #     ee_oob = (
+            #         ee_traj_data["x"].lt(x_min).any()
+            #         or ee_traj_data["x"].gt(x_max).any()
+            #         or ee_traj_data["y"].lt(y_min).any()
+            #         or ee_traj_data["y"].gt(y_max).any()
+            #     )
+            #     ax.plot(
+            #         ee_traj_data["x"],
+            #         ee_traj_data["y"],
+            #         linestyle="--",
+            #         label="EE traj",
+            #         color="orange" if ee_oob else "green",
+            #     )
 
-            title = f"Iteration {it}"
+            title = f"DMP Trajectory: Iteration {it}"
             if total_balls is not None:
-                title += f" - total_balls={round(total_balls,1) if total_balls is not None else 'N/A'}"
+                title += f" (Cost: {round(total_balls,1) if total_balls is not None else 'N/A'})"
             ax.set_title(title)
 
             ax.set_xlabel("X Position")
@@ -703,7 +703,9 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
     #         plt.show()
     #     plt.close()
 
-def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None, show=False):
+def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None, plt_ext="png", show=False):
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman", "DejaVu Serif", "Liberation Serif"]
     # Load trajectory data from CSV
     df_dmp = pd.read_csv(dmp_trajectory_csv)
     df_ee = pd.read_csv(ee_trajectory_csv) if ee_trajectory_csv else None
@@ -715,9 +717,10 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
     traj_plots_dir.mkdir(parents=True, exist_ok=True)
     # os.chdir(traj_plots_dir)
     x_bounds, y_bounds = rectangle_trajectory(center=ws_center, width=ws_width, height=ws_length, num_points=200, plot=False)
-    plt.figure(figsize=(10, 6))
+    
     for it in df_dmp['iter'].unique():
-        plot_path = traj_plots_dir / f'iteration_{it}.png'
+        plot_path = traj_plots_dir / f'iteration_{it}.{plt_ext}'
+        
         if plot_path.exists():
             # print(f"Iteration {it} already plotted, skipping.")
             continue
@@ -725,26 +728,26 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
         ee_traj_data = df_ee[df_ee['iter'] == it] if df_ee is not None else None
         tb_series = df_cost.loc[df_cost["iter"] == it, "total_balls"] if df_cost is not None else None
         total_balls = tb_series.iloc[0] if tb_series is not None and not tb_series.empty else None
-
+        plt.figure(figsize=(6, 8))
         plt.plot(x_bounds, y_bounds, linestyle=':', color='black', label='Workspace Boundary')
 
         # for obs in INTERNAL_OBSTACLES:
         #     plt.plot(obs[0], obs[1], marker='o', color='gray', markersize=8, label='Internal Obstacle' if 'Internal Obstacle' not in plt.gca().get_legend_handles_labels()[1] else "")
         #     circle_trajectory(center=(obs[0], obs[1]), radius=0.05, num_points=100, plot=True, color='gray', linestyle='-')
 
-        plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP traj', color='red' if dmp_traj_data['x'].lt(x_min).any() or dmp_traj_data['x'].gt(x_max).any() or dmp_traj_data['y'].lt(y_min).any() or dmp_traj_data['y'].gt(y_max).any() else 'blue')
-        if ee_traj_data is not None:
-            plt.plot(ee_traj_data['x'], ee_traj_data['y'], linestyle='--', label='EE traj', color='orange' if ee_traj_data['x'].lt(x_min).any() or ee_traj_data['x'].gt(x_max).any() or ee_traj_data['y'].lt(y_min).any() or ee_traj_data['y'].gt(y_max).any() else 'green')
-        plt.title(f'Iteration {it} - Cost={round(total_balls,1) if total_balls is not None else "N/A"}')
+        plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP Trajectory', color='red' if dmp_traj_data['x'].lt(x_min).any() or dmp_traj_data['x'].gt(x_max).any() or dmp_traj_data['y'].lt(y_min).any() or dmp_traj_data['y'].gt(y_max).any() else 'blue')
+        # if ee_traj_data is not None:
+        #     plt.plot(ee_traj_data['x'], ee_traj_data['y'], linestyle='--', label='EE traj', color='orange' if ee_traj_data['x'].lt(x_min).any() or ee_traj_data['x'].gt(x_max).any() or ee_traj_data['y'].lt(y_min).any() or ee_traj_data['y'].gt(y_max).any() else 'green')
+        plt.title(f'DMP Trajectory: Iteration {it} (Cost: {round(total_balls,1) if total_balls is not None else "N/A"})')
         #total_balls={total_balls}', color='red' if dmp_traj_data['x'].lt(-1.0).any() or dmp_traj_data['x'].gt(1.0).any() or dmp_traj_data['y'].lt(-0.6).any() or dmp_traj_data['y'].gt(0.6).any() else 'blue')
     
         # plt.title('Trajectories Over Iterations')
         plt.xlabel('X Position')
         plt.ylabel('Y Position')
-        plt.xlim(-0.05, x_max+0.05)
+        plt.xlim(x_min-0.05, x_max+0.05)
         plt.ylim(y_min-0.05, y_max+0.05)
-        plt.axis('equal')
-        plt.legend()
+        # plt.axis('equal')
+        plt.legend(loc='lower right')
         plt.grid(True)
         plt.savefig(plot_path)
         if show:
@@ -959,7 +962,7 @@ def plot_trajectory_coverage_heatmap(
     # _save_grid(grid, output_path, plot_title)
     # return grid, output_path
 
-#%%
+#%% Plotting
 if __name__ == "__main__":
     # feedback_window = 30  # number of recent iterations to summarize for feedback
     # step_size = 50
@@ -976,11 +979,16 @@ if __name__ == "__main__":
     # guided = 1 # whether to use guided trajectory optimization
     # Load parameters from config file
     config_path = Path("./config/")
-    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
-    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
-    config_file = config_path / "num-optimizer-hist-100.yaml"
+    # config_file = config_path / "num-optimizer-hist-100.yaml"
+    # config_file = config_path / "semantics-hist-100.yaml"
+    
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
     feedback_window = plot_config["llm_settings"]["feedback_window"]

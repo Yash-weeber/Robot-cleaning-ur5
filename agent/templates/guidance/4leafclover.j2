@@ -1,0 +1,10 @@
+    The following trajectory-shape guidance takes **absolute precedence** over optimizing the objective function.
+    The policy **must satisfy this guidance first**, and only then optimize the objective.
+        The desired policy must generate a boundary-safe four-leaf-clover trajectory centered at the center of the workspace:
+            1. **Primary motion direction:** The trajectory should be centered at the center of the workspace, forming a symmetric four-petal pattern (a four-leaf clover).
+            2. **Four-leaf-clover-shape behavior:** The policy must produce one complete, continuous four-petal loop, where the trajectory traces four smooth lobes that meet at the center. Each petal must be clearly formed, symmetric, and connected through the central crossing point.
+            3. **Smoothness:** The trajectory must maintain continuous curvature across all petals, with no abrupt changes in direction.
+            4. **Workspace safety:** The entire four-leaf-clover shape must remain strictly within workspace boundaries. The lobe size and curvature must be chosen so the trajectory never goes out of bounds.
+            5. **Coverage objective:** The policy should maximize workspace coverage by sweeping across all four quadrants of the workspace as it traces the four petals.
+            6. **Global optimality:** The policy must avoid partial petals, distorted lobes, or local oscillatory patterns.
+
