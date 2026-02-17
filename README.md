@@ -1,7 +1,7 @@
 
 ---
 
-#  UR5e Robot Cleaning Optimization with LLMs
+#  UR5 Robot Cleaning Optimization with LLMs
 
 This repository contains a framework for optimizing robot trajectories using **Large Language Models (LLMs)**. By combining **Dynamic Movement Primitives (DMPs)** with the reasoning capabilities of models like Gemini and Ollama, the system learns to clean a workspace in a **MuJoCo** simulation through iterative feedback.
 
