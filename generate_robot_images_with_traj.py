@@ -83,8 +83,11 @@ print(f"Position error: {np.linalg.norm(final_pos - target_pos):.6f}")
 # -----------------------------
 # Load and interpolate trajectory
 # -----------------------------
-df_traj = pd.read_csv("dmp_trajectory_feedback.csv")
-iteration = 10
+df_traj = pd.read_csv("dmp_trajectory_feedback-sinusoid-x-run-7.csv")
+# df_traj = pd.read_csv("dmp_trajectory_feedback-props-run-9.csv")
+# df_traj = pd.read_csv("ee_trajectory-sinusoid-x-run-7.csv")
+# df_traj = pd.read_csv("ee_trajectory-props-run-9.csv")
+iteration = 1
 df_traj_iter = df_traj[df_traj['iter'] == iteration].copy()
 
 # Original trajectory points
@@ -94,7 +97,9 @@ y_orig = df_traj_iter['y'].values
 # Create parameter t for original points
 t_orig = np.linspace(0, 1, len(x_orig))
 # Create parameter t for interpolated points
-t_interp = np.linspace(0, 1, len(x_orig))
+# t_interp = np.linspace(0, 1, len(x_orig))
+t_interp = np.linspace(0, 1, len(x_orig) * 50)
+# t_interp = t_interp[::10]  # Sample every 10th point for interpolation (adjust as needed)
 
 # Interpolate x and y
 interp_x = interp1d(t_orig, x_orig, kind='cubic')
@@ -143,8 +148,8 @@ data.ctrl[:6] = solved_qpos
 with mujoco.viewer.launch_passive(model, data) as viewer:
     # Optional: set camera position
     viewer.cam.azimuth = 180
-    viewer.cam.elevation = -70
-    viewer.cam.distance = 2
+    viewer.cam.elevation = -30
+    viewer.cam.distance = 1.9
     viewer.cam.lookat[:] = [0.6, 0, 0.5]
     
     # Run simulation loop
@@ -158,6 +163,32 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         # Manually add trajectory visualization to the scene
         with viewer.lock():
             viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = False
+            
+            # Add start point (green sphere)
+            if viewer.user_scn.ngeom < viewer.user_scn.maxgeom:
+                geom = viewer.user_scn.geoms[viewer.user_scn.ngeom]
+                mujoco.mjv_initGeom(
+                    geom,
+                    type=mujoco.mjtGeom.mjGEOM_SPHERE,
+                    size=[0.02, 0, 0],
+                    pos=trajectory[0],
+                    mat=np.eye(3).flatten(),
+                    rgba=[0, 1, 0, 0.8]  # Green
+                )
+                viewer.user_scn.ngeom += 1
+            
+            # # Add end point (red sphere)
+            # if viewer.user_scn.ngeom < viewer.user_scn.maxgeom:
+            #     geom = viewer.user_scn.geoms[viewer.user_scn.ngeom]
+            #     mujoco.mjv_initGeom(
+            #         geom,
+            #         type=mujoco.mjtGeom.mjGEOM_SPHERE,
+            #         size=[0.02, 0, 0],
+            #         pos=trajectory[-1],
+            #         mat=np.eye(3).flatten(),
+            #         rgba=[1, 0, 0, 0.8]  # Red
+            #     )
+            #     viewer.user_scn.ngeom += 1
             
             # Add trajectory points
             for i in range(len(trajectory) - 1):
@@ -192,9 +223,29 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                         size=[0.006, length/2, 0],  # radius, half-length
                         pos=midpoint,
                         mat=rotation_matrix.flatten(),
-                        rgba=[1, 0.549, 0, 0.9]
+                        # rgba=[1, 0.549, 0, 0.9]
+                        rgba=[0.25, 0.25, 0.25, 0.5]
                     )
                     viewer.user_scn.ngeom += 1
+            # Draw trajectory as line segments (not cylinders)
+            # for i in range(len(trajectory) - 1):
+            #     if viewer.user_scn.ngeom >= viewer.user_scn.maxgeom:
+            #         break
+
+            #     p1 = trajectory[i]
+            #     p2 = trajectory[i + 1]
+
+            #     geom = viewer.user_scn.geoms[viewer.user_scn.ngeom]
+            #     mujoco.mjv_connector(
+            #         geom,
+            #         mujoco.mjtGeom.mjGEOM_LINE,
+            #         5.0,   # line width (pixels)
+            #         p1,
+            #         p2,
+            #         # rgba=[1, 0.549, 0, 0.9]
+            #     )
+            #     geom.rgba[:] = [1.0, 0.549, 0.0, 1.0]
+            #     viewer.user_scn.ngeom += 1
         
         # Sync viewer
         viewer.sync()

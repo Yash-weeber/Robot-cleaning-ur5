@@ -55,3 +55,243 @@ WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000
 Tue Feb 10 19:13:21 2026
 WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
 
+Fri Feb 13 19:01:30 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3400.
+
+Fri Feb 13 19:05:22 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0800.
+
+Fri Feb 13 19:12:14 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3400.
+
+Fri Feb 13 19:12:37 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
+
+Sat Feb 14 12:52:02 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3400.
+
+Sat Feb 14 17:06:54 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
+
+Sat Feb 14 17:07:33 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.4500.
+
+Sat Feb 14 17:08:18 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.4500.
+
+Sat Feb 14 17:10:03 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3200.
+
+Sat Feb 14 17:10:40 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
+
+Sat Feb 14 17:12:01 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.4300.
+
+Sat Feb 14 17:51:19 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3200.
+
+Sat Feb 14 17:51:57 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
+
+Sat Feb 14 17:53:25 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
+
+Sat Feb 14 17:54:18 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3500.
+
+Sat Feb 14 17:55:10 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3400.
+
+Sat Feb 14 17:57:47 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3500.
+
+Sun Feb 15 13:48:15 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3300.
+
+Sun Feb 15 13:50:33 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.6400.
+
+Sun Feb 15 14:55:24 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.7000.
+
+Sun Feb 15 14:59:07 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.3200.
+
+Sun Feb 15 15:00:30 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.1600.
+
+Sun Feb 15 15:00:55 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0400.
+
+Sun Feb 15 15:03:34 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 15:05:24 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0400.
+
+Sun Feb 15 15:06:13 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 15:07:04 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 15:57:28 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:30:36 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:32:01 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:33:17 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:34:50 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:35:30 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:35:55 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.1200.
+
+Sun Feb 15 17:36:32 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:37:18 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:37:55 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:38:37 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:41:23 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:42:05 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:44:36 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:45:23 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:46:11 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:47:08 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:48:57 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:49:41 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:51:06 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:51:50 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:52:19 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:53:15 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Sun Feb 15 17:53:46 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 12:25:31 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 12:39:47 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0400.
+
+Thu Feb 19 12:40:18 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0300.
+
+Thu Feb 19 12:41:08 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0400.
+
+Thu Feb 19 13:24:21 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0300.
+
+Thu Feb 19 13:47:31 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 13:48:40 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 13:51:19 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 13:51:47 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 14:00:49 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 14:01:30 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 14:02:23 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.6600.
+
+Thu Feb 19 14:03:00 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.7200.
+
+Thu Feb 19 14:08:45 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0200.
+
+Thu Feb 19 14:09:58 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:17:54 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:20:09 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:21:00 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:22:48 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:23:42 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:24:55 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:25:52 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:26:37 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:27:20 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:32:52 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:41:18 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:42:25 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:42:58 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+
+Thu Feb 19 14:47:07 2026
+WARNING: Pre-allocated visual geom buffer is full. Increase maxgeom above 100000. Time = 0.0100.
+

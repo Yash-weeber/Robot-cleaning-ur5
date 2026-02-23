@@ -46,15 +46,15 @@
     <texture name="skybox" type="skybox" builtin="gradient"
       rgb1="0.7 0.85 1" rgb2="0.2 0.3 0.5" width="512" height="512" />
     <texture name="ground_tex" type="2d" builtin="checker" width="512" height="512"
-      rgb1="0.2 0.4 0.8" rgb2="0.9 0.9 1" mark="cross" random="0.01" />
-    <material name="ground_mat" texture="ground_tex" texrepeat="4 4"
-      rgba="1 1 1 1" specular="1" shininess="1" reflectance="0.5" />
+      rgb1="0.0392 0.5647 0.8588" rgb2="0.9 0.9 1" mark="cross" random="0.01" />
+    <material name="ground_mat" texture="ground_tex" texrepeat="10 10"
+      rgba="0.0392 0.5647 0.8588 1" specular="0.6" shininess="0.7" reflectance="0.2" />
     <material name="black" rgba="0.033 0.033 0.033 1" />
     <material name="jointgray" rgba="0.278 0.278 0.278 1" />
     <material name="linkgray" rgba="0.82 0.82 0.82 1" />
     <material name="urblue" rgba="0.49 0.678 0.8 1" />
-    <material name="table_material" rgba="0.6 0.6 0.6 1" />
-    <material name="dust_material" rgba="0.03 0.03 0.03 1" />
+    <material name="table_material" rgba="0.7 0.7 0.7 1" />
+    <material name="dust_material" rgba="0.600 0.300 0.0 1" />
     <!-- Purple material for the mop -->
     <material name="mop_purple" rgba="0.18 0.05 0.35 1" specular="0.5" shininess="0.6" />
     <!-- Dark green material for the mop -->
@@ -83,7 +83,7 @@
     <mesh file="wrist3.obj" />
 
     <!-- Table and tool meshes -->
-    <mesh file="test.stl" scale="1 1 1" name="table" />
+    <mesh file="test.stl" scale="1 1.6 1" name="table" />
     <mesh name="base_mesh" file="mop_base.obj" scale="0.002 0.002 0.002" />
     <mesh name="handle_mesh" file="mop_handle.obj" scale="0.0015 0.001 0.0015" />
   </asset>
@@ -98,14 +98,27 @@
   <!-- ================= WORLD OBJECTS ================= -->
   <worldbody>
     <!-- Key lights -->
-    <light name="sun_key" directional="true" pos="0 0 5" dir="0 0 -1"
-      diffuse="0.2 0.2 0.2" ambient="0.2 0.2 0.2" specular="0.15 0.15 0.15" castshadow="false" />
+    <!-- Key light (main directional light) -->
+    <light name="sun_key" directional="true" pos="2 2 4" dir="-1 -1 -1"
+      diffuse="0.3 0.3 0.3" ambient="0.3 0.3 0.35" specular="0.5 0.5 0.5" castshadow="false" />
+    
+    <!-- Fill light (soften shadows) -->
+    <light name="fill" pos="-2 -2 3" dir="1 1 -1"
+      diffuse="0.4 0.4 0.45" ambient="0 0 0" specular="0.2 0.2 0.2" castshadow="false" />
+    
+    <!-- Rim/back light (add depth) -->
+    <light name="rim" pos="0 3 2.5" dir="0 -1 -1"
+      diffuse="0.3 0.35 0.4" ambient="0 0 0" specular="0.15 0.15 0.15" castshadow="false" />
+    
+    <!-- Ground with proper contact properties -->
+    <geom name="ground" type="plane" size="4 4 0.1" material="ground_mat"
+      solref="1.0 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05" />
     <!-- <light name="fill" pos="2 2 3" dir="-1 -1 -1"
            diffuse="0.6 0.6 0.7" ambient="0.2 0.2 0.2" specular="0.1 0.1 0.1" castshadow="false"/> -->
     <!-- Ground with proper contact properties -->
-    <geom name="ground" type="plane" size="10 10 0.1" material="ground_mat"
+    <!-- <geom name="ground" type="plane" size="4 4 0.1" material="ground_mat"
       rgba="0.5 0.5 0.5 1" pos="0 0 0"
-      solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05" />
+      solref="1.0 1.0" solimp="0.9 0.95 0.001" friction="0.9 0.1 0.05" /> -->
     <!-- pos="-1.35 -0.7 -0.01" -->
 
     <!-- Table positioned as base platform -->
@@ -115,7 +128,7 @@
         material="table_material" group="3" contype="1" conaffinity="1"
         solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05" />
       <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"
-        pos="1 0.6 0" />
+        pos="0.65 0.7 -0.142" />
       <!-- 45-deg wedges along table edges (width ≈ 0.10 m, thickness ≈ 0.02 m) -->
       <!-- Table collision box extents in table frame: x in [-2.7, 0], y in [-1.4, 0], top z ≈
         0.49 -->
