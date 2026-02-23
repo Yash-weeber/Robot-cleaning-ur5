@@ -11,7 +11,7 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     The generated 2D trajectory must strictly stay within the defined XY workspace limits.
     The function f(weights) evaluates the cost of the policy.
 
-# Here's how we will interact :
+# Here's how we will interact:
     1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajectory in the XY workspace and its corresponding function value f(weights) for each example.
     2. You will provide the response in exact following format:
         * Line 1: a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights).

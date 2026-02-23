@@ -6,10 +6,13 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import pdb
+
+from pandas.core.indexes import extension
 from utils.draw_shapes import rectangle_trajectory, circle_trajectory
 import tiktoken
 from config.loader import load_config
 import re
+plt.rcParams["font.family"] = "sans-serif"
 
 config = load_config("config/config.yaml")
 
@@ -25,7 +28,7 @@ ws_length = config["simulation"]["ws_length"]
 y_min, y_max = ws_center[1] - ws_length / 2, ws_center[1] + ws_length / 2
 x_min, x_max = ws_center[0] - ws_width / 2, ws_center[0] + ws_width / 2
 
-def plot_weights_history_heatmap(weights_csv, n_bfs, output_path=None):
+def plot_weights_history_heatmap(weights_csv: Path, n_bfs, output_path=None, ext="png"):
     df = pd.read_csv(weights_csv)
     weight_cols = [f"w{i}" for i in range(n_bfs)]
     if not all(c in df.columns for c in weight_cols):
@@ -39,8 +42,20 @@ def plot_weights_history_heatmap(weights_csv, n_bfs, output_path=None):
     df = df.dropna(subset=["iter"] + weight_cols)
     if df.empty:
         raise ValueError(f"No valid rows found in {weights_csv} after parsing.")
-
+    weight_hist_save_path = weights_csv.parent / "weight_heatmap_plots"
+    weight_hist_save_path.mkdir(parents=True, exist_ok=True)
     weights_matrix = df[weight_cols].to_numpy()  # shape (num_iters, n_bfs)
+    for i in range(weights_matrix.shape[0]):
+        w_i = weights_matrix[i, :].reshape(2, n_bfs//2)
+        plt.figure(figsize=(2, 1), dpi=300)
+        im = plt.imshow(w_i, aspect="auto", cmap="viridis")
+        plt.colorbar(im, label="Weight Value")
+        plt.ylabel("Weights")
+        plt.yticks([0, 1], ["$\\theta_x$", "$\\theta_y$"])
+        plt.xlabel("Basis Function Index")
+        plt.savefig(weight_hist_save_path/f"iter-{int(df.iloc[i]['iter']):04d}.{ext}", dpi=150)
+        plt.close()
+        
     plt.figure(figsize=(20, 6))
     im = plt.imshow(weights_matrix.T, aspect="auto", cmap="viridis")
     plt.colorbar(im, label="Weight Value")
@@ -704,8 +719,8 @@ def plot_cost_history(cost_history_csv, ee_trajectory_csv=None, n_x_seg=4, n_y_s
     #     plt.close()
 
 def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None, plt_ext="png", show=False):
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman", "DejaVu Serif", "Liberation Serif"]
+    plt.rcParams["font.family"] = "sans-serif"
+    # plt.rcParams["font.serif"] = ["Times New Roman", "DejaVu Serif", "Liberation Serif"]
     # Load trajectory data from CSV
     df_dmp = pd.read_csv(dmp_trajectory_csv)
     df_ee = pd.read_csv(ee_trajectory_csv) if ee_trajectory_csv else None
@@ -725,11 +740,12 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
             # print(f"Iteration {it} already plotted, skipping.")
             continue
         dmp_traj_data = df_dmp[df_dmp['iter'] == it]
+        dmp_traj_data = dmp_traj_data.iloc[::8]
         ee_traj_data = df_ee[df_ee['iter'] == it] if df_ee is not None else None
         tb_series = df_cost.loc[df_cost["iter"] == it, "total_balls"] if df_cost is not None else None
         total_balls = tb_series.iloc[0] if tb_series is not None and not tb_series.empty else None
-        plt.figure(figsize=(6, 8))
-        plt.plot(x_bounds, y_bounds, linestyle=':', color='black', label='Workspace Boundary')
+        plt.figure(figsize=(2, 3), dpi=300)
+        plt.plot(x_bounds, y_bounds, linestyle=':', color='black')
 
         # for obs in INTERNAL_OBSTACLES:
         #     plt.plot(obs[0], obs[1], marker='o', color='gray', markersize=8, label='Internal Obstacle' if 'Internal Obstacle' not in plt.gca().get_legend_handles_labels()[1] else "")
@@ -738,7 +754,7 @@ def plot_trajectories(dmp_trajectory_csv, ee_trajectory_csv=None, cost_csv=None,
         plt.plot(dmp_traj_data['x'], dmp_traj_data['y'], label='DMP Trajectory', color='red' if dmp_traj_data['x'].lt(x_min).any() or dmp_traj_data['x'].gt(x_max).any() or dmp_traj_data['y'].lt(y_min).any() or dmp_traj_data['y'].gt(y_max).any() else 'blue')
         # if ee_traj_data is not None:
         #     plt.plot(ee_traj_data['x'], ee_traj_data['y'], linestyle='--', label='EE traj', color='orange' if ee_traj_data['x'].lt(x_min).any() or ee_traj_data['x'].gt(x_max).any() or ee_traj_data['y'].lt(y_min).any() or ee_traj_data['y'].gt(y_max).any() else 'green')
-        plt.title(f'DMP Trajectory: Iteration {it} (Cost: {round(total_balls,1) if total_balls is not None else "N/A"})')
+        plt.title(f'Iteration {it} (Reward: {500 - round(total_balls,1) if total_balls is not None else "N/A"})')
         #total_balls={total_balls}', color='red' if dmp_traj_data['x'].lt(-1.0).any() or dmp_traj_data['x'].gt(1.0).any() or dmp_traj_data['y'].lt(-0.6).any() or dmp_traj_data['y'].gt(0.6).any() else 'blue')
     
         # plt.title('Trajectories Over Iterations')
@@ -770,6 +786,7 @@ def plot_trajectory_coverage_heatmap(
     y_window: int = 0,
     x_window: int = 0,
     cost_csv=None,
+    extension="png",
 ):
     """
     Create a 0/1 heatmap over the workspace grid indicating which segments
@@ -862,7 +879,7 @@ def plot_trajectory_coverage_heatmap(
         return grid
 
     def _save_grid(grid: np.ndarray, out_file: Path, plot_title: str):
-        fig, ax = plt.subplots(figsize=(7, 6))
+        fig, ax = plt.subplots(figsize=(2, 3), dpi=300)
         im = ax.imshow(
             grid,
             cmap=cmap,
@@ -873,19 +890,27 @@ def plot_trajectory_coverage_heatmap(
             interpolation="nearest",
             extent=[x_min, x_max, y_min, y_max],
         )
+        # ax.set_xticks(x_edges, minor=True)
+        # ax.set_yticks(y_edges, minor=True)
+        # ax.grid(which="minor", color="black", linestyle="-", linewidth=0.3, alpha=0.35)
+        # ax.tick_params(which="minor", bottom=False, left=False)
+        # ax.axhline(y=0.0, color="black", linestyle="-", linewidth=0.3, alpha=0.35, zorder=5)
+        
         x_marks_cm = [15.3, 46.27, 73]
         y_marks_cm = [15, 40, 65, 90, 110] 
         xm_plot = [x_min + v/100.0 for v in x_marks_cm]
         ym_plot = [y_min + v/100.0 for v in y_marks_cm]
         X_marks, Y_marks = np.meshgrid(xm_plot, ym_plot)
-        ax.scatter(X_marks, Y_marks, marker='x', color='green', s=100, linewidth=2, label="Targets")
+        # ax.scatter(X_marks, Y_marks, marker='x', color='green', s=100, linewidth=2, label="Targets")
         ax.set_title(plot_title)
+        ax.set_xlim(x_min-0.05, x_max+0.05)
+        ax.set_ylim(y_min-0.05, y_max+0.05)
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
         # cbar = fig.colorbar(im, ax=ax, shrink=0.85, ticks=[0, 1])
         # cbar.set_label("visited (0/1)")
-        fig.tight_layout()
-        fig.savefig(out_file, dpi=150)
+        # fig.tight_layout()
+        fig.savefig(out_file, dpi=300)
         if show:
             plt.show()
         plt.close(fig)
@@ -903,15 +928,15 @@ def plot_trajectory_coverage_heatmap(
         grid = _grid_from_points(df_it)
 
         if output_path is None:
-            output_path = traj_path.parent / f"trajectory_coverage_heatmap_iter{int(iter_value)}_{n_x_seg}x{n_y_seg}.png"
+            output_path = traj_path.parent / f"trajectory_coverage_heatmap_iter{int(iter_value)}_{n_x_seg}x{n_y_seg}.{extension}"
         else:
             output_path = Path(output_path)
 
         cost_suffix = ""
         if float(iter_value) in cost_map:
-            cost_suffix = f" (Cost: {cost_map[float(iter_value)]:.2f})"
+            cost_suffix = f" (Reward: {500 - cost_map[float(iter_value)]:.2f})"
 
-        plot_title = title or f"Trajectory coverage heatmap — iter {int(iter_value)}{cost_suffix}"
+        plot_title = title or f"Iteration {int(iter_value)}{cost_suffix}"
         _save_grid(grid, output_path, plot_title)
         return grid, output_path
 
@@ -930,21 +955,21 @@ def plot_trajectory_coverage_heatmap(
         results = {}
 
         for it in iters:
-            out_file = out_dir / f"iter_{int(it):04d}.png"
-            if out_file.exists():
-                continue  # Skip existing files
+            out_file = out_dir / f"iter_{int(it):04d}.{extension}"
+            # if out_file.exists():
+            #     continue  # Skip existing files
             df_it = df[df[iter_col] == float(it)].copy()
             if df_it.empty:
                 continue
 
             grid = _grid_from_points(df_it)
-            out_file = out_dir / f"iter_{int(it):04d}.png"
+            out_file = out_dir / f"iter_{int(it):04d}.{extension}"
             
             cost_suffix = ""
             if float(it) in cost_map:
-                cost_suffix = f" (Cost: {cost_map[float(it)]:.2f})"
+                cost_suffix = f" (Reward: {500 - cost_map[float(it)]:.2f})"
 
-            plot_title = title or f"Trajectory coverage — iter {int(it)}{cost_suffix}"
+            plot_title = title or f"Iteration {int(it)}{cost_suffix}"
             _save_grid(grid, out_file, plot_title)
             results[int(it)] = out_file
 
@@ -954,7 +979,7 @@ def plot_trajectory_coverage_heatmap(
     # grid = _grid_from_points(df)
 
     # if output_path is None:
-    #     output_path = traj_path.parent / f"trajectory_coverage_heatmap_all_{n_x_seg}x{n_y_seg}.png"
+    #     output_path = traj_path.parent / f"trajectory_coverage_heatmap_all_{n_x_seg}x{n_y_seg}.{extension}"
     # else:
     #     output_path = Path(output_path)
 
@@ -981,10 +1006,12 @@ if __name__ == "__main__":
     config_path = Path("./config/")
     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover.yaml"
-    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y.yaml"
+    config_file = config_path / "semantics-gridcoverage-hist-30.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
     # config_file = config_path / "num-optimizer-hist-100.yaml"
     # config_file = config_path / "semantics-hist-100.yaml"
@@ -1066,9 +1093,9 @@ if __name__ == "__main__":
     
     print(f"Processing experiment folder: {root_dir}")
     # Aggregate across all runs in the experiment folder
-    plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
-    summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(1,16)]
+    # plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
+    # summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
+    exp_nums = [i for i in range(7,8)]
     # exp_num = 3
     for exp_num in exp_nums:
         print(f"Processing experiment run: {exp_num}")
@@ -1077,12 +1104,235 @@ if __name__ == "__main__":
         ee_traj_file = root_dir / f"{exp_num}/ee_trajectory.csv"
         weights_csv = root_dir / f"{exp_num}/weights_history.csv"
         weights_heatmap_file = root_dir / f"{exp_num}/weights_heatmap.png"
-        plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
-        plot_trajectories(dmp_traj_file, ee_traj_file, cost_file)
+        # plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
+        # plot_trajectories(dmp_traj_file, ee_traj_file, cost_file, plt_ext="pdf")
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=25, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file)
-        plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file)
+        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file, extension="pdf")
+        # plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file, ext="pdf")
         # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+
+
+#%%
+def plot_avg_cost_history_across_experiment_types(
+    plotting_configs: dict,
+    *,
+    results_base_dir: str | Path = "/scratch/melmisti/robot_cleaning/Results5",
+    output_path: str | Path | None = None,
+    show: bool = False,
+    min_runs_per_iter: int = 1,
+    title: str = "Average Reward History Across Experiment Types",
+    output_file: str = "avg_reward_history_across_experiment_types.pdf",
+):
+    """
+    For each experiment type in plotting_configs, resolve its logs folder using
+    the same naming logic as the __main__ block, load all runs (1..num_runs),
+    and overlay mean ± std curves on a single plot.
+
+    plotting_configs format:
+    {
+        "Experiment Label": {
+            "config_file": Path(...),   # path to the YAML config
+            "num_runs": 15,             # how many run folders to look for
+            "color": "blue",            # optional matplotlib color
+        },
+        ...
+    }
+    """
+    results_base_dir = Path(results_base_dir)
+    all_stats = {}
+
+    fig, ax = plt.subplots(figsize=(4, 2))
+
+    for exp_name, spec in plotting_configs.items():
+        cfg_file   = Path(spec["config_file"])
+        num_runs   = int(spec.get("num_runs", 0))
+        color      = spec.get("color", None)
+
+        # ── Resolve the logs root the same way __main__ does ──────────────────
+        cfg = load_config(cfg_file)
+        llm = cfg["llm_settings"]
+        dmp = cfg["dmp_params"]
+
+        run_type               = llm["run_type"]
+        traj_in_prompt         = llm["traj_in_prompt"]
+        resample_rate          = llm["resample_rate"]
+        feedback_window        = llm["feedback_window"]
+        step_size              = llm["step_size"]
+        template_number        = llm["template_number"]
+        n_warmup               = llm["n_warmup"]
+        grid_coverage_in_prompt= llm["grid_coverage_in_prompt"]
+        grid_reward            = llm["grid_reward"]
+        guided                 = llm["guided"]
+        n_x_seg                = dmp["num_x_segments"]
+        n_y_seg                = dmp["num_y_segments"]
+
+        rt = run_type
+        if traj_in_prompt:
+            rt += f"-traj-{resample_rate}"
+        if grid_coverage_in_prompt:
+            rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
+        if grid_reward:
+            rt += f"-gridreward-{n_x_seg}x{n_y_seg}"
+        else:
+            rt += "-totalcost"
+        if guided:
+            rt += "-guided"
+
+        suffix = ""
+        if guided:
+            guidance_file = llm.get("guidance_file", "")
+            if guidance_file:
+                suffix = f"-{Path(guidance_file).stem}"
+
+        save_results_file = (
+            f"{rt}-stepsize-{step_size}-hist-{feedback_window}"
+            f"-walled-{template_number}{suffix}"
+        )
+        logs_root = results_base_dir / f"n_warmup-{n_warmup}" / "logs" / save_results_file
+        # ──────────────────────────────────────────────────────────────────────
+
+        per_run = []
+        for run_id in range(1, num_runs + 1):
+            csv_path = logs_root / str(run_id) / "llm_iteration_log.csv"
+            if not csv_path.exists():
+                continue
+
+            df = pd.read_csv(csv_path, usecols=["iter", "total_balls"])
+            df["iter"]        = pd.to_numeric(df["iter"],        errors="coerce")
+            df["total_balls"] = pd.to_numeric(500 - df["total_balls"], errors="coerce")
+            df = df.dropna(subset=["iter", "total_balls"])
+            df = df.iloc[::3]
+            if df.empty:
+                continue
+
+            # Collapse any duplicate rows per iter within this run
+            df = df.groupby("iter", as_index=False)["total_balls"].mean()
+            df["run"] = run_id
+            per_run.append(df)
+
+        if not per_run:
+            print(f"[WARN] No valid runs found for '{exp_name}' under: {logs_root}")
+            continue
+
+        all_runs = pd.concat(per_run, ignore_index=True)
+        stats = (
+            all_runs.groupby("iter")["total_balls"]
+            .agg(mean="mean", std="std", n="count")
+            .reset_index()
+            .sort_values("iter")
+        )
+
+        if min_runs_per_iter > 1:
+            stats = stats[stats["n"] >= min_runs_per_iter]
+        if stats.empty:
+            print(f"[WARN] Empty stats for '{exp_name}' after min_runs_per_iter={min_runs_per_iter} filter.")
+            continue
+
+        all_stats[exp_name] = stats
+
+        std = stats["std"].fillna(0.0)
+        ax.plot(stats["iter"], stats["mean"], label=exp_name, color=color, linewidth=2)
+        ax.fill_between(
+            stats["iter"],
+            stats["mean"] - std,
+            stats["mean"] + std,
+            alpha=0.18,
+            color=color,
+        )
+
+    if not all_stats:
+        raise ValueError("No experiment produced plottable statistics.")
+
+    ax.set_title(title)
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Reward")
+    ax.set_xlim(0, 400)#, df["iter"].max())
+    ax.set_ylim(100, 600)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+
+    if output_path is None:
+        output_path = results_base_dir / output_file
+    else:
+        output_path = Path(output_path)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    if show:
+        plt.show()
+    plt.close(fig)
+
+    print(f"Saved comparison plot: {output_path}")
+    return all_stats, output_path
+
+config_path = Path("./config/")
+plotting_configs = {
+                    # "ProPS": {
+                    #     "config_file": config_path / "num-optimizer-hist-100.yaml",
+                    #     "num_runs": 15,
+                    #     "color": "deepskyblue"
+                    #     },
+                    "ProPS+": {
+                        "config_file": config_path / "semantics-hist-100.yaml",
+                        "num_runs": 15,
+                        "color": "darkorange"
+                        },
+                    "ProPS+ with Bitmap Representation": {
+                        "config_file": config_path / "semantics-gridcoverage-hist-30.yaml",
+                        "num_runs": 15,
+                        "color": "deepskyblue"
+                        },
+                    # "ProPS+ with Bitmap Representation (sinusoid-x guidance)": {
+                    #     "config_file": config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml",
+                    #     "num_runs": 5,
+                    #     "color": "red"
+                    #     },
+                    # "ProPS+ with Bitmap Representation (sinusoid-y guidance)": {
+                    #     "config_file": config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml",
+                    #     "num_runs": 5,
+                    #     "color": "red"
+                    #     },
+                    # "ProPS+ with Bitmap Representation (circle guidance)": {
+                    #     "config_file": config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml",
+                    #     "num_runs": 5,
+                    #     "color": "red"
+                    #     },
+                    }
+colors = ["darkorange", "deepskyblue", "seagreen", "crimson", "orchid", "goldenrod", 
+                  "mediumslateblue", "darkturquoise", "firebrick", "mediumseagreen"]
+all_stats, comparison_plot = plot_avg_cost_history_across_experiment_types(
+    plotting_configs,
+    results_base_dir="/scratch/melmisti/robot_cleaning/Results5",
+    show=True,
+    min_runs_per_iter=1,
+    title="Average Reward",
+    output_file="avg_reward_history_across_experiment_types.pdf",
+)
+plotting_configs = {
+                    "sinusoid-x": {
+                        "config_file": config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml",
+                        "num_runs": 5,
+                        "color": "dodgerblue"
+                        },
+                    "sinusoid-y": {
+                        "config_file": config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml",
+                        "num_runs": 5,
+                        "color": "goldenrod"
+                        },
+                    "circle": {
+                        "config_file": config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml",
+                        "num_runs": 5,
+                        "color": "mediumseagreen"
+                        },
+                    }
+all_stats, comparison_plot = plot_avg_cost_history_across_experiment_types(
+    plotting_configs,
+    results_base_dir="/scratch/melmisti/robot_cleaning/Results5",
+    show=True,
+    min_runs_per_iter=1,
+    title="Average Reward with Guidance",
+    output_file="avg_reward_history_guided_experiments.pdf",
+)
 
 
 #%%
@@ -1091,17 +1341,19 @@ exp2 = Path("/scratch/melmisti/robot_cleaning/Results-on-site/logs/semantics-RL-
 exp1 = Path("/scratch/melmisti/robot_cleaning/Results-on-site/logs/semantics-RL-optimizer-totalcost-stepsize-50-hist-100-walled-1/1/")
 df_r1 = pd.read_csv(exp1 / rewards_log)
 df_r2 = pd.read_csv(exp2 / rewards_log)
-plt.figure(figsize=(10, 6))
-plt.plot(df_r1['iter'], df_r1['total_balls'], marker='o', label='Exp 1: no grid coverage in prompt')
-plt.plot(df_r2['iter'], df_r2['total_balls'], marker='o', label='Exp 2: grid coverage in prompt')
+plt.rcParams["font.family"] = "sans-serif"
+plt.figure(figsize=(4, 2))
+plt.plot(df_r1['iter'], 100 - df_r1['total_balls'], label='ProPS+', color='darkorange', linewidth=2)
+plt.plot(df_r2['iter'], 100 - df_r2['total_balls'], label='ProPS+ with Bitmap Representation', color='deepskyblue', linewidth=2)
 plt.xlabel('Iteration')
-plt.ylabel('Cost')
+plt.ylabel('Reward')
 plt.grid(True)
-plt.xlim(min(df_r1['iter'].min(), df_r2['iter'].min()), max(df_r1['iter'].max(), df_r2['iter'].max()))
-plt.title('Comparison of Cost Histories')
+plt.xlim(0, 40)
+plt.title('Comparison of Reward Histories')
 plt.legend()
-plt.savefig(exp1.parent.parent / "cost_history_comparison.pdf")
+plt.savefig(exp1.parent.parent / "reward_history_comparison.pdf")
 plt.show()
+plt.close()
 
 # %%
 # root_dir = "./Results/logs/semantics-walled-stepsize-100-hist-gridreward-2/"
