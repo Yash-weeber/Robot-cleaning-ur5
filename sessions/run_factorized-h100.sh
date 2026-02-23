@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -A grp_hbenamor
 #SBATCH -N 1
-#SBATCH -c 4
-#SBATCH -t 0-9:30:00
+#SBATCH -c 8
+#SBATCH -t 0-16:30:00
 #SBATCH -p general
 #SBATCH -q private
 #SBATCH --mem=32G

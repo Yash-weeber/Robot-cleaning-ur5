@@ -3,10 +3,10 @@
 #SBATCH -N 1
 #SBATCH -c 8
 #SBATCH -t 0-16:30:00
-#SBATCH -p general
-#SBATCH -q private
-#SBATCH --mem=32G
-#SBATCH --gpus-per-node=h100:1
+#SBATCH -p public
+#SBATCH -q public
+#SBATCH --mem=16G
+#SBATCH --gpus-per-node=a100:1
 #SBATCH -o sessions/errors/template-1.%j.out
 #SBATCH -e sessions/errors/template-1.%j.err
 #SBATCH --mail-type=ALL
@@ -53,4 +53,4 @@ done
 # ollama pull gpt-oss:120b
 
 # --- Run your program ---
-python main_llm.py --config semantics-guided-gridcoverage-20x20-hist-30.yaml
+python main_llm.py --config semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml

@@ -57,12 +57,29 @@ def run_llm_optimization(config):
 
         # Warmup: Predefined trajectories and weight bootstrapping
         if it < 0:
-            if (it - 1) % 5 == 0:
-                trajectory = generate_warmup_trajectory(n_counter, config)
-                if trajectory is not None:
-                    dmp.imitate_path(trajectory.T, plot=False)
-                    write_weights_csv(weights_csv_path, dmp.w.copy())
-                    n_counter += 1
+            if config['llm_settings'].get('draw_warmup_trajectories', True):
+                if (it - 1) % 5 == 0:
+                    trajectory = generate_warmup_trajectory(n_counter, config)
+                    if trajectory is not None:
+                        dmp.imitate_path(trajectory.T, plot=False)
+                        write_weights_csv(weights_csv_path, dmp.w.copy())
+                        n_counter += 1
+            elif config['llm_settings']['draw_warmup_trajectories'] == False:
+                print("Skipping warmup trajectory drawing and using trajectories from history.")
+                # load historical weights to simulate warmup trajectories
+                try:                    
+                    df_w_hist = pd.read_csv('warmup_weights.csv')
+                    df_w_hist = df_w_hist[df_w_hist['tag'] == 'proposed'].copy()
+                    df_w_hist.drop(columns=["timestamp", "tag"], inplace=True)
+                    w = df_w_hist.loc[df_w_hist['iter'] == it].drop(columns=["iter"]).to_numpy().reshape(2, n_bfs)
+                    write_weights_csv(weights_csv_path, w)
+                    dmp.reset_state(y0=np.array([controller.ws_center[0], controller.ws_center[1]]))
+                    dmp.goal = np.array([controller.ws_center[0], controller.ws_center[1]])
+                except Exception as e:
+                    print(f"Error loading warmup weights at iter {it}: {e}. Using random weights.")
+                    # np.random.seed(config['llm_settings']['seed_number'] + it)
+                    # w = np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
+                    # write_weights_csv(weights_csv_path, w)
 
         # Load weights for current iteration
         try:
@@ -130,9 +147,13 @@ def run_llm_optimization(config):
 
         # Logic to decide next weights
         if it < 0:
-            # Random exploration during warmup period
-            np.random.seed(config['llm_settings']['seed_number'] + it)
-            w_next = w2 + np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
+            if config['llm_settings'].get('draw_warmup_trajectories', True):
+                # Random exploration during warmup period
+                np.random.seed(config['llm_settings']['seed_number'] + it)
+                w_next = w2 + np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
+            else:
+                # During warmup, if not drawing trajectories, just reuse the loaded weights (which simulate warmup)
+                w_next = w2.copy()
         else:
             # Build detailed prompt with coordinate tables and grid markdown
             feedback_text, guidance_text = build_llm_feedback(
@@ -143,19 +164,19 @@ def run_llm_optimization(config):
             prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text=guidance_text)
             # save_dialog(config['logs']['dialog_dir'], it + 1, prompt, "")
 
-            try:
-                # Use large token limit for coordinate tables
-                if config['llm_settings']['llm_model'].startswith("gpt"):
-                    response = llm.call_ollama(prompt, token_limit=118000)
-                elif config['llm_settings']['llm_model'].startswith("gemini"):
-                    response = llm.call_gemini(prompt)
-                else:
-                    raise ValueError(f"Unsupported LLM model: {config['llm_settings']['llm_model']}")
-                w_next = parse_ollama_weights(response, n_bfs)
-                save_dialog(config['logs']['dialog_dir'], it + 1, prompt, response)
-            except Exception as e:
-                print(f"LLM Error at iteration {it}: {e}. Reusing current weights.")
-                w_next = w2.copy()
+            # try:
+            # Use large token limit for coordinate tables
+            if config['llm_settings']['llm_model'].startswith("gpt"):
+                response = llm.call_ollama(prompt, token_limit=118000)
+            elif config['llm_settings']['llm_model'].startswith("gemini"):
+                response = llm.call_gemini(prompt)
+            else:
+                raise ValueError(f"Unsupported LLM model: {config['llm_settings']['llm_model']}")
+            w_next = parse_ollama_weights(response, n_bfs)
+            save_dialog(config['logs']['dialog_dir'], it + 1, prompt, response)
+            # except Exception as e:
+            #     print(f"LLM Error at iteration {it}: {e}. Reusing current weights.")
+            #     w_next = w2.copy()
 
         # Update for next iteration
         append_weight_history(config['logs']['weight_history_csv'], it + 1, "proposed", w_next, n_bfs)

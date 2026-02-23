@@ -53,4 +53,4 @@ done
 # ollama pull gpt-oss:120b
 
 # --- Run your program ---
-python main_llm.py --config semantics-guided-gridcoverage-20x20-hist-30.yaml
+python main_llm.py --config semantics-gridcoverage-hist-30.yaml

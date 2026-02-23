@@ -8,6 +8,7 @@ import struct
 import uuid
 import time
 from pathlib import Path
+from config.loader import load_config
 
 _MAGIC = b"PKL1"
 _HDR = struct.Struct("!4s16sHHH")  # magic, msg_id, seq, total, payload_len
@@ -61,7 +62,7 @@ def extract_traj_to_pkl(iteration, traj_csv_path, output_pkl_path, resample_rate
     y_traj = dmp_traj_data.filter(like='y').to_numpy().ravel().tolist()
     traj = []
     for k in range(len(x_traj)):
-        traj.append([x_traj[k], y_traj[k]*0.9, -0.108])
+        traj.append([x_traj[k], y_traj[k], -0.108])
     
     # dmp_traj_data_dict = {
     #     'iteration': iteration,
@@ -75,19 +76,34 @@ def extract_traj_to_pkl(iteration, traj_csv_path, output_pkl_path, resample_rate
         pickle.dump(traj, f)
 
 if __name__ == "__main__":
-    run = 1
-    feedback_window = 30  # number of recent iterations to summarize for feedback
-    step_size = 50
-    run_type = "semantics-RL-optimizer"
-    traj_in_prompt = False
-    resample_rate = 20
-    template_number = '1'  # which prompt template to use
-    temp = ""
-    n_x_seg = 20
-    n_y_seg = 20
-    grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
-    grid_reward = 0 # whether to include grid-based reward in LLM feedback
-    guided = 1  # whether to use guided trajectory optimization
+    config_path = Path("./config/")
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
+    # config_file = config_path / "num-optimizer-hist-100.yaml"
+    # config_file = config_path / "semantics-hist-100.yaml"
+    
+    plot_config = load_config(config_file)
+    # print(f"Loaded plot configuration from YAML: {plot_config}")
+    feedback_window = plot_config["llm_settings"]["feedback_window"]
+    step_size = plot_config["llm_settings"]["step_size"]
+    run_type = plot_config["llm_settings"]["run_type"]
+    traj_in_prompt = plot_config["llm_settings"]["traj_in_prompt"]
+    resample_rate = plot_config["llm_settings"]["resample_rate"]
+    n_warmup = plot_config["llm_settings"]["n_warmup"]
+    template_number = plot_config["llm_settings"]["template_number"]
+    n_x_seg = plot_config["dmp_params"]["num_x_segments"]
+    n_y_seg = plot_config["dmp_params"]["num_y_segments"]
+    grid_coverage_in_prompt = plot_config["llm_settings"]["grid_coverage_in_prompt"]
+    grid_reward = plot_config["llm_settings"]["grid_reward"]
+    guided = plot_config["llm_settings"]["guided"]
+    # exp_nums = plot_config["exp_nums"]
+    
     rt = run_type
 
     if traj_in_prompt:
@@ -97,7 +113,7 @@ if __name__ == "__main__":
         rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
 
     if grid_reward:
-        rt += f"-gridreward-{n_x_seg}x{n_y_seg}"
+        rt += "-gridreward"
     else: 
         rt += "-totalcost"
     if guided:
@@ -122,36 +138,50 @@ if __name__ == "__main__":
         
     if guided:
         rt += "-guided"
+    
+    if guided:
+        # suffix = f"-infinity-y"
+        # suffix = f"-circle"
+        suffix = f"-{plot_config['llm_settings']['guidance_file'].split('/')[-1].split('.')[0]}"
+    else:
+        suffix = ""
+    
+    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}/7" 
+    
+    # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
+    # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
+    # root_dir = Path(f"./Results/logs/{save_results_file}/")
+    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/n_warmup-{n_warmup}/logs/{save_results_file}/")
     iteration = 400
-    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
-    root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results3/logs/{save_results_file}/{run}/")
+    # save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}" 
+    # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results3/logs/{save_results_file}/{run}/")
     traj_csv_path = root_dir / "dmp_trajectory_feedback.csv"
     output_pkl_path = root_dir / f"llm_traj-{iteration}.pkl"
-    extract_traj_to_pkl(iteration, traj_csv_path, output_pkl_path)
+    extract_traj_to_pkl(iteration, traj_csv_path, output_pkl_path, resample_rate=1)
 # %%
-output_pkl_path = "llm_traj-400.pkl"
-with open(output_pkl_path, 'rb') as f:
-    data = pickle.load(f)
-x = []
-y = []
-for k in range(len(data)):
-    x.append(data[k][0])
-    y.append(data[k][1])
-# print(len(data['x_traj']), len(data['y_traj']))
-# print(data['x_traj'])
-# %%
-# plt.plot(data['x_traj'], data['y_traj'])
-plt.plot([-yi for yi in y], [xi for xi in x])
-plt.scatter(-y[0], x[0], color='red', label='Start')
-plt.scatter(-y[-1], x[-1], color='green', label='End')
-plt.title("Extracted Trajectory from DMP")
-plt.show()
+# output_pkl_path = "llm_traj-400.pkl"
+# with open(output_pkl_path, 'rb') as f:
+#     data = pickle.load(f)
+# x = []
+# y = []
+# for k in range(len(data)):
+#     x.append(data[k][0])
+#     y.append(data[k][1])
+# # print(len(data['x_traj']), len(data['y_traj']))
+# # print(data['x_traj'])
+# # %%
+# # plt.plot(data['x_traj'], data['y_traj'])
+# plt.plot([-yi for yi in y], [xi for xi in x])
+# plt.scatter(-y[0], x[0], color='red', label='Start')
+# plt.scatter(-y[-1], x[-1], color='green', label='End')
+# plt.title("Extracted Trajectory from DMP")
+# plt.show()
 
 
 # %%
-SEND_UDP = True
-UDP_HOST = "169.254.169.102"   # change to receiver IP
-UDP_PORT = 5005          # change to receiver port
+# SEND_UDP = True
+# UDP_HOST = "169.254.169.102"   # change to receiver IP
+# UDP_PORT = 5005          # change to receiver port
 
 # if SEND_UDP:
 #     msg_id = send_pkl_over_udp(output_pkl_path, UDP_HOST, UDP_PORT, chunk_size=1024)

@@ -1,0 +1,10 @@
+    The following trajectory-shape guidance takes **absolute precedence** over optimizing the objective function.
+    The policy **must satisfy this guidance first**, and only then optimize the objective.
+        The desired policy must generate a boundary-safe outward-expanding spiral trajectory centered at the center of the workspace:
+            1. **Primary motion direction:** The trajectory should begin near the center of the workspace and expand outward.
+            2. **Spiral-shape behavior:** The policy must produce a single continuous spiral, where the radius gradually increases with each revolution. The spiral should expand smoothly outward until it reaches the allowable workspace limits.
+            3. **Smoothness:** The trajectory must maintain continuous curvature, with no abrupt changes in direction, velocity, or acceleration. The outward expansion must be gradual and consistent.
+            4. **Workspace safety:** The spiral must remain strictly within workspace boundaries at all times. The growth rate of the radius must be chosen so the trajectory never goes out of bounds.
+            5. **Coverage objective:** The policy should maximize workspace coverage by sweeping through increasingly larger loops as the spiral expands outward.
+            6. **Global optimality:** The policy must avoid partial arcs, inward-collapsing spirals, or local oscillatory patterns.
+

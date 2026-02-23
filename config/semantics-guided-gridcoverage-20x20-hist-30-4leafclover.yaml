@@ -42,16 +42,16 @@ llm_settings:
   llm_model: "gpt-oss:120b"
   history_window: 25
   trajectory_history_window: 40
-  feedback_window: 100
+  feedback_window: 30
   n_warmup: 20
   draw_warmup_trajectories: True
   seed_number: 42
   traj_in_prompt: False
   grid_reward: False
-  grid_coverage_in_prompt: False
-  guided: False
-  guidance_file: ""
-  run_type: "num-optimizer"
+  grid_coverage_in_prompt: True
+  guided: True
+  guidance_file: guidance/4leafclover.j2
+  run_type: "semantics-RL-optimizer"
   template_number: 1
   resample_rate: 20
   step_size: 50

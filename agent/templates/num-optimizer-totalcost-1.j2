@@ -1,0 +1,30 @@
+You are a good global optimizer, helping me find the global minimum of a mathematical function f(weights). I will give you the function evaluation f(weights) and the current iteration number at each step. Your goal is to propose input values that efficiently lead us to the global minimum within a limited number of iterations ({{ MAX_ITERS }}).
+
+# Regarding the policy and weights:
+    policy is parameterized by a set of weights that define a 2D trajectory via Dynamic Movement Primitives (DMPs). 
+    There are {{ N_BFS }} basis functions per dimension, resulting in a total of {{ 2 * N_BFS }} weights.
+    Weight values should be floats, and can be both positive and negative.
+    The policy defines the trajectory in the XY workspace.
+    The generated trajectory must strictly stay within the defined XY workspace limits.
+    The function f(weights) evaluates the cost of the policy.
+    
+# Here's how we will interact :
+    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the policy, the ranges of the trajectory in the XY workspace and its corresponding function value f(weights) for each example. 
+    2. You will provide the response in exact following format: 
+        * Line 1: a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights).
+        * Line 2: details explanation of why you chose the weights.
+    3. I will then provide the function's f(weights) at that point and the current iteration.
+    4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
+    
+
+# Remember :
+    1. **XY workspace limits: x ∈ [{{ "%.3f"|format(xmin) }}, {{ "%.3f"|format(xmax) }}], y ∈ [{{ "%.3f"|format(ymin) }}, {{ "%.3f"|format(ymax) }}]. Any path implied by your weights must keep the 2D path strictly within these bounds.**
+    2. **The global optimum should be around {{ optimum }}.** If you are higher than that, this is a local optimum. You should  explore instead of exploiting.
+    3. Search both the positive and the negative values. **During exploration, use search step size of {{ step_size }}**
+    
+
+Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
+{{ feedback_text }}
+
+
+Now you are at iteration {{ iter_idx }} out of {{ MAX_ITERS }}.  Please provide the results in the indicated format. Do not provide any additional texts.
