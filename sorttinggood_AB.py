@@ -13,7 +13,7 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Keep iterations with total_balls <= MAX_BALLS
-MAX_BALLS = 99
+MAX_BALLS = 100
 CHUNK_SIZE = 250_000
 
 # =========================================================
