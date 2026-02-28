@@ -24,13 +24,13 @@ SCRIPT_DIR = config["simulation"]["base_dir"]  # Use the base_dir from config, w
 INPUT_DIR = config["simulation"].get("base_dir", SCRIPT_DIR)  # Use config value if provided, otherwise default to script directory
 
 # Define the output directory as a subfolder named "output" inside the script directory
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "SOM_Results", "filtered_results")  # Output will be saved in a subfolder to keep things organized
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "SOM_Results", "filtered_results-2")  # Output will be saved in a subfolder to keep things organized
 
 # Create the output directory if it does not already exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Maximum number of balls allowed per iteration; iterations exceeding this are filtered out
-MAX_BALLS = 100
+MAX_BALLS = 250
 
 # Number of rows to read at a time when processing large CSV files in chunks
 CHUNK_SIZE = 250_000
