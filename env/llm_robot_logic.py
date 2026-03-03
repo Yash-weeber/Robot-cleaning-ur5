@@ -1,8 +1,10 @@
 import numpy as np
 import mujoco
+from pathlib import Path
+import pandas as pd
 from utils.draw_shapes import (
     circle_trajectory, rectangle_trajectory,
-    elipsoid_trajectory, triangle_trajectory
+    elipsoid_trajectory, triangle_trajectory, square_trajectory
 )
 from utils.obstacle_avoidance import avoid_obstacles
 
@@ -34,15 +36,64 @@ def generate_warmup_trajectory(n_counter, config):
     trajectory = np.hstack((np.array(ws_center).reshape(2, 1), trajectory)).T
     return trajectory
 
+def generate_warmup_trajectory_lab(n_counter, config, use_shapes=False):
+    ws_center = config["simulation"]["ws_center"]
+    ws_width = config["simulation"]["ws_width"]
+    ws_length = config["simulation"]["ws_length"]
+    if use_shapes:
+        if n_counter > 0:
+            n_counter = 0
+        if n_counter == 0:
+            x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.8*ws_length/2, num_points=200, plot=False)
+        elif n_counter == -1:
+            x_traj, y_traj = triangle_trajectory(center=(ws_center[0], ws_center[1]), side_length=0.5*ws_width, num_points=200, plot=False)
+            # x_traj, y_traj = rectangle_trajectory(center=(ws_center[0], ws_center[1]), width=0.6*ws_width, height=0.7*ws_length, num_points=200, plot=False)
+        elif n_counter == -2:
+            x_traj, y_traj = elipsoid_trajectory(center=(ws_center[0], ws_center[1]), axes_lengths=(0.8*ws_width/2, 0.5*ws_length/2), angle=0.0, num_points=200, plot=False)
+        elif n_counter == -3:
+            x_traj, y_traj = triangle_trajectory(center=(ws_center[0], ws_center[1]), side_length=0.8*ws_width/2, num_points=200, plot=False)
+        elif n_counter == -4:
+            x_traj, y_traj = square_trajectory(center=(ws_center[0], ws_center[1]), side_length=0.2*ws_width, num_points=200, plot=False)
+        #     x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.2*ws_width, num_points=200, plot=False)
+        # elif n_counter == 1:
+        #     x_traj, y_traj = rectangle_trajectory(center=(ws_center[0], ws_center[1]), width=0.2*ws_width, height=0.35*ws_length, num_points=200, plot=False)
+        # elif n_counter == 2:
+        #     x_traj, y_traj = elipsoid_trajectory(center=(ws_center[0], ws_center[1]), axes_lengths=(0.2*ws_width, 0.4*ws_width), angle=0.0, num_points=200, plot=False)
+        # elif n_counter == 3:
+        #     x_traj, y_traj = triangle_trajectory(center=(ws_center[0], ws_center[1]), side_length=0.3*ws_width, num_points=200, plot=False)
+        else:
+            return None
+    else:
+        root_dir = Path(config["logs"]["root"]) 
+        warmup_traj_csv = root_dir.parent.parent / "warmup_trajectories.csv"
+        if warmup_traj_csv.exists():  
+            print(f"Loading warmup trajectory from {warmup_traj_csv}")   
+            df = pd.read_csv(warmup_traj_csv)
+            df_iter = df[df['iter'] == n_counter].copy()
+            df_iter = df_iter.iloc[:len(df_iter) // 2]  # Use only the first half of the trajectory for warmup
+            df_iter = df_iter[::2]  # Downsample by taking every other point
+            if df_iter.empty:
+                return None
+            x_traj = df_iter['x'].values
+            y_traj = df_iter['y'].values
+        else:
+            print(f"Warning: Warmup trajectory CSV not found at {warmup_traj_csv}. Generating default circular trajectory.")
+            x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.8*ws_length/2, num_points=200, plot=False)
+
+    trajectory = np.vstack((x_traj, y_traj))
+
+    trajectory = np.hstack((np.array(ws_center).reshape(2, 1), trajectory)).T
+    return trajectory
+
 def get_dmp_step_with_obstacles(dmp):
 
     y, _, _ = dmp.step(
         tau=2.0,
         external_force=avoid_obstacles(
             dmp.y, dmp.dy, dmp.goal,
-            rect_d0_x=0.06,
-            rect_d0_y=0.14,
-            rect_eta=30.0,
+            rect_d0_x=0.125,
+            rect_d0_y=0.06,
+            rect_eta=1.0,
             obs_d0=0.1,
             obs_eta=30.0,
             max_force=220.0

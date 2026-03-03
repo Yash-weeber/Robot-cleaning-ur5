@@ -12,7 +12,7 @@ from env.robot_logic import (
     get_joint_positions, set_joint_positions, enhanced_ik_solver
 )
 from env.llm_robot_logic import (
-    generate_warmup_trajectory, get_dmp_step_with_obstacles, log_iteration_data
+    generate_warmup_trajectory_lab, get_dmp_step_with_obstacles, log_iteration_data
 )
 from agent.llm_client import LLMInterface
 from agent.llm_data_utils import (
@@ -58,7 +58,7 @@ class LLM_Brain:
         self.weights_csv_path = os.path.join(config['logs']['root'], "weights.csv")
 
         # Initialize DMP
-        self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)
+        self.dmp = DMPs_rhythmic(n_dmps=2, n_bfs=self.n_bfs, dt=self.dt)#, ay=np.array([250.0, 250.0]), by=np.array([150.0, 150.0]))
         self.iteration = self._find_iteration_number()
     
     def _find_iteration_number(self):
@@ -68,7 +68,7 @@ class LLM_Brain:
             df = pd.read_csv(weight_history_path)
             if not df.empty:
                 return int(df['iter'].max()) + 1
-        return 0
+        return -4  # Start with -4 to allow for 5 warmup trajectories (0, -1, -2, -3, -4)
     
     def _prompt_llm(self):
         """prompts the llm for new weights based on past performance"""
@@ -87,7 +87,21 @@ class LLM_Brain:
 
     def _generate_dmp_trajectory(self, weights):
         """Generates a DMP trajectory given weights"""
-        trajectory = generate_warmup_trajectory(0, self.config)
+        trajectory = generate_warmup_trajectory_lab(self.iteration, self.config)
+        import matplotlib.pyplot as plt
+        plt.plot(trajectory[:,0], trajectory[:,1])
+        plt.scatter(self.ws_center[0], self.ws_center[1], color='red', label='Workspace Center')
+        plt.hlines([self.y_max, self.y_min], self.x_min, self.x_max, colors='gray', linestyles='dashed')
+        plt.vlines([self.x_min, self.x_max], self.y_min, self.y_max, colors='gray', linestyles='dashed')
+        plt.xlim(self.x_min-0.05, self.x_max+0.05)
+        plt.ylim(self.y_min-0.05, self.y_max+0.05)
+        plt.title(f"Warmup Trajectory for Iteration {self.iteration}")
+        plt.xlabel("x (m)")
+        plt.ylabel("y (m)")
+        plt.legend()
+        plt.grid()
+        # plt.savefig(os.path.join(self.config['logs']['root'], f"warmup_trajectory_iter_{self.iteration}.png"))
+        print(f"Saved warmup trajectory plot in {self.config['logs']['root']}/warmup_trajectory_iter_{self.iteration}.png")
         self.dmp.imitate_path(trajectory.T, plot=False)
         self.dmp.w = weights.copy()
         self.dmp.reset_state()
@@ -96,6 +110,7 @@ class LLM_Brain:
         for i in range(int(self.dmp.timesteps)):
             # Step DMP with aggressive obstacle avoidance gains
             y = get_dmp_step_with_obstacles(self.dmp)
+            # y, _, _ = self.dmp.step(tau=2.0)
             target_3d = np.array([y[0], y[1], self.config['robot']['mop_z_height']], dtype=float)
             dmp_task_trajectory.append(target_3d)
         
@@ -113,12 +128,22 @@ class LLM_Brain:
         """Ask user to provide a reward score for the trajectory"""
         while True:
             try:
-                reward = float(input(f"Please provide a reward score (0-100) for iteration {self.iteration}: "))
-                reward = 100 - reward  # Convert to cost
-                if 0 <= reward <= 100:
-                    return reward
-                else:
-                    print("Reward must be between 0 and 100.")
+                # reward = float(input(f"Please provide a reward score (0-500) for iteration {self.iteration}: "))
+                # if 0 <= reward <= 500:
+                #     return reward
+                # else:
+                #     print("Reward must be between 0 and 500.")
+                initial_ball_count = int(input(f"Please enter the initial number of balls for iteration {self.iteration}: "))
+                if initial_ball_count < 0:
+                    print("Initial ball count cannot be negative.")
+                    continue
+                final_ball_count = int(input(f"Please enter the final number of balls for iteration {self.iteration}: "))
+                if final_ball_count < 0:
+                    print("Final ball count cannot be negative.")
+                    continue
+                ratio = final_ball_count / initial_ball_count if initial_ball_count > 0 else 0
+                cost = ratio * 100  # Scale to 0-100
+                return cost
             except ValueError:
                 print("Invalid input. Please enter a numeric value between 0 and 100.")
     
@@ -137,6 +162,7 @@ class LLM_Brain:
         # Load trajectory data from CSV
         df_dmp = pd.read_csv(self.config['logs']['dmp_trajectory_csv'])
         dmp_traj_data = df_dmp[df_dmp['iter'] == self.iteration]
+        
         dmp_traj_data.drop(columns=['iter', 'timestamp', 'step'], inplace=True)
         dmp_traj_data = dmp_traj_data.iloc[::resample_rate, :].reset_index(drop=True)
         # print(dmp_traj_data.head())
@@ -159,19 +185,50 @@ class LLM_Brain:
         with open(self.config['logs']['traj_out_pkl'], 'wb') as f:
             print(f"Saving trajectory pickle for iteration {self.iteration} with {len(traj)} points.\n in {self.config['logs']['traj_out_pkl']}")
             pickle.dump(traj, f)
+            
+    def extract_traj_to_csv(self, resample_rate=20):
+        df_dmp = pd.read_csv(self.config['logs']['dmp_trajectory_csv'])
+        dmp_traj_data = df_dmp[df_dmp['iter'] == self.iteration]
+        # dmp_traj_data.drop(columns=['iter', 'timestamp', 'step'], inplace=True)
+        dmp_traj_data = dmp_traj_data.iloc[::resample_rate, :].reset_index(drop=True)
+        out_csv_path = os.path.join(self.config['logs']['root'], f"motion_safe.csv")
+        dmp_traj_data.to_csv(out_csv_path, index=False)
+        print(f"Saved trajectory CSV for iteration {self.iteration} with {len(dmp_traj_data)} points.\n in {out_csv_path}")
 
     def step(self):
         """Performs a single optimization step"""
         traj_in_bound = False
-        while not traj_in_bound:
-            w_next = self._prompt_llm()
-            trajectory = self._generate_dmp_trajectory(w_next)
-            traj_in_bound = self._check_trajectory_in_bounds(trajectory)
+        if self.iteration > 0:
+            while not traj_in_bound:
+                w_next = self._prompt_llm()
+                trajectory = self._generate_dmp_trajectory(w_next)
+                traj_in_bound = self._check_trajectory_in_bounds(trajectory)
+        else:
+            trajectory = self._generate_dmp_trajectory(self.dmp.w)
+            w_next = self.dmp.w.copy()
+            
+        import matplotlib.pyplot as plt
+        x_traj = [traj[0] for traj in trajectory]
+        y_traj = [traj[1] for traj in trajectory]
+        plt.plot(x_traj, y_traj, label='DMP Trajectory')
+        plt.scatter(self.ws_center[0], self.ws_center[1], color='red', label='Workspace Center')
+        plt.hlines([self.y_max, self.y_min], self.x_min, self.x_max, colors='gray', linestyles='dashed')
+        plt.vlines([self.x_min, self.x_max], self.y_min, self.y_max, colors='gray', linestyles='dashed')
+        plt.xlim(self.x_min-0.05, self.x_max+0.05)
+        plt.ylim(self.y_min-0.05, self.y_max+0.05)
+        plt.title(f"DMP Trajectory for Iteration {self.iteration}")
+        plt.xlabel("x (m)")
+        plt.ylabel("y (m)")
+        plt.legend()
+        plt.grid()
+        plt.savefig(os.path.join(self.config['logs']['root'], f"dmp_trajectory_iter_{self.iteration}.png"))
+        plt.close()
         
         save_trajectory_data(self.iteration, trajectory, self.config['logs']['dmp_trajectory_csv'])
         save_trajectory_data(self.iteration, trajectory, self.config['logs']['ee_trajectory_csv'])
         # Update for next iteration
-        self.extract_traj_to_pkl(resample_rate=20)
+        # self.extract_traj_to_pkl(resample_rate=20)
+        self.extract_traj_to_csv(resample_rate=20)
         append_weight_history(self.config['logs']['weight_history_csv'], self.iteration, "proposed", w_next, self.n_bfs)
         write_weights_csv(self.weights_csv_path, w_next)
         reward = self._obtain_reward_from_user()
@@ -179,6 +236,7 @@ class LLM_Brain:
         print(f"Received reward: {reward} for iteration {self.iteration}")
         
         log_iteration_data(self.iteration, grid_mat, reward, len(trajectory), self.config['logs']['iter_log_csv'])
+        
         
         append_weight_history(self.config['logs']['weight_history_csv'], self.iteration, "executed", w_next, self.n_bfs)
         # write_weights_csv(self.weights_csv_path, w_next)

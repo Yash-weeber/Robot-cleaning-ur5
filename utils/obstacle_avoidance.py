@@ -1,7 +1,7 @@
 import numpy as np
 from config.loader import load_config
 
-config = load_config(config_path="config/config.yaml")
+config = load_config(config_path="config/config-in-lab-grid-coverage.yaml")
 
 # Rectangle keep-in zone boundaries/parameters
 ws_center = config["simulation"]["ws_center"]
@@ -105,8 +105,8 @@ def avoid_obstacles(
     goal,
     *,
     # keep-in rectangle params
-    rect_d0_x=0.14,
-    rect_d0_y=0.06,
+    rect_d0_x=0.125,
+    rect_d0_y=0.045,
     rect_eta=0.2,
     rect_k_out=200.0,
     # internal obstacle params
@@ -124,7 +124,7 @@ def avoid_obstacles(
     p = np.zeros(2, dtype=float)
 
     p += _keep_in_rect_force(y, d0_x=rect_d0_x, d0_y=rect_d0_y, eta=rect_eta, k_out=rect_k_out)
-    p += _repulsive_point_obstacles_force(y, INTERNAL_OBSTACLES, d0=obs_d0, eta=obs_eta)
+    # p += _repulsive_point_obstacles_force(y, INTERNAL_OBSTACLES, d0=obs_d0, eta=obs_eta)
 
     # Clamp for stability
     eps = 1e-9
