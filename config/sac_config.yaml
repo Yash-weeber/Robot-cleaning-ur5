@@ -1,0 +1,88 @@
+
+
+
+# --- Simulation & Environment ---
+simulation:
+  xml_path: "ballmove.xml"
+  site_name: "ee_site"
+  dt: 0.002
+  keys_file_path: "./keys.env"
+  base_dir: "./Results/"
+  max_iters: 400
+  ws_width: 0.9144
+  ws_length: 1.2192
+  ws_center: [0.6, 0.0]
+
+# --- Robot Hardware Limits (UR5e) ---
+robot:
+  joint_names: ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
+  home_joint_positions: [1.63, -1.51, -1.89, -0.88, 1.76, 0.0]
+  mop_z_height: 0.49
+
+# --- Inverse Kinematics ---
+ik_params:
+  init_lambda: 0.15
+  tol: 0.001
+  step_clip: 0.2
+  max_wp_step: 0.03
+  max_iters_per_wp: 300
+  print_every: 60
+  ik_max_iters: 50
+
+# --- DMP Setup (Action Space) ---
+dmp_params:
+  n_bfs: 10
+  num_balls: 500
+  num_x_segments: 3
+  num_y_segments: 2
+  random_scale: 10.0
+  deci_build: 2
+  dt: 0.002
+
+# --- Soft Actor-Critic Hyperparameters (UPDATED) ---
+sac_params:
+  # Learning rates (Faster for small data budget)
+  lr_actor: 0.001
+  lr_critic: 0.001
+  lr_alpha: 0.001
+
+  # RL math
+  gamma: 0.99
+  tau: 0.005
+  target_entropy: -20
+
+  # Memory & batching
+  buffer_size: 100000    # Keeps history intact
+  batch_size: 512      # Smaller batch for stability with limited data
+  hidden_dim: 1024       # Narrower networks to learn faster from 2000 tries
+
+  # Training schedule (Nested Loop Logic)
+  num_iterations: 200           # Outer loop
+  episodes_per_iteration: 10      # Inner loop: 10 tries
+  updates_per_iteration: 2       # Gradient steps after the 2 tries
+  learning_starts: 20            # Wait for warmup before updating
+
+  # State & Reward mapping
+  traj_state_len: 100            # state_dim = 2 * 50 = 100
+
+
+# --- Obstacle Avoidance ---
+obstacle_params:
+  rect_d0: 0.05
+  rect_eta: 25.0
+  obs_d0: 0.1
+  obs_eta: 25.0
+  max_force: 220.0
+
+# --- Metadata & Logging ---
+llm_settings:
+  run_type: "pure-sac-optimization"
+  grid_reward: False
+  resample_rate: 20
+  feedback_window: 400
+  n_warmup: 20              # FIXED — do not change
+  step_size: 100
+  seed_number: 42
+  llm_model: "none"
+  warmup_strategy: "expert_buffer_fill"
+  automatic_entropy_tuning: True
