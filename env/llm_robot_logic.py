@@ -70,8 +70,8 @@ def generate_warmup_trajectory_lab(n_counter, config, use_shapes=False):
             print(f"Loading warmup trajectory from {warmup_traj_csv}")   
             df = pd.read_csv(warmup_traj_csv)
             df_iter = df[df['iter'] == n_counter].copy()
-            df_iter = df_iter.iloc[:len(df_iter) // 2]  # Use only the first half of the trajectory for warmup
-            df_iter = df_iter[::2]  # Downsample by taking every other point
+            # df_iter = df_iter.iloc[:len(df_iter) // 2]  # Use only the first half of the trajectory for warmup
+            # df_iter = df_iter[::2]  # Downsample by taking every other point
             if df_iter.empty:
                 return None
             x_traj = df_iter['x'].values
@@ -79,7 +79,8 @@ def generate_warmup_trajectory_lab(n_counter, config, use_shapes=False):
         else:
             print(f"Warning: Warmup trajectory CSV not found at {warmup_traj_csv}. Generating default circular trajectory.")
             x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.8*ws_length/2, num_points=200, plot=False)
-
+    
+    x_traj, y_traj = circle_trajectory(center=(ws_center[0], ws_center[1]), radius=0.8*ws_length/2, num_points=200, plot=False)
     trajectory = np.vstack((x_traj, y_traj))
 
     trajectory = np.hstack((np.array(ws_center).reshape(2, 1), trajectory)).T

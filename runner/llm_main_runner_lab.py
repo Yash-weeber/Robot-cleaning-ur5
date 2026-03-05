@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import pickle
 import time
 import numpy as np
@@ -204,8 +205,14 @@ class LLM_Brain:
                 trajectory = self._generate_dmp_trajectory(w_next)
                 traj_in_bound = self._check_trajectory_in_bounds(trajectory)
         else:
-            trajectory = self._generate_dmp_trajectory(self.dmp.w)
-            w_next = self.dmp.w.copy()
+            warmup_weights_csv = Path(self.config['logs']['root']).parent.parent / f"warmup_weights.csv"
+            if warmup_weights_csv.exists():
+                print(f"Loading warmup weights from {warmup_weights_csv}")
+                df_w = pd.read_csv(warmup_weights_csv)
+                weight_columns = [f"w{i}" for i in range(self.n_bfs * 2)]
+                weights = df_w[weight_columns].iloc[self.iteration].to_numpy().reshape(2, self.n_bfs)
+            trajectory = self._generate_dmp_trajectory(weights)
+            w_next = weights.copy()
             
         import matplotlib.pyplot as plt
         x_traj = [traj[0] for traj in trajectory]

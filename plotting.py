@@ -14,7 +14,7 @@ from config.loader import load_config
 import re
 plt.rcParams["font.family"] = "sans-serif"
 
-config = load_config("config/config-in-lab-grid-coverage-guided-sinusoid-y.yaml")
+config = load_config("config/semantics-gridcoverage-hist-30-n_bfs-20.yaml")
 
 INTERNAL_OBSTACLES = np.array([[0.0, 0.0],
                             #    [0.0, 0.525],
@@ -988,132 +988,137 @@ def plot_trajectory_coverage_heatmap(
     # return grid, output_path
 
 #%% Plotting
-# if __name__ == "__main__":
-#     # feedback_window = 30  # number of recent iterations to summarize for feedback
-#     # step_size = 50
-#     # run_type = "semantics-RL-optimizer"
-#     # traj_in_prompt = False
-#     # resample_rate = 20
-#     # n_warmup = 5
-#     # template_number = '1'  # which prompt template to use
-#     # temp = ""
-#     # n_x_seg = 20
-#     # n_y_seg = 20
-#     # grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
-#     # grid_reward = 0 # whether to include grid-based reward in LLM feedback
-#     # guided = 1 # whether to use guided trajectory optimization
-#     # Load parameters from config file
-#     config_path = Path("./config/")
-#     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
-#     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
-#     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
-#     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
-#     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover.yaml"
-#     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
-#     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y.yaml"
-#     config_file = config_path / "semantics-gridcoverage-hist-30.yaml"
-#     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
-#     # config_file = config_path / "num-optimizer-hist-100.yaml"
-#     # config_file = config_path / "semantics-hist-100.yaml"
-#     # config_file = config_path / "config-in-lab-grid-coverage.yaml"
-#     config_file = config_path / "config-in-lab-grid-coverage-guided-sinusoid-y.yaml"
+if __name__ == "__main__":
+    # feedback_window = 30  # number of recent iterations to summarize for feedback
+    # step_size = 50
+    # run_type = "semantics-RL-optimizer"
+    # traj_in_prompt = False
+    # resample_rate = 20
+    # n_warmup = 5
+    # template_number = '1'  # which prompt template to use
+    # temp = ""
+    # n_x_seg = 20
+    # n_y_seg = 20
+    # grid_coverage_in_prompt = 1  # whether to include grid coverage info in LLM feedback
+    # grid_reward = 0 # whether to include grid-based reward in LLM feedback
+    # guided = 1 # whether to use guided trajectory optimization
+    # Load parameters from config file
+    config_path = Path("./config/")
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y.yaml"
+    config_file = config_path / "semantics-gridcoverage-hist-30.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
+    # config_file = config_path / "num-optimizer-hist-100.yaml"
+    # config_file = config_path / "semantics-hist-100.yaml"
+    # config_file = config_path / "config-in-lab-grid-coverage.yaml"
+    config_file = config_path / "config-in-lab-grid-coverage-guided-sinusoid-y.yaml"
+    config_file = config_path / "semantics-gridcoverage-hist-30-n_bfs-20.yaml"
+    # config_file = config_path / "semantics-hist-30-n_bfs-20.yaml"
+    # config_file = config_path / "semantics-gridcoverage-hist-30-n_bfs-30.yaml"
+    # config_file = config_path / "semantics-hist-30-n_bfs-30.yaml"
         
-#     plot_config = load_config(config_file)
-#     # print(f"Loaded plot configuration from YAML: {plot_config}")
-#     feedback_window = plot_config["llm_settings"]["feedback_window"]
-#     step_size = plot_config["llm_settings"]["step_size"]
-#     run_type = plot_config["llm_settings"]["run_type"]
-#     traj_in_prompt = plot_config["llm_settings"]["traj_in_prompt"]
-#     resample_rate = plot_config["llm_settings"]["resample_rate"]
-#     n_warmup = plot_config["llm_settings"]["n_warmup"]
-#     template_number = plot_config["llm_settings"]["template_number"]
-#     n_x_seg = plot_config["dmp_params"]["num_x_segments"]
-#     n_y_seg = plot_config["dmp_params"]["num_y_segments"]
-#     grid_coverage_in_prompt = plot_config["llm_settings"]["grid_coverage_in_prompt"]
-#     grid_reward = plot_config["llm_settings"]["grid_reward"]
-#     guided = plot_config["llm_settings"]["guided"]
-#     # exp_nums = plot_config["exp_nums"]
+    plot_config = load_config(config_file)
+    # print(f"Loaded plot configuration from YAML: {plot_config}")
+    feedback_window = plot_config["llm_settings"]["feedback_window"]
+    step_size = plot_config["llm_settings"]["step_size"]
+    run_type = plot_config["llm_settings"]["run_type"]
+    traj_in_prompt = plot_config["llm_settings"]["traj_in_prompt"]
+    resample_rate = plot_config["llm_settings"]["resample_rate"]
+    n_warmup = plot_config["llm_settings"]["n_warmup"]
+    template_number = plot_config["llm_settings"]["template_number"]
+    n_x_seg = plot_config["dmp_params"]["num_x_segments"]
+    n_y_seg = plot_config["dmp_params"]["num_y_segments"]
+    grid_coverage_in_prompt = plot_config["llm_settings"]["grid_coverage_in_prompt"]
+    grid_reward = plot_config["llm_settings"]["grid_reward"]
+    guided = plot_config["llm_settings"]["guided"]
+    n_bfs = plot_config["dmp_params"]["n_bfs"]
+    # exp_nums = plot_config["exp_nums"]
     
-#     rt = run_type
+    rt = run_type
 
-#     if traj_in_prompt:
-#         rt += "-traj"
+    if traj_in_prompt:
+        rt += "-traj"
     
-#     if grid_coverage_in_prompt:
-#         rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
+    if grid_coverage_in_prompt:
+        rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
 
-#     if grid_reward:
-#         rt += "-gridreward"
-#     else: 
-#         rt += "-totalcost"
-#     if guided:
-#         rt += "-guided"
+    if grid_reward:
+        rt += "-gridreward"
+    else: 
+        rt += "-totalcost"
+    if guided:
+        rt += "-guided"
     
-#     template_name = f"{rt}-{template_number}.j2"
+    template_name = f"{rt}-{template_number}.j2"
     
-#     print(f"Using template: {template_name}")
+    print(f"Using template: {template_name}")
     
-#     rt = run_type
+    rt = run_type
     
-#     if traj_in_prompt:
-#         rt += f"-traj-{resample_rate}"
+    if traj_in_prompt:
+        rt += f"-traj-{resample_rate}"
     
-#     if grid_coverage_in_prompt:
-#         rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
+    if grid_coverage_in_prompt:
+        rt += f"-gridcov-{n_x_seg}x{n_y_seg}"
         
-#     if grid_reward:
-#         rt += f"-gridreward-{n_x_seg}x{n_y_seg}"
-#     else:
-#         rt += "-totalcost"
+    if grid_reward:
+        rt += f"-gridreward-{n_x_seg}x{n_y_seg}"
+    else:
+        rt += "-totalcost"
         
-#     if guided:
-#         rt += "-guided"
+    if guided:
+        rt += "-guided"
     
-#     if guided:
-#         # suffix = f"-infinity-y"
-#         # suffix = f"-circle"
-#         suffix = f"-{plot_config['llm_settings']['guidance_file'].split('/')[-1].split('.')[0]}"
-#     else:
-#         suffix = ""
+    if guided:
+        # suffix = f"-infinity-y"
+        # suffix = f"-circle"
+        suffix = f"-{plot_config['llm_settings']['guidance_file'].split('/')[-1].split('.')[0]}"
+    else:
+        suffix = ""
     
-#     save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}" 
+    save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}" 
     
-#     # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
-#     # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
-#     # root_dir = Path(f"./Results/logs/{save_results_file}/")
-#     # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/n_warmup-{n_warmup}/logs/{save_results_file}/")
-#     # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
-#     root_dir = Path(plot_config["simulation"]["base_dir"]) / f"n_warmup-{n_warmup}" / "logs" / save_results_file
-#     # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
-#     # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
-#     # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
+    # template_name = f"{run_type}-totalcost-{template_number}.j2" if not GRID_REWARD else f"{run_type}-gridreward-{template_number}.j2"
+    # save_results_file = f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}{template_number}{temp}" if not GRID_REWARD else f"{run_type}-walled-stepsize-{step_size}-hist-{feedback_window}-gridreward-{n_x_seg}x{n_y_seg}{template_number}{temp}"
+    # root_dir = Path(f"./Results/logs/{save_results_file}/")
+    # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/n_warmup-{n_warmup}/logs/{save_results_file}/")
+    # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
+    root_dir = Path(plot_config["simulation"]["base_dir"]) / f"n_warmup-{n_warmup}" / "logs" / save_results_file
+    # root_dir = Path(f"/scratch/melmisti/robot_cleaning/Results5/logs/{save_results_file}/")
+    # logs_path = Path("/scratch/melmisti/robot_cleaning/Results/logs/")
+    # exp_paths = sorted([p for p in logs_path.iterdir() if p.is_dir()])
     
-#     # # for root_dir in exp_paths:
-#     # for root_dir in exp_paths:
-#     #     print(f"Processing experiment folder: {root_dir}")
-#     #     # Aggregate across all runs in the experiment folder
-#     #     plot_avg_cost_history_across_runs(root_dir, show=True, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
-#     #     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
+    # # for root_dir in exp_paths:
+    # for root_dir in exp_paths:
+    #     print(f"Processing experiment folder: {root_dir}")
+    #     # Aggregate across all runs in the experiment folder
+    #     plot_avg_cost_history_across_runs(root_dir, show=True, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
+    #     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
     
-#     print(f"Processing experiment folder: {root_dir}")
-#     # Aggregate across all runs in the experiment folder
-#     plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
-#     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-#     exp_nums = [i for i in range(1,8)]
-#     # exp_num = 3
-#     for exp_num in exp_nums:
-#         print(f"Processing experiment run: {exp_num}")
-#         cost_file = root_dir / f"{exp_num}/llm_iteration_log.csv"
-#         dmp_traj_file = root_dir / f"{exp_num}/dmp_trajectory_feedback.csv"
-#         ee_traj_file = root_dir / f"{exp_num}/ee_trajectory.csv"
-#         weights_csv = root_dir / f"{exp_num}/weights_history.csv"
-#         weights_heatmap_file = root_dir / f"{exp_num}/weights_heatmap.png"
-#         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
-#         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file, plt_ext="pdf")
-#         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-#         grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file, extension="pdf")
-#         plot_weights_history_heatmap(weights_csv, n_bfs=20, output_path=weights_heatmap_file, ext="pdf")
-#         # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
+    print(f"Processing experiment folder: {root_dir}")
+    # Aggregate across all runs in the experiment folder
+    plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
+    summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
+    exp_nums = [i for i in range(5,11)]
+    # exp_num = 3
+    for exp_num in exp_nums:
+        print(f"Processing experiment run: {exp_num}")
+        cost_file = root_dir / f"{exp_num}/llm_iteration_log.csv"
+        dmp_traj_file = root_dir / f"{exp_num}/dmp_trajectory_feedback.csv"
+        ee_traj_file = root_dir / f"{exp_num}/ee_trajectory.csv"
+        weights_csv = root_dir / f"{exp_num}/weights_history.csv"
+        weights_heatmap_file = root_dir / f"{exp_num}/weights_heatmap.png"
+        plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
+        plot_trajectories(dmp_traj_file, ee_traj_file, cost_file, plt_ext="pdf")
+        # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
+        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file, extension="pdf")
+        plot_weights_history_heatmap(weights_csv, n_bfs=n_bfs, output_path=weights_heatmap_file, ext="pdf")
+        # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 
 
 #%%

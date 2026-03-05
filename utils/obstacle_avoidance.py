@@ -1,7 +1,7 @@
 import numpy as np
 from config.loader import load_config
 
-config = load_config(config_path="config/config-in-lab-grid-coverage.yaml")
+config = load_config(config_path="config/config.yaml")
 
 # Rectangle keep-in zone boundaries/parameters
 ws_center = config["simulation"]["ws_center"]

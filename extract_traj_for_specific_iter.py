@@ -84,7 +84,7 @@ def extract_weights_for_iters(iteration_list, weights_csv_path, output_csv_path,
         y_min_old, y_max_old = ws_center_old[1] - ws_length_old/2, ws_center_old[1] + ws_length_old/2
 
     df_w = pd.read_csv(weights_csv_path)
-    df_w = df_w[df_w["tag"] == "proposed"].copy()
+    df_w = df_w[df_w["tag"] == "executed"].copy()
     # print(df_w['iter'].unique())
     # print(df_w['iter'].isin(iteration_list))
     dmp_w_data = df_w[df_w['iter'].isin(iteration_list)].copy()
