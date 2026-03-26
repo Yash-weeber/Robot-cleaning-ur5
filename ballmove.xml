@@ -90,6 +90,7 @@
 
   <!-- Visual settings: skybox + haze for infinite horizon look -->
   <visual>
+    <global offwidth="1280" offheight="720" />
     <map znear="0.01" zfar="200" fogstart="8" fogend="60" />
   </visual>
 
@@ -124,7 +125,7 @@
     <!-- Table positioned as base platform -->
     <body name="table" pos="0.6 0 0" euler="0 0 1.57079632679">
       <inertial mass="50" pos="0 0 0.05" diaginertia="10 10 5" />
-      <geom name="table_collision" type="box" size="1 0.6 0.45" pos="0.0 0.0 0.01"
+      <geom name="table_collision" type="box" size="0.68 0.6 0.44875" pos="-0.019 0.11 0.01"
         material="table_material" group="3" contype="1" conaffinity="1"
         solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.7 0.1 0.05" />
       <geom name="table_visual" type="mesh" mesh="table" material="table_material" class="visual"
@@ -209,7 +210,11 @@
 
                     <body name="mop_tool" pos="0 -0.4 0">
                       <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01" />
-                      <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1" />
+                      <!-- <geom type="mesh" mesh="handle_mesh" density="500" friction="0.8 0.1 0.1" /> -->
+                      <geom type="cylinder" size="0.01 0.2" pos="0 0.2 0" 
+                        euler="1.57079632679 0 0" group="1" contype="1" conaffinity="1"
+                        solref="0.02 1.0" solimp="0.9 0.95 0.001" friction="0.8 0.1 0.05" />
+                      <!-- <site name="ee_site" pos="0 -0.025 0.0" size="0.01" rgba="1 0 0 1" group="4" /> -->
 
                       <body name="mop_head">
                         <joint name="mop_socket" type="ball" damping="0.5" limited="false" />
@@ -217,6 +222,16 @@
                         <inertial mass="0.2" pos="0 -0.05 -0.1" diaginertia="0.005 0.005 0.005" />
                         <geom type="mesh" mesh="base_mesh" density="500" friction="0.8 0.1 0.1"
                           pos="0 -0.05 -0.1" material="mop_dark_green" />
+                        <!-- Thin disc primitive co-located with the mesh bottom face.
+                             Provides a clean box-plane contact with the table instead of
+                             relying on imprecise mesh convex-hull collision. -->
+                        <geom name="mop_pad" type="box" size="0.12 0.005 0.09"
+                          pos="0 -0.04 0.0"
+                          euler="0 0 0"
+                          contype="1" conaffinity="1"
+                          solref="0.006 1.0" solimp="0.85 0.8 0.0005"
+                          friction="0.01 0.01 0.05"
+                          rgba="0.2 0.6 0.2 0.3" group="3" />
                       </body>  <!--
                       mop_head -->
                     </body>    <!--
@@ -2751,6 +2766,8 @@
       <geom type="sphere" size="0.003" material="dust_material"/>
    </body>
 </worldbody>
+
+<option o_solref="-100 -10" o_solimp="0.99 0.995 0.001 0.5 2" o_margin="0.001"/>
 
   <!-- ================= ACTUATORS ================= -->
   <actuator>

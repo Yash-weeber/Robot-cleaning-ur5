@@ -15,7 +15,7 @@ robot:
   joint_names:
     ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
   home_joint_positions: [1.63, -1.51, -1.89, -0.88, 1.76, 0.0]
-  mop_z_height: 0.49
+  mop_z_height: 0.495
 
 ik_params:
   init_lambda: 0.15

@@ -19,6 +19,10 @@ class ViewerAdapter:
                 import mujoco.viewer as mview # Moved inside to prevent crash
                 self.backend = "dm"
                 self.viewer = mview.launch_passive(model, data)
+                self.viewer.cam.azimuth = 180
+                self.viewer.cam.elevation = -30
+                self.viewer.cam.distance = 1.9
+                self.viewer.cam.lookat[:] = [0.6, 0, 0.5]
                 print("[Viewer] Using mujoco.viewer (DeepMind).")
                 return
             except Exception:
@@ -29,6 +33,10 @@ class ViewerAdapter:
                 import mujoco_viewer
                 self.backend = "community"
                 self.viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=False)
+                self.viewer.cam.azimuth = 180
+                self.viewer.cam.elevation = -30
+                self.viewer.cam.distance = 1.9
+                self.viewer.cam.lookat[:] = [0.6, 0, 0.5]
                 print("[Viewer] Using mujoco-python-viewer.")
                 return
             except Exception:

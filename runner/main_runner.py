@@ -1,4 +1,5 @@
 import time
+from tkinter import SEL
 import numpy as np
 import mujoco
 try:
@@ -24,6 +25,7 @@ from agent.dmp_logic import DMPs_discrete, DMPs_rhythmic
 from agent.interfaces import DrawingInterface, RealTimeMouseControl
 from utils.draw_shapes import infinity_trajectory
 from utils.obstacle_avoidance import avoid_obstacles
+from utils.video_recorder import VideoRecorder
 
 
 class EnhancedDMPController:
@@ -69,7 +71,9 @@ class EnhancedDMPController:
         self.y_max = self.ws_center[1] + ws_length / 2.0
         self.grid_count = np.zeros((self.num_x_segments, self.num_y_segments), dtype=int)
         self.kp = [300, 300, 150, 80, 50, 50]
+        # self.kp = [x/1.5 for x in self.kp]  # Scale down for smoother control
         self.kd = [150, 150, 80, 40, 20, 20]
+        # self.kd = [x/1.5 for x in self.kd]  # Scale down for smoother control
         # self.set_joint_pid_gains(self.kp, self.kd)
         self.reset_robot_to_home()
 
@@ -209,8 +213,16 @@ class EnhancedDMPController:
                 joint_traj.append(get_joint_positions(self.model, self.data, self.joint_names).copy())
         return joint_traj
 
-    def execute_joint_trajectory(self, joint_traj, dt=None):
+    def execute_joint_trajectory(self, joint_traj, dt=None, record_path=None):
+        """
+        Execute a pre-computed joint trajectory.
 
+        Args:
+            joint_traj  : list of joint-position arrays.
+            dt          : timestep between waypoints (defaults to self.dt).
+            record_path : if provided (e.g. 'videos/run.mp4'), saves an MP4
+                          of the execution using mujoco.Renderer off-screen.
+        """
         if dt is None:
             dt = self.dt
 
@@ -222,6 +234,8 @@ class EnhancedDMPController:
             mujoco.mj_forward(self.model, self.data)
             time.sleep(self.dt)
 
+        recorder = VideoRecorder(self.model, self.data, record_path) if record_path else None
+
         for joints in joint_traj:
             self.data.ctrl[:] = joints
             mujoco.mj_step(self.model, self.data)
@@ -230,10 +244,62 @@ class EnhancedDMPController:
             cl_pos = self.data.site_xpos[self.site_id].copy()
             self.ee_trajectory.append(cl_pos)
 
+            if recorder:
+                recorder.capture()
+
             if self.viewer and self.viewer.is_running():
                 self.viewer.draw()
             time.sleep(dt)
+
+        if recorder:
+            recorder.save()
+            recorder.close()
+
         print("Trajectory execution complete.")
+
+    def execute_xy_trajectory(self, xy_trajectory, dt=None, record_path=None):
+        """
+        Takes an XY trajectory (N x 2 array), applies IK at the fixed mop Z height
+        to produce a joint trajectory, then executes it.
+
+        Args:
+            xy_trajectory: array-like of shape (N, 2) with [x, y] positions.
+            dt           : timestep between waypoints (defaults to self.dt).
+            record_path  : if provided (e.g. 'videos/run.mp4'), saves an MP4
+                           of the execution.
+
+        Returns:
+            bool: True if all waypoints were reached, False if any IK failures occurred.
+        """
+        xy_trajectory = np.asarray(xy_trajectory)
+        if xy_trajectory.ndim != 2 or xy_trajectory.shape[1] != 2:
+            raise ValueError("xy_trajectory must be an (N, 2) array of [x, y] positions.")
+
+        if dt is None:
+            dt = self.dt
+
+        print(f"Applying IK to {len(xy_trajectory)} XY waypoints (Z={self.mop_z_height:.4f} m)...")
+
+        joint_traj = []
+        failed = 0
+        for idx, (x, y) in enumerate(xy_trajectory):
+            target_3d = np.array([x, y, self.mop_z_height])
+            success, error = enhanced_ik_solver(
+                self.model, self.data, self.site_id, target_3d, self.joint_names,
+                max_iters_per_wp=50, print_every=1000
+            )
+            if success:
+                joint_traj.append(get_joint_positions(self.model, self.data, self.joint_names).copy())
+            else:
+                print(f"  IK failed at waypoint {idx} ({x:.3f}, {y:.3f}), error={error:.6f} m — skipping.")
+                failed += 1
+
+        print(f"IK complete: {len(joint_traj)} succeeded, {failed} failed.")
+
+        if joint_traj:
+            self.execute_joint_trajectory(joint_traj, dt=dt, record_path=record_path)
+
+        return failed == 0
 
     def execute_realtime_mode(self):
 

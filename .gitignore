@@ -7,3 +7,5 @@
 /Results/*
 /sessions/errors/*
 *.env
+*.zip
+DMP_TRAJ_Results.zip

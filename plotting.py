@@ -29,6 +29,7 @@ y_min, y_max = ws_center[1] - ws_length / 2, ws_center[1] + ws_length / 2
 x_min, x_max = ws_center[0] - ws_width / 2, ws_center[0] + ws_width / 2
 
 def plot_weights_history_heatmap(weights_csv: Path, n_bfs, output_path=None, ext="png"):
+    plt.rcParams["font.family"] = "sans-serif"
     df = pd.read_csv(weights_csv)
     weight_cols = [f"w{i}" for i in range(n_bfs)]
     if not all(c in df.columns for c in weight_cols):
@@ -45,18 +46,18 @@ def plot_weights_history_heatmap(weights_csv: Path, n_bfs, output_path=None, ext
     weight_hist_save_path = weights_csv.parent / "weight_heatmap_plots"
     weight_hist_save_path.mkdir(parents=True, exist_ok=True)
     weights_matrix = df[weight_cols].to_numpy()  # shape (num_iters, n_bfs)
-    for i in range(weights_matrix.shape[0]):
-        w_i = weights_matrix[i, :].reshape(2, n_bfs//2)
-        plt.figure(figsize=(2, 1), dpi=300)
-        im = plt.imshow(w_i, aspect="auto", cmap="viridis")
-        plt.colorbar(im, label="Weight Value")
-        plt.ylabel("Weights")
-        plt.yticks([0, 1], ["$\\theta_x$", "$\\theta_y$"])
-        plt.xlabel("Basis Function Index")
-        plt.savefig(weight_hist_save_path/f"iter-{int(df.iloc[i]['iter']):04d}.{ext}", dpi=150)
-        plt.close()
+    # for i in range(weights_matrix.shape[0]):
+    #     w_i = weights_matrix[i, :].reshape(2, n_bfs//2)
+    #     plt.figure(figsize=(2, 1), dpi=300)
+    #     im = plt.imshow(w_i, aspect="auto", cmap="viridis")
+    #     plt.colorbar(im, label="Weight Value")
+    #     plt.ylabel("Weights")
+    #     plt.yticks([0, 1], ["$\\theta_x$", "$\\theta_y$"])
+    #     plt.xlabel("Basis Function Index")
+    #     plt.savefig(weight_hist_save_path/f"iter-{int(df.iloc[i]['iter']):04d}.{ext}", dpi=150)
+    #     plt.close()
         
-    plt.figure(figsize=(20, 6))
+    plt.figure(figsize=(4, 2))
     im = plt.imshow(weights_matrix.T, aspect="auto", cmap="viridis")
     plt.colorbar(im, label="Weight Value")
     plt.title("DMP Weights History (executed iterations)")
@@ -1005,14 +1006,14 @@ if __name__ == "__main__":
     # Load parameters from config file
     config_path = Path("./config/")
     config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral-warmup-5.yaml"
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-x-warmup-5.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-spiral.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover-warmup-5.yaml"
     # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-4leafclover.yaml"
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
-    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y.yaml"
-    config_file = config_path / "semantics-gridcoverage-hist-30.yaml"
-    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y-warmup-5.yaml"
+    # config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-sinusoid-y.yaml"
+    # config_file = config_path / "semantics-gridcoverage-hist-30.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-30-circle.yaml"
     # config_file = config_path / "num-optimizer-hist-100.yaml"
     # config_file = config_path / "semantics-hist-100.yaml"
     # config_file = config_path / "config-in-lab-grid-coverage.yaml"
