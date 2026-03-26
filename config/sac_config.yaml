@@ -42,14 +42,14 @@ dmp_params:
 # --- Soft Actor-Critic Hyperparameters (UPDATED) ---
 sac_params:
   # Learning rates (Faster for small data budget)
-  lr_actor: 0.001
-  lr_critic: 0.001
-  lr_alpha: 0.001
+  lr_actor: 0.0001
+  lr_critic: 0.0003
+  lr_alpha: 0.00001
 
   # RL math
   gamma: 0.99
   tau: 0.005
-  target_entropy: -20
+  target_entropy: -10
 
   # Memory & batching
   buffer_size: 100000    # Keeps history intact
@@ -81,7 +81,7 @@ llm_settings:
   resample_rate: 20
   feedback_window: 400
   n_warmup: 20              # FIXED — do not change
-  step_size: 100
+  step_size: 50
   seed_number: 42
   llm_model: "none"
   warmup_strategy: "expert_buffer_fill"
