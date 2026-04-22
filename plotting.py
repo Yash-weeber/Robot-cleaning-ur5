@@ -1022,7 +1022,9 @@ if __name__ == "__main__":
     # config_file = config_path / "semantics-hist-30-n_bfs-20.yaml"
     # config_file = config_path / "semantics-gridcoverage-hist-30-n_bfs-30.yaml"
     # config_file = config_path / "semantics-hist-30-n_bfs-30.yaml"
-        
+    config_file = config_path / "semantics-hist-100-sum-opt.yaml"
+    config_file = config_path / "semantics-hist-100-sum-opt-2.yaml"
+            
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
     feedback_window = plot_config["llm_settings"]["feedback_window"]
@@ -1038,6 +1040,7 @@ if __name__ == "__main__":
     grid_reward = plot_config["llm_settings"]["grid_reward"]
     guided = plot_config["llm_settings"]["guided"]
     n_bfs = plot_config["dmp_params"]["n_bfs"]
+    summarizer = plot_config["llm_settings"].get('summarizer', False)
     # exp_nums = plot_config["exp_nums"]
     
     rt = run_type
@@ -1060,6 +1063,9 @@ if __name__ == "__main__":
     print(f"Using template: {template_name}")
     
     rt = run_type
+    
+    if summarizer:
+        rt += "-sum-opt"
     
     if traj_in_prompt:
         rt += f"-traj-{resample_rate}"
@@ -1105,7 +1111,7 @@ if __name__ == "__main__":
     # Aggregate across all runs in the experiment folder
     plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(5,11)]
+    exp_nums = [i for i in range(2,3)]
     # exp_num = 3
     for exp_num in exp_nums:
         print(f"Processing experiment run: {exp_num}")
@@ -1117,7 +1123,7 @@ if __name__ == "__main__":
         plot_cost_history(cost_file, ee_trajectory_csv=ee_traj_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, starting_from=-20)
         plot_trajectories(dmp_traj_file, ee_traj_file, cost_file, plt_ext="pdf")
         # plot_grid_reward_heatmaps(cost_file, n_x_seg=n_x_seg, n_y_seg=n_y_seg, cmap="viridis")
-        grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file, extension="pdf")
+        # grid, _ = plot_trajectory_coverage_heatmap(ee_traj_file, n_x_seg=20, n_y_seg=20, cmap="Blues", y_window=0, x_window=0, cost_csv=cost_file, extension="pdf")
         plot_weights_history_heatmap(weights_csv, n_bfs=n_bfs, output_path=weights_heatmap_file, ext="pdf")
         # make_trajectories_gif(dmp_traj_file, ee_traj_file, cost_file, stride=1, fps=4, dpi=120)
 

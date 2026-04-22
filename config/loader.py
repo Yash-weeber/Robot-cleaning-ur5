@@ -31,7 +31,7 @@ def load_config(config_path="config/config.yaml"):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
 
-    template_number = config['simulation'].get('template_number', 1)
+    template_number = config['llm_settings'].get('template_number', 1)
     grid_reward = config['llm_settings'].get('grid_reward', False)
     resample_rate = config['llm_settings'].get('resample_rate', 30)
     n_x_seg = config['dmp_params'].get('num_x_segments', 3)
@@ -44,7 +44,11 @@ def load_config(config_path="config/config.yaml"):
     guided = config['llm_settings'].get('guided', False)
     on_site = config['llm_settings'].get('on_site', False)
     in_lab = config['llm_settings'].get('in_lab', False)
+    summarizer = config['llm_settings'].get('summarizer', False)
     rt = run_type
+    
+    if summarizer:
+        rt += "-opt"
 
     if traj_in_prompt:
         rt += "-traj"
@@ -63,12 +67,23 @@ def load_config(config_path="config/config.yaml"):
         rt += "-onsite"
     if in_lab:
         rt += "-inlab"
+    
         
     template = f"{rt}-{template_number}.j2"
+    if summarizer:
+        parts = rt.split("-")
+        for i, p in enumerate(parts):
+            if p == "opt":
+                parts[i] = "sum"
+                break
+        config['llm_settings']['summarizer_template'] = f"{'-'.join(parts)}-{template_number}.j2"
     
     print(f"Using template: {template}")
     
     rt = run_type
+    
+    if summarizer:
+        rt += "-sum-opt"
     
     if traj_in_prompt:
         rt += f"-traj-{resample_rate}"

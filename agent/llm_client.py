@@ -24,12 +24,15 @@ class LLMInterface:
         if not hasattr(self, "_active_idx"):
             self._active_idx = 0
 
-    def render_prompt(self, iter_idx, feedback_text, bounds, guidance_text=""):
+    def render_prompt(self, iter_idx, feedback_text, bounds, guidance_text="", summarize=False):
 
         # Determine template name based on configuration flags
         traj_in_prompt = self.config['llm_settings'].get('traj_in_prompt', True)
         grid_reward = self.config['llm_settings'].get('grid_reward', False)
-        template_name = self.config['llm_settings']['template']
+        if not summarize:
+            template_name = self.config['llm_settings']['template']
+        else:
+            template_name = self.config['llm_settings']['summarizer_template']
 
         try:
             template = self.jinja_env.get_template(template_name)

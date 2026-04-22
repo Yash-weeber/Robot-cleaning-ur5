@@ -2,6 +2,57 @@ import os
 import json
 import numpy as np
 import pandas as pd
+import re
+
+def keep_only_reasoning_after_weights(text: str) -> str:
+    t = (text or "").strip()
+
+    # Remove outer code fences if present
+    if t.startswith("```"):
+        t = re.sub(r"^```[^\n]*\n", "", t)
+        t = re.sub(r"\n```$", "", t).strip()
+
+    # If model used <weights>...</weights>, keep everything after
+    if "</weights>" in t:
+        return t.split("</weights>", 1)[1].lstrip()
+    
+    # if model used "**Line 1:**" and "**Line 2:**" format, keep everything after Line 1 (the weights line)
+    if "**Line 2:**" in t:
+        return t.split("**Line 2:**", 1)[1].lstrip()
+    
+    # if model used "**Explanation:**" format, keep everything after that line
+    if "**Explanation:**" in t:
+        return t.split("**Explanation:**", 1)[1].lstrip()
+
+    # If model wrote a "weights=..." line, keep everything after that line
+    m = re.search(r"(?im)^\s*weights\s*[:=].*$", t)
+    if m:
+        return t[m.end():].lstrip()
+
+    # If response starts with a JSON/list weights blob, drop the first bracketed chunk
+    s = t.lstrip()
+    if s.startswith("["):
+        depth = 0
+        for i, ch in enumerate(s):
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    return s[i + 1:].lstrip()
+    if s.startswith("{"):
+        depth = 0
+        for i, ch in enumerate(s):
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return s[i + 1:].lstrip()
+
+    # Default: drop the first non-empty line (the weights line)
+    lines = t.splitlines()
+    return ("\n".join(lines[1:]).lstrip()) if len(lines) > 1 else ""
 
 
 def load_trajectory_history(csv_path, max_iters=20):
@@ -155,7 +206,7 @@ def load_traj_feedback(csv_path):
         print(f"Warning: Could not load trajectory feedback {csv_path}: {e}")
         return {}
 
-def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_traj_df, config, bounds):
+def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_traj_df, config, bounds, inc_reasoning=False):
 
     STRICT_X_MIN, STRICT_X_MAX = bounds['xmin'], bounds['xmax']
     STRICT_Y_MIN, STRICT_Y_MAX = bounds['ymin'], bounds['ymax']
@@ -169,6 +220,10 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
     resample_rate = config['llm_settings'].get('resample_rate', 30)
     y_window = config['llm_settings'].get('y_window', 0)
     x_window = config['llm_settings'].get('x_window', 0)
+    if inc_reasoning:
+        summarizer = config['llm_settings'].get('summarizer', False)
+    else:
+        summarizer = False
 
     # Grid parameters for labeling markdown tables
     n_x_seg = config['dmp_params']['num_x_segments']
@@ -275,6 +330,7 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
             separator = "-" * 50
             feedback_text += f"{separator}{iter_label}{separator}\n"
             feedback_text += f"weights={json.dumps([round(w, 4) for w in weights])}\n{bounds_info}\n"
+            
 
             # Trajectory Resampling (every 30 steps)
             if traj_in_prompt and ee_traj_df is not None:
@@ -307,5 +363,13 @@ def build_llm_feedback(iter_idx, w_df, iter_log_data, traj_feedback_data, ee_tra
                 feedback_text += f"f(weights):\n{cells_df.to_markdown(index=True)}\n\n"
             else:
                 feedback_text += f"f(weights)={current_f}\n\n"
+            if summarizer:
+                if it_num < 1:
+                    reasoning_content = "Warmup iteration - no optimizer reasoning."
+                else:
+                    with open(config['logs']['dialog_dir']+f"/iter_{it_num:03d}_response.txt", "r", encoding="utf-8") as f:
+                        reasoning_content = f.read()
+                    reasoning_content = keep_only_reasoning_after_weights(reasoning_content)
+                feedback_text += f"Optimizer agent reasoning:\n{reasoning_content}\n"
 
     return feedback_text, guidance_text
