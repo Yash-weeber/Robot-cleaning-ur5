@@ -1023,7 +1023,7 @@ if __name__ == "__main__":
     # config_file = config_path / "semantics-gridcoverage-hist-30-n_bfs-30.yaml"
     # config_file = config_path / "semantics-hist-30-n_bfs-30.yaml"
     config_file = config_path / "semantics-hist-100-sum-opt.yaml"
-    config_file = config_path / "semantics-hist-100-sum-opt-2.yaml"
+    # config_file = config_path / "semantics-hist-100-sum-opt-2.yaml"
             
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
@@ -1111,7 +1111,7 @@ if __name__ == "__main__":
     # Aggregate across all runs in the experiment folder
     plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(2,3)]
+    exp_nums = [i for i in range(5,8)]
     # exp_num = 3
     for exp_num in exp_nums:
         print(f"Processing experiment run: {exp_num}")

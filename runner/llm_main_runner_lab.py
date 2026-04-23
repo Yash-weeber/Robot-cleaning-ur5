@@ -210,7 +210,10 @@ class LLM_Brain:
                 print(f"Loading warmup weights from {warmup_weights_csv}")
                 df_w = pd.read_csv(warmup_weights_csv)
                 weight_columns = [f"w{i}" for i in range(self.n_bfs * 2)]
-                weights = df_w[weight_columns].iloc[self.iteration].to_numpy().reshape(2, self.n_bfs)
+                df_w = df_w[df_w["tag"] == "executed"]
+                weights = df_w[weight_columns][df_w['iter'] == self.iteration].to_numpy().reshape(2, self.n_bfs)
+                print(weights)
+                # weights = df_w[weight_columns].iloc[self.iteration].to_numpy().reshape(2, self.n_bfs)
             trajectory = self._generate_dmp_trajectory(weights)
             w_next = weights.copy()
             

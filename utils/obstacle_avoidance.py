@@ -1,7 +1,9 @@
 import numpy as np
 from config.loader import load_config
 
-config = load_config(config_path="config/config.yaml")
+# TODO: Enable passing config from main loader so it does not need to be loaded again!
+# config = load_config(config_path="config/config.yaml")
+config = load_config(config_path="config/config-in-lab-grid-coverage-guided-sinusoid-y.yaml")
 
 # Rectangle keep-in zone boundaries/parameters
 ws_center = config["simulation"]["ws_center"]
@@ -108,7 +110,7 @@ def avoid_obstacles(
     rect_d0_x=0.125,
     rect_d0_y=0.045,
     rect_eta=0.2,
-    rect_k_out=200.0,
+    rect_k_out=1.0,
     # internal obstacle params
     obs_d0=0.25,
     obs_eta=5,
