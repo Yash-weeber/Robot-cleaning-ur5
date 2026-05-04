@@ -2,8 +2,8 @@ import numpy as np
 from config.loader import load_config
 
 # TODO: Enable passing config from main loader so it does not need to be loaded again!
-# config = load_config(config_path="config/config.yaml")
-config = load_config(config_path="config/config-in-lab-grid-coverage-guided-sinusoid-y.yaml")
+config = load_config(config_path="config/config.yaml")
+# config = load_config(config_path="config/config-in-lab-grid-coverage-guided-sinusoid-y.yaml")
 
 # Rectangle keep-in zone boundaries/parameters
 ws_center = config["simulation"]["ws_center"]

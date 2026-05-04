@@ -44,6 +44,7 @@ def run_llm_optimization(config):
     n_warmup = config['llm_settings']['n_warmup']
     feedback_window = config['llm_settings']['feedback_window']
     weights_csv_path = os.path.join(config['logs']['root'], "weights.csv")
+    scratchpad = config['llm_settings'].get('scratchpad', False)
 
     # Initialize DMP
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=n_bfs, dt=controller.dt)
@@ -160,8 +161,21 @@ def run_llm_optimization(config):
                 it + 1, pd.read_csv(config['logs']['weight_history_csv']),
                 iter_log_data, traj_feedback_data, ee_traj_df, config, bounds
             )
+            
+            if scratchpad:
+                if it == 0:
+                    scratchpad_text = "Initial iteration, no prior feedback."
+                else:
+                    response_file_name = f"iter_{it:03d}_response.txt"
+                    response_file_path = os.path.join(config['logs']['dialog_dir'], response_file_name)
+                    if os.path.exists(response_file_path):
+                        with open(response_file_path, "r", encoding="utf-8") as f:
+                            scratchpad_text = f.read()
+                        scratchpad_text = scratchpad_text.split("<scratchpad>")[1].split("</scratchpad>")[0].strip()
+                    else:
+                        raise FileNotFoundError(f"Expected scratchpad response file not found: {response_file_path}")
 
-            prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text=guidance_text)
+            prompt = llm.render_prompt(it + 1, feedback_text, bounds, guidance_text=guidance_text, scratchpad_text=scratchpad_text if scratchpad else "", summarize=False)
             # save_dialog(config['logs']['dialog_dir'], it + 1, prompt, "")
 
             # try:

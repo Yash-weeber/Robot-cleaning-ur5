@@ -24,7 +24,7 @@ class LLMInterface:
         if not hasattr(self, "_active_idx"):
             self._active_idx = 0
 
-    def render_prompt(self, iter_idx, feedback_text, bounds, guidance_text="", summarize=False):
+    def render_prompt(self, iter_idx, feedback_text, bounds, guidance_text="", scratchpad_text="", summarize=False):
 
         # Determine template name based on configuration flags
         traj_in_prompt = self.config['llm_settings'].get('traj_in_prompt', True)
@@ -53,7 +53,8 @@ class LLMInterface:
             iter_idx=iter_idx,
             n_x_seg=self.config['dmp_params']['num_x_segments'],
             n_y_seg=self.config['dmp_params']['num_y_segments'],
-            guidance_text=self.config['llm_settings'].get('guidance_file', "")
+            guidance_text=self.config['llm_settings'].get('guidance_file', ""),
+            scratchpad_text=scratchpad_text
         )
 
     def call_ollama(self, prompt, token_limit=100000):

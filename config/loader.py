@@ -45,11 +45,14 @@ def load_config(config_path="config/config.yaml"):
     on_site = config['llm_settings'].get('on_site', False)
     in_lab = config['llm_settings'].get('in_lab', False)
     summarizer = config['llm_settings'].get('summarizer', False)
+    scratchpad = config['llm_settings'].get('scratchpad', False)
     rt = run_type
     
     if summarizer:
         rt += "-opt"
 
+    if scratchpad:
+        rt += "-scratchpad"
     if traj_in_prompt:
         rt += "-traj"
     
@@ -84,6 +87,9 @@ def load_config(config_path="config/config.yaml"):
     
     if summarizer:
         rt += "-sum-opt"
+    
+    if scratchpad:
+        rt += "-scratchpad"
     
     if traj_in_prompt:
         rt += f"-traj-{resample_rate}"

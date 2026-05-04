@@ -121,7 +121,7 @@ def parse_ollama_weights(out_text, n_bfs):
 
 def save_dialog(dialog_dir, iter_idx, prompt, response):
     """Exact copy of original save_dialog."""
-    pid = f"iter_{iter_idx:03d}_{uuid.uuid4().hex[:8]}"
+    pid = f"iter_{iter_idx:03d}"
     with open(os.path.join(dialog_dir, pid + "_prompt.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     with open(os.path.join(dialog_dir, pid + "_response.txt"), "w", encoding="utf-8") as f:

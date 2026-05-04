@@ -12,10 +12,11 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     The function f(weights) evaluates the cost of the policy.
 
 # Here's how we will interact:
-    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajectory in the XY workspace and its corresponding function value f(weights) for each example.
+    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajectory in the XY workspace and its corresponding function value f(weights) for each example, as well as a scratchpad containing pointers on what you should do in this iteration.
     2. You will provide the response in exact following format:
         * Line 1: Must be exactly one <weights>...</weights> block. Inside the tag must be valid JSON of the form: {"weights":[...]} containing a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights).
         * Line 2: A <reasoning>...</reasoning> block with a detailed explanation of the reasoning behind the suggested weights.
+        * Line 3: A <scratchpad>...</scratchpad> block with any information you need for the next iteration, including notes about the strategy followed so far.
     3. I will then provide the function's f(weights) at that point and the current iteration.
     4. You will repeat the steps from 2-3 until we will reach a maximum number of iteration.
 
@@ -24,9 +25,12 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     2. **The global optimum should be around {{ optimum }}.** If you are higher than that, this is a local optimum. You should explore instead of exploiting.
     3. Search both the positive and the negative values. **During exploration, use search step size of {{ step_size }}**
     4. Balance between exploration and exploitation.
-    5. Be bold in exploring the weights space, and do not be conservative by suggesting weights that are close to the previous ones during exploration. The optimization landscape is complex and non-convex, so it is important to explore a wide range of weights to find the global optimum.
-    
-Next, You will see summary of the reasoning traces from the previous iterations, highlighting the key insights and patterns observed in the weights provided by the summarization agent:
+    5. Plan for the next iteration in the scratchpad. 
+
+Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
 {{ feedback_text }}
+
+Here is the scratchpad for the current iteration, which includes pointers on what you should do in this iteration:
+{{ scratchpad_text }}
 
 Now you are at iteration {{ iter_idx }} out of {{ MAX_ITERS }}. Please provide the results in the indicated format.

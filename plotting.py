@@ -1024,6 +1024,7 @@ if __name__ == "__main__":
     # config_file = config_path / "semantics-hist-30-n_bfs-30.yaml"
     config_file = config_path / "semantics-hist-100-sum-opt.yaml"
     # config_file = config_path / "semantics-hist-100-sum-opt-2.yaml"
+    config_file = config_path / "semantics-hist-100-scratchpad.yaml"
             
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
@@ -1041,6 +1042,7 @@ if __name__ == "__main__":
     guided = plot_config["llm_settings"]["guided"]
     n_bfs = plot_config["dmp_params"]["n_bfs"]
     summarizer = plot_config["llm_settings"].get('summarizer', False)
+    scratchpad = plot_config["llm_settings"].get('scratchpad', False)
     # exp_nums = plot_config["exp_nums"]
     
     rt = run_type
@@ -1066,6 +1068,9 @@ if __name__ == "__main__":
     
     if summarizer:
         rt += "-sum-opt"
+        
+    if scratchpad:
+        rt += "-scratchpad"
     
     if traj_in_prompt:
         rt += f"-traj-{resample_rate}"
@@ -1111,7 +1116,7 @@ if __name__ == "__main__":
     # Aggregate across all runs in the experiment folder
     plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(5,8)]
+    exp_nums = [i for i in range(1,7)]
     # exp_num = 3
     for exp_num in exp_nums:
         print(f"Processing experiment run: {exp_num}")
