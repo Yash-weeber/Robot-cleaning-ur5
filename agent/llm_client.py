@@ -8,6 +8,9 @@ from jinja2 import Environment, FileSystemLoader
 
 _call_gemini_lock = threading.Lock()
 
+class LLMError(Exception):
+    """Base exception for LLM client errors."""
+
 
 class LLMInterface:
     def __init__(self, config):
@@ -120,5 +123,65 @@ class LLMInterface:
             except Exception as e:
                 last_error = e
                 continue
-
         raise RuntimeError(f"All Gemini API keys failed. Last error: {last_error}")
+    
+    def call_gemma(self, prompt: str, image_data: list[str] | str | None=None):
+        try:
+            import openai
+        except ImportError as e:
+            raise ImportError(
+                "OpenAI SDK not installed. Run: pip install openai"
+            ) from e
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise LLMError("OPENAI_API_KEY environment variable not set")
+        self._openai = openai
+        self._client = openai.OpenAI(
+            api_key=api_key,
+            base_url="https://openai.rc.asu.edu/v1"
+        )
+
+        import base64
+        content = [{"type": "text", "text": prompt}]
+        
+        if image_data:
+            # Handle list of base64 strings (New)
+            if isinstance(image_data, list):
+                for b64 in image_data:
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
+                    })
+            # Handle single file path (Legacy/Standard)
+            elif isinstance(image_data, str):
+                with open(image_data, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode('utf-8')
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{b64}"}
+                })
+
+        response = self._client.chat.completions.create(
+            model=self.config['llm_settings']['llm_model'],
+            max_tokens=self.config['llm_settings'].get('max_tokens', 70000),
+            temperature=self.config['llm_settings'].get('temperature', 0.7),
+            messages=[{"role": "user", "content": content}],
+        )
+
+        if hasattr(response, 'usage') and response.usage:
+            prompt_tokens = getattr(response.usage, 'prompt_tokens', 'Unknown')
+            completion_tokens = getattr(response.usage, 'completion_tokens', 'Unknown')
+            total_tokens = getattr(response.usage, 'total_tokens', 'Unknown')
+            
+            print("-" * 40)
+            print("API Token Usage:")
+            print(f"  -> Prompt (Images + Text): {prompt_tokens} tokens")
+            print(f"  -> Completion (Response):  {completion_tokens} tokens")
+            print(f"  -> Total Tokens Used:      {total_tokens} tokens")
+            print("-" * 40)
+            
+        content = response.choices[0].message.content
+        if content is None:
+            raise LLMError("OpenAI API returned content=None, which is likely a transient issue. Consider retrying.")
+        return content
+

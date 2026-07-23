@@ -12,7 +12,7 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     The function f(weights) evaluates the cost of the policy.
 
 # Here's how we will interact :
-    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example.
+    1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajecotry in the XY workspace and its corresponding function value f(weights) for each example. I will also provide with an image showing the trajectories for the last 25 iterations.
     2. You will provide the response in exact following format:
         * Block 1: 
                 **<think>**
@@ -33,6 +33,8 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     1. **XY workspace limits: x ∈ [{{ "%.3f"|format(xmin) }}, {{ "%.3f"|format(xmax) }}], y ∈ [{{ "%.3f"|format(ymin) }}, {{ "%.3f"|format(ymax) }}]. Any proposed weights must keep the trajectory strictly within these bounds.**
     2. **Search for the global optimum.** Balance exploration and exploitation. When are stuck in a local optimum, you should explore instead of exploiting.
     3. Search both the positive and the negative values. **During exploration, use search step size of {{ step_size }}**
+    4. The trajectory and policy obtained must follow the provided guidance.
+    5. You will also be provided with an image showing the trajectories for the last 25 iterations. Use this image to analyze the trajectory patterns and inform your weight selection.
 
 Next, You will see examples of the weights and their corresponding function value f(weights) and XY workspace range:
 {{ feedback_text }}

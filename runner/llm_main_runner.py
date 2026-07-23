@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import mujoco
 from agent.pydmps.dmp_rhythmic import DMPs_rhythmic
+import base64
+import matplotlib.pyplot as plt
 
 # Internal imports from the factorized codebase
 from runner.main_runner import EnhancedDMPController
@@ -43,6 +45,7 @@ def run_llm_optimization(config):
     max_iters = config['simulation']['max_iters']
     n_warmup = config['llm_settings']['n_warmup']
     feedback_window = config['llm_settings']['feedback_window']
+    w_image = config['llm_settings'].get('w_image', False)
     weights_csv_path = os.path.join(config['logs']['root'], "weights.csv")
     scratchpad = config['llm_settings'].get('scratchpad', False)
 
@@ -122,6 +125,7 @@ def run_llm_optimization(config):
             if i % keep_every == 0:
                 joint_traj.append(get_joint_positions(model, data, joint_names).copy())
 
+
         # Execute joint movements if successful
         if joint_traj:
             set_joint_positions(model, data, joint_names, start_joints)
@@ -184,6 +188,14 @@ def run_llm_optimization(config):
                 response = llm.call_ollama(prompt, token_limit=118000)
             elif config['llm_settings']['llm_model'].startswith("gemini"):
                 response = llm.call_gemini(prompt)
+            elif config['llm_settings']['llm_model'].startswith("gemma"):
+                if w_image:
+                    image_path = plot_trajectory_history(config, it)
+                    with open(image_path, "rb") as img_file:
+                        image_data = base64.b64encode(img_file.read()).decode('utf-8')
+                    response = llm.call_gemma(prompt, image_data=image_data)
+                else:
+                    response = llm.call_gemma(prompt)
             else:
                 raise ValueError(f"Unsupported LLM model: {config['llm_settings']['llm_model']}")
             w_next = parse_ollama_weights(response, n_bfs)
@@ -197,3 +209,53 @@ def run_llm_optimization(config):
         write_weights_csv(weights_csv_path, w_next)
 
     controller.viewer.close()
+
+def plot_trajectory_history(config, iteration):
+    """
+    Load and plot the trajectory of the last feedback_window iterations in a 5x5 grid from the saved CSV file.
+    """
+    feedback_window = config['llm_settings']['feedback_window']
+    ws_center = config["simulation"]["ws_center"]
+    ws_width = config["simulation"]["ws_width"]
+    ws_length = config["simulation"]["ws_length"]
+
+    XMIN = ws_center[0] - ws_width / 2.0
+    XMAX = ws_center[0] + ws_width / 2.0
+    YMIN = ws_center[1] - ws_length / 2.0
+    YMAX = ws_center[1] + ws_length / 2.0
+    n_warmup = config['llm_settings']['n_warmup']
+    iteration_start = max(1 - n_warmup, iteration - feedback_window + 1)
+    iteration_end = iteration
+    traj_df = pd.read_csv(config['logs']['dmp_trajectory_csv'])
+    traj_df = traj_df[(traj_df['iter'] >= iteration_start) & (traj_df['iter'] <= iteration_end)]
+    plt.figure(figsize=(8, 8))
+    
+    fig, axes = plt.subplots(
+            5, 5, sharex=True, sharey=True,
+            figsize=(15, 15)
+        )
+    axes = axes.flatten()
+    
+    for ax in axes:
+        ax.set_aspect("equal")
+    
+    for idx, (iter_num, group) in enumerate(traj_df.groupby('iter')):
+        if idx >= 25:
+            break
+        ax = axes[idx]
+        ax.plot(group['x'], group['y'], label=f"Iter {iter_num}")
+        ax.set_title(f"Iteration {iter_num}")
+        ax.set_xlim(XMIN, XMAX)
+        ax.set_ylim(YMIN, YMAX)
+        ax.grid()
+    plt.tight_layout()
+    image_path = os.path.join(config['logs']['dialog_dir'], f"iter_{iteration+1}_trajectory_history.png")
+    plt.savefig(image_path)
+    breakpoint()
+    return image_path
+
+
+
+
+    
+    

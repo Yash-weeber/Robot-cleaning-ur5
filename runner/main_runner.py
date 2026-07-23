@@ -235,6 +235,7 @@ class EnhancedDMPController:
             time.sleep(self.dt)
 
         recorder = VideoRecorder(self.model, self.data, record_path) if record_path else None
+        # recorder = None
 
         for joints in joint_traj:
             self.data.ctrl[:] = joints

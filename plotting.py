@@ -1025,6 +1025,7 @@ if __name__ == "__main__":
     config_file = config_path / "semantics-hist-100-sum-opt.yaml"
     # config_file = config_path / "semantics-hist-100-sum-opt-2.yaml"
     config_file = config_path / "semantics-hist-100-scratchpad.yaml"
+    config_file = config_path / "semantics-hist-30-n_bfs-20-gemma.yaml"
             
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
