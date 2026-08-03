@@ -15,15 +15,9 @@ You are good global RL policy optimizer, helping me find the global optimal poli
     1. I will provide you max steps ({{ MAX_ITERS }}) along with training examples which includes weights for the DMP policy, the ranges of the trajectory in the XY workspace and its corresponding function value f(weights) for each example. I will also provide with an image showing the trajectories for the last 25 iterations.
     2. You will provide the response in exact following format:
         * Block 1: 
-                <think>
-                    Perform a detailed analysis of the current state:
-                    - **State Summary**: Identify the Global Best step from the history buffer in terms of its ability to minimize f(weights) value and compliance with XY workspace limits.
-                    - **Trend Analysis**: Compare the most recent trials to determine the current trajectory.
-                    - **Step Evaluation**: Analyze how the previous change in policy weights affected the generated 2D trajectories, the nature of the sweeping motion, and the cost values.
-                    - **Strategy & Pacing**: State whether you are **Exploring** (using step ≈ {{ step_size }}) or **Exploiting** (smaller step). Justify this based on the iteration index {{ step_number }} to pace the search (starting broad, narrowing later).
-                    - **Trajectory Analysis**: Examine the provided image of the last 25 iterations to identify patterns, areas of improvement, and potential adjustments to the weights that could lead to a more effective sweeping motion and lower cost.
-                    - **Reasoning**: Detailed explanation of the reasoning behind the suggested weights.
-                </think>
+                <reasoning>
+                    block with a detailed explanation of the reasoning behind the suggested weights.
+                </reasoning> 
         * Block 2: 
                 <weights>
                     a new set of {{ 2 * N_BFS }} float weights as an array, aiming to minimize the functions value f(weights). in the following format: [w1, w2, ..., w{{ 2 * N_BFS }}]

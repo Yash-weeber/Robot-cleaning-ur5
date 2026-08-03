@@ -31,7 +31,7 @@ x_min, x_max = ws_center[0] - ws_width / 2, ws_center[0] + ws_width / 2
 def plot_weights_history_heatmap(weights_csv: Path, n_bfs, output_path=None, ext="png"):
     plt.rcParams["font.family"] = "sans-serif"
     df = pd.read_csv(weights_csv)
-    weight_cols = [f"w{i}" for i in range(n_bfs)]
+    weight_cols = [f"w{i}" for i in range(2*n_bfs)]
     if not all(c in df.columns for c in weight_cols):
         raise ValueError(f"Expected weight columns {weight_cols} not all found in {weights_csv}")
     # df = df[df["iter"] >= 1].copy()  # filter out any non-iteration rows (e.g., metadata)
@@ -1025,7 +1025,11 @@ if __name__ == "__main__":
     config_file = config_path / "semantics-hist-100-sum-opt.yaml"
     # config_file = config_path / "semantics-hist-100-sum-opt-2.yaml"
     config_file = config_path / "semantics-hist-100-scratchpad.yaml"
-    config_file = config_path / "semantics-hist-30-n_bfs-20-gemma.yaml"
+    config_file = config_path / "semantics-hist-25-n_bfs-20-gemma.yaml"
+    # config_file = config_path / "semantics-hist-25-n_bfs-20-gemma-image-3.yaml"
+    config_file = config_path / "semantics-guided-gridcoverage-20x20-hist-25-sinusoid-y-warmup-5-gemma.yaml"
+    config_file = config_path / "semantics-guided-image-hist-25-sinusoid-x-warmup-5-gemma.yaml"
+    # config_file = config_path / "semantics-hist-25-n_bfs-10-gemma-image-3-warmup-5.yaml"
             
     plot_config = load_config(config_file)
     # print(f"Loaded plot configuration from YAML: {plot_config}")
@@ -1044,6 +1048,7 @@ if __name__ == "__main__":
     n_bfs = plot_config["dmp_params"]["n_bfs"]
     summarizer = plot_config["llm_settings"].get('summarizer', False)
     scratchpad = plot_config["llm_settings"].get('scratchpad', False)
+    w_image = plot_config["llm_settings"].get('w_image', False)
     # exp_nums = plot_config["exp_nums"]
     
     rt = run_type
@@ -1093,6 +1098,9 @@ if __name__ == "__main__":
         suffix = f"-{plot_config['llm_settings']['guidance_file'].split('/')[-1].split('.')[0]}"
     else:
         suffix = ""
+
+    if w_image:
+        rt+="-image"
     
     save_results_file = f"{rt}-stepsize-{step_size}-hist-{feedback_window}-walled-{template_number}{suffix}" 
     
@@ -1117,7 +1125,7 @@ if __name__ == "__main__":
     # Aggregate across all runs in the experiment folder
     plot_avg_cost_history_across_runs(root_dir, show=False, n_x_seg=n_x_seg, n_y_seg=n_y_seg)
     summarize_min_cost_across_runs(root_dir, output_filename="min cost summary.txt")
-    exp_nums = [i for i in range(1,7)]
+    exp_nums = [i for i in range(1,11)]
     # exp_num = 3
     for exp_num in exp_nums:
         print(f"Processing experiment run: {exp_num}")

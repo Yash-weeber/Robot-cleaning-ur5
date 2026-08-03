@@ -17,4 +17,7 @@ export OPENAI_API_KEY="sk-vbzIxKIpk88GDGPFNZVdjQ"
 export OPENAI_API_KEY="sk-v-BMw2uB5DbpxhsCc3LrUw"
 
 conda activate robot-cleaning-ur5
-python main.py --config config/semantics-hist-30-n_bfs-20-gemma.yaml
+python main_llm.py --config config/semantics-hist-25-n_bfs-10-gemma-image-3.yaml 
+python main_llm.py --config config/semantics-guided-gridcoverage-20x20-hist-25-sinusoid-y-warmup-5-gemma.yaml
+python main_llm.py --config config/semantics-hist-25-n_bfs-10-gemma-image-3-warmup-5.yaml
+python main_llm.py --config config/semantics-guided-image-hist-25-sinusoid-x-warmup-5-gemma.yaml

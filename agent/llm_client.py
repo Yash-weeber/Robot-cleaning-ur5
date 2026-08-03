@@ -143,6 +143,7 @@ class LLMInterface:
 
         import base64
         content = [{"type": "text", "text": prompt}]
+        # breakpoint()
         
         if image_data:
             # Handle list of base64 strings (New)

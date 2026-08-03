@@ -48,6 +48,7 @@ def run_llm_optimization(config):
     w_image = config['llm_settings'].get('w_image', False)
     weights_csv_path = os.path.join(config['logs']['root'], "weights.csv")
     scratchpad = config['llm_settings'].get('scratchpad', False)
+    draw_warmup_trajectories = config['llm_settings'].get('draw_warmup_trajectories', True)
 
     # Initialize DMP
     dmp = DMPs_rhythmic(n_dmps=2, n_bfs=n_bfs, dt=controller.dt)
@@ -60,22 +61,24 @@ def run_llm_optimization(config):
         controller.hard_reset_from_home(redraw=False)
 
         # Warmup: Predefined trajectories and weight bootstrapping
-        if it < 0:
-            if config['llm_settings'].get('draw_warmup_trajectories', True):
+        if it <= 0:
+            if draw_warmup_trajectories:
                 if (it - 1) % 5 == 0:
                     trajectory = generate_warmup_trajectory(n_counter, config)
                     if trajectory is not None:
                         dmp.imitate_path(trajectory.T, plot=False)
                         write_weights_csv(weights_csv_path, dmp.w.copy())
                         n_counter += 1
-            elif config['llm_settings']['draw_warmup_trajectories'] == False:
+            elif draw_warmup_trajectories == False:
                 print("Skipping warmup trajectory drawing and using trajectories from history.")
                 # load historical weights to simulate warmup trajectories
                 try:                    
                     df_w_hist = pd.read_csv('warmup_weights.csv')
                     df_w_hist = df_w_hist[df_w_hist['tag'] == 'proposed'].copy()
                     df_w_hist.drop(columns=["timestamp", "tag"], inplace=True)
+
                     w = df_w_hist.loc[df_w_hist['iter'] == it].drop(columns=["iter"]).to_numpy().reshape(2, n_bfs)
+
                     write_weights_csv(weights_csv_path, w)
                     dmp.reset_state(y0=np.array([controller.ws_center[0], controller.ws_center[1]]))
                     dmp.goal = np.array([controller.ws_center[0], controller.ws_center[1]])
@@ -84,7 +87,6 @@ def run_llm_optimization(config):
                     # np.random.seed(config['llm_settings']['seed_number'] + it)
                     # w = np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
                     # write_weights_csv(weights_csv_path, w)
-
         # Load weights for current iteration
         try:
             w2 = read_weights_csv(weights_csv_path, n_bfs)
@@ -152,7 +154,7 @@ def run_llm_optimization(config):
 
         # Logic to decide next weights
         if it < 0:
-            if config['llm_settings'].get('draw_warmup_trajectories', True):
+            if draw_warmup_trajectories:
                 # Random exploration during warmup period
                 np.random.seed(config['llm_settings']['seed_number'] + it)
                 w_next = w2 + np.random.randn(2, n_bfs) * config['dmp_params']['random_scale']
@@ -191,8 +193,11 @@ def run_llm_optimization(config):
             elif config['llm_settings']['llm_model'].startswith("gemma"):
                 if w_image:
                     image_path = plot_trajectory_history(config, it)
+                    # breakpoint()
                     with open(image_path, "rb") as img_file:
-                        image_data = base64.b64encode(img_file.read()).decode('utf-8')
+                        # breakpoint()
+                        image_data = [base64.b64encode(img_file.read()).decode('utf-8')]
+                        # breakpoint()
                     response = llm.call_gemma(prompt, image_data=image_data)
                 else:
                     response = llm.call_gemma(prompt)
@@ -214,6 +219,7 @@ def plot_trajectory_history(config, iteration):
     """
     Load and plot the trajectory of the last feedback_window iterations in a 5x5 grid from the saved CSV file.
     """
+    import math
     feedback_window = config['llm_settings']['feedback_window']
     ws_center = config["simulation"]["ws_center"]
     ws_width = config["simulation"]["ws_width"]
@@ -228,10 +234,11 @@ def plot_trajectory_history(config, iteration):
     iteration_end = iteration
     traj_df = pd.read_csv(config['logs']['dmp_trajectory_csv'])
     traj_df = traj_df[(traj_df['iter'] >= iteration_start) & (traj_df['iter'] <= iteration_end)]
-    plt.figure(figsize=(8, 8))
+    cols = 5
+    rows = math.ceil((iteration_end - iteration_start + 1) / cols)
     
     fig, axes = plt.subplots(
-            5, 5, sharex=True, sharey=True,
+            rows, cols, sharex=True, sharey=True,
             figsize=(15, 15)
         )
     axes = axes.flatten()
@@ -244,14 +251,15 @@ def plot_trajectory_history(config, iteration):
             break
         ax = axes[idx]
         ax.plot(group['x'], group['y'], label=f"Iter {iter_num}")
-        ax.set_title(f"Iteration {iter_num}")
+        ax.set_title(f"Iteration {iter_num}" if iter_num > 0 else f"Example {iter_num}")
         ax.set_xlim(XMIN, XMAX)
         ax.set_ylim(YMIN, YMAX)
         ax.grid()
     plt.tight_layout()
-    image_path = os.path.join(config['logs']['dialog_dir'], f"iter_{iteration+1}_trajectory_history.png")
+    image_path = os.path.join(config['logs']['dialog_dir'], f"iter_{iteration+1:03d}_trajectory_history.png")
     plt.savefig(image_path)
-    breakpoint()
+    plt.close()
+    # breakpoint()
     return image_path
 
 
